@@ -10,6 +10,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/qt/qt_key_modifiers.h"
 #include "data/data_histories.h"
 #include "data/data_thread.h"
+#include "fork/ghost_mode.h"
 #include "history/history.h"
 
 namespace Api {
@@ -32,6 +33,9 @@ SendAction::SendAction(
 , options(options)
 , replyTo({ .messageId = { history->peer->id, thread->topicRootId() } }) {
 	replyTo.topicRootId = replyTo.messageId.msg;
+	// Every send path builds one of these, so ghost mode's scheduled sending
+	// needs exactly this one hook to cover text, media, albums and forwards.
+	Fork::Ghost::ApplyScheduledSend(this->options.scheduled);
 }
 
 SendOptions DefaultSendWhenOnlineOptions() {

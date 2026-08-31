@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #pragma once
 
+#include "base/basic_types.h"
+
 // Ghost mode: stop the client telling the server things it does not have to.
 //
 // Four separate switches rather than one, because they are four different
@@ -33,11 +35,18 @@ struct Settings {
 	bool blockOnlineStatus = false;
 	bool blockUploadProgress = false;
 
+	// Sending a message normally marks the account online server-side, which
+	// blockOnlineStatus cannot undo - the server decides that, not us. Sending
+	// through the scheduled path avoids it. The cost is that every message
+	// takes the scheduled route, which is a different code path in Telegram.
+	bool useScheduledMessages = false;
+
 	[[nodiscard]] bool anyEnabled() const {
 		return blockReadReceipts
 			|| blockTyping
 			|| blockOnlineStatus
-			|| blockUploadProgress;
+			|| blockUploadProgress
+			|| useScheduledMessages;
 	}
 };
 
@@ -57,5 +66,11 @@ void Start();
 [[nodiscard]] bool BlocksTyping();
 [[nodiscard]] bool BlocksOnlineStatus();
 [[nodiscard]] bool BlocksUploadProgress();
+[[nodiscard]] bool UsesScheduledMessages();
+
+// Applied where every send path converges, so text, media, albums and
+// forwards are all covered by one hook. Leaves an already scheduled message
+// alone: the user asked for that time on purpose.
+void ApplyScheduledSend(TimeId &scheduled);
 
 } // namespace Fork::Ghost
