@@ -5,14 +5,12 @@
 # Usage:  fork/update-upstream.sh [upstream-ref]      (default: upstream/dev)
 #         fork/update-upstream.sh v7.2.0
 #
-# The current upstream base is derived, not stored: it is the merge-base of the
-# fork branch and upstream/dev. That keeps the fork free of any state file that
-# would itself have to be rebased.
 set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+. fork/_common.sh
+fork_ensure_setup
 
-TARGET="${1:-upstream/dev}"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-
 if [ "$BRANCH" = "HEAD" ]; then
 	echo "[ERROR] detached HEAD - check out the fork branch first." >&2
 	exit 1
@@ -25,7 +23,8 @@ fi
 echo "==> fetching upstream"
 git fetch upstream --tags --prune
 
-BASE="$(git merge-base "$BRANCH" upstream/dev)"
+TARGET="${1:-upstream/$UPSTREAM_BRANCH}"
+BASE="$(fork_base "$BRANCH")"
 NEW="$(git rev-parse "${TARGET}^{commit}")"
 OLD_HEAD="$(git rev-parse "$BRANCH")"
 
