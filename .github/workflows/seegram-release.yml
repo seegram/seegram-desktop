@@ -76,6 +76,10 @@ jobs:
           echo "building $(git log -1 --format='%h %s')"
 
       - name: Build, sign and publish
+        env:
+          # gh cannot reach the keychain from the runner service; the run's
+          # own token is enough to create and upload a release.
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -eu
           . "$HOME/seegram-update-keys/api.env"
@@ -134,6 +138,8 @@ jobs:
 
       - name: Build, sign and publish
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
           Get-Content "$HOME\seegram-update-keys\api.env" | ForEach-Object {

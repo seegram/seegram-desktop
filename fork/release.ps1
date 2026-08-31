@@ -214,6 +214,33 @@ print('feed updated for ' + platform)
     $head = Invoke-WebRequest -Method Head -Uri "https://desktop.see.tg/packages/$remoteName"
     if ($head.StatusCode -ne 200) { Fail "the package is not reachable, HTTP $($head.StatusCode)" }
 
+    # ---------------------------------------------------- github release
+    #
+    # A second, separate channel: the updater serves people who already run
+    # SeeGram, this serves people installing it for the first time. Attach a
+    # portable archive rather than the .tdup, which only the updater reads.
+
+    $versionStr = (Select-String -Path $versionHeader -Pattern 'AppVersionStr = "([^"]*)"').Matches[0].Groups[1].Value
+    $tag = "v$versionStr-$Counter"
+    $archive = Join-Path $stage "SeeGram-$versionStr-build$Counter-Windows-x64.zip"
+
+    if (Get-Command gh -ErrorAction SilentlyContinue) {
+        Write-Host "==> attaching a portable build to release $tag"
+        $items = @("$buildDir\SeeGram.exe")
+        if (Test-Path "$buildDir\Updater.exe") { $items += "$buildDir\Updater.exe" }
+        Compress-Archive -Path $items -DestinationPath $archive -Force
+        gh release view $tag *> $null
+        if ($LASTEXITCODE -ne 0) {
+            $notes = "Telegram Desktop $versionStr, SeeGram build $Counter.`n`n" +
+                "Installed copies update themselves; this archive is for a first install."
+            gh release create $tag --title "SeeGram $versionStr build $Counter" --notes $notes | Out-Null
+        }
+        gh release upload $tag $archive --clobber | Out-Null
+        Write-Host "    $(Split-Path $archive -Leaf)"
+    } else {
+        Write-Host "==> gh not installed, skipping the GitHub release"
+    }
+
     Write-Host ""
     Write-Host "==> released $base build $Counter for $platformKey"
     Write-Host "    clients on an older build pick it up within 8 hours, or at"
