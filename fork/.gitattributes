@@ -1,0 +1,3 @@
+# The repository root sets "* text=auto", which converts these scripts to
+# CRLF when checked out on Windows and breaks them under bash. Pin LF.
+*.sh text eol=lf
