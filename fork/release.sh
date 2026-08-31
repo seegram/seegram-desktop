@@ -204,19 +204,45 @@ ARCHIVE="$STAGE/SeeGram-$VERSION_STR-build$COUNTER-macOS-arm64.zip"
 GH_REPO_SLUG="$(git remote get-url origin \
 	| sed -E 's#.*github\.com[:/]([^/]+/[^/.]+)(\.git)?$#\1#')"
 
+# ------------------------------------------------------------------- dmg
+#
+# The familiar drag-to-Applications disk image. Unsigned, like the app
+# itself: a Developer ID is tied to a paid Apple account, and Gatekeeper
+# refusing an unsigned download once is a distribution problem rather than a
+# build one - hence the note in the release body.
+
+DMG="$STAGE/SeeGram-$VERSION_STR-build$COUNTER-macOS-arm64.dmg"
+echo "==> building the disk image"
+DMG_STAGE="$STAGE/dmg"
+mkdir -p "$DMG_STAGE"
+cp -R "$BUILD_DIR/$APP" "$DMG_STAGE/"
+ln -s /Applications "$DMG_STAGE/Applications"
+hdiutil create -volname "SeeGram" -srcfolder "$DMG_STAGE" \
+	-ov -format UDZO -quiet "$DMG"
+echo "    $(basename "$DMG") ($(( $(stat -f %z "$DMG") / 1048576 )) MB)"
+
 if command -v gh >/dev/null 2>&1; then
-	echo "==> attaching a portable build to release $TAG in $GH_REPO_SLUG"
+	echo "==> attaching builds to release $TAG in $GH_REPO_SLUG"
 	( cd "$BUILD_DIR" && zip -qry "$ARCHIVE" "$APP" )
 	if ! gh release view "$TAG" --repo "$GH_REPO_SLUG" >/dev/null 2>&1; then
 		gh release create "$TAG" --repo "$GH_REPO_SLUG" \
 			--title "SeeGram $VERSION_STR build $COUNTER" \
 			--notes "Telegram Desktop $VERSION_STR, SeeGram build $COUNTER.
 
-Installed copies update themselves; this archive is for a first install." \
+Installed copies update themselves; these downloads are for a first install.
+
+**macOS:** the app is not signed with an Apple Developer ID, so the first
+open needs a right-click on SeeGram.app and then Open - double-clicking
+reports it as damaged. Once opened this way it starts normally afterwards.
+
+**Windows:** SmartScreen shows an unknown-publisher prompt on the installer;
+More info, then Run anyway." \
 			>/dev/null
 	fi
-	gh release upload "$TAG" "$ARCHIVE" --repo "$GH_REPO_SLUG" --clobber >/dev/null
+	gh release upload "$TAG" "$ARCHIVE" "$DMG" \
+		--repo "$GH_REPO_SLUG" --clobber >/dev/null
 	echo "    $(basename "$ARCHIVE")"
+	echo "    $(basename "$DMG")"
 else
 	echo "==> gh not installed, skipping the GitHub release"
 fi
