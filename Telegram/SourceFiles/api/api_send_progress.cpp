@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "api/api_send_progress.h"
 
+#include "fork/ghost_mode.h"
 #include "main/main_session.h"
 #include "history/history.h"
 #include "data/data_peer.h"
@@ -113,6 +114,19 @@ void SendProgressManager::send(const Key &key, int progress) {
 		return;
 	}
 	using Type = SendProgressType;
+	// Ghost mode keeps these apart: "typing" and "uploading a file" give away
+	// different things, and the upload one is what reveals that a large send
+	// is already in flight.
+	const auto uploading = (key.type == Type::UploadVideo)
+		|| (key.type == Type::UploadVoice)
+		|| (key.type == Type::UploadRound)
+		|| (key.type == Type::UploadPhoto)
+		|| (key.type == Type::UploadFile);
+	if (uploading
+		? Fork::Ghost::BlocksUploadProgress()
+		: Fork::Ghost::BlocksTyping()) {
+		return;
+	}
 	const auto action = [&]() -> MTPsendMessageAction {
 		const auto p = MTP_int(progress);
 		switch (key.type) {

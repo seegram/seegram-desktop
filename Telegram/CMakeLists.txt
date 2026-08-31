@@ -623,6 +623,11 @@ PRIVATE
     core/version.h
     core/websocket_client.cpp
     core/websocket_client.h
+    fork/build_counter.h
+    fork/ghost_mode.cpp
+    fork/ghost_mode.h
+    fork/settings_ghost.cpp
+    fork/settings_ghost.h
     countries/countries_manager.cpp
     countries/countries_manager.h
     data/business/data_business_chatbots.cpp
