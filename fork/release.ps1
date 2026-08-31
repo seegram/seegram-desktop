@@ -134,10 +134,14 @@ try {
 
     Write-Host "==> packing and signing"
     Push-Location $stage
+    # -target names the architecture the package is FOR. It is part of the
+    # signed region, so a package built without it is stamped x86 and every
+    # x64 client rejects it - the same trap as -arch on macOS.
     & "$root\$buildDir\Packer.exe" `
         -path . `
         -version $base `
         -counter $Counter `
+        -target win64 `
         -channel stable `
         -keys-loc "$root\Telegram\Resources\update" `
         -local-key "$keysDir\release-private.pem" `
