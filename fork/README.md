@@ -3,6 +3,16 @@
 This repository is a fork of [telegramdesktop/tdesktop](https://github.com/telegramdesktop/tdesktop)
 that carries a small set of extra features and follows upstream releases.
 
+## Working from a fresh clone
+
+Check out `main`. It carries the fork; upstream's own branch (`dev`) is only
+the base it sits on and contains none of the fork's changes.
+
+    git clone https://github.com/see-tg/seegram-desktop.git
+    cd seegram-desktop
+    git checkout main
+    git submodule update --init --recursive
+
 ## Model: rebase, never merge
 
 `main` is always **`<an upstream commit>` + a short series of fork commits on top**.
@@ -28,9 +38,14 @@ The script fetches upstream, derives the current base, backs the branch up,
 rebases, re-pins submodules, and prints a `git range-diff` so you can confirm
 every fork commit survived and changed only where expected.
 
-`rerere` is enabled in this clone (`git config rerere.enabled true`), so a
-conflict resolved once is replayed automatically on later updates. This is the
-single biggest time saver in fork maintenance - do not disable it.
+`rerere` is what makes this cheap: a conflict resolved once is replayed
+automatically on later updates. It is the single biggest time saver in fork
+maintenance - do not disable it.
+
+Both the `upstream` remote and `rerere` are *clone-local* state that `git
+clone` does not carry over, so a fresh clone starts without them. The scripts
+therefore configure both on first run instead of relying on anyone reading
+this file first.
 
 ## Rules for fork commits
 
