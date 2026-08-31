@@ -66,7 +66,11 @@ jobs:
         run: |
           set -eu
           cd "$HOME/TBuild/seegram-desktop"
-          git fetch --quiet origin "${{ github.sha }}"
+          # The run's own short-lived token: the runner service cannot reach
+          # the keychain where this machine's git credentials live.
+          git fetch --quiet \
+            "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" \
+            "${{ github.sha }}"
           git reset --quiet --hard "${{ github.sha }}"
           git submodule update --quiet --init --recursive
           echo "building $(git log -1 --format='%h %s')"
