@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "platform/mac/global_menu_mac.h"
 
+#include "core/version.h"
 #include "core/application.h"
 #include "core/sandbox.h"
 #include "window/window_controller.h"
@@ -355,7 +356,7 @@ void Manager::buildAppleMenu(QMenu *main) {
 			});
 		};
 		const auto about = main->addAction(
-			u"About Telegram"_q,
+			u"About "_q + AppFile.utf16(),
 			std::move(callback));
 		about->setMenuRole(QAction::AboutQtRole);
 	}
