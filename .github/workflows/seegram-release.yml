@@ -1,0 +1,77 @@
+# Build, sign and publish a fork release.
+#
+# Runs on the fork's own self-hosted runners, which is what makes this both
+# safe and cheap: the signing key stays on the machine that already holds it
+# and never becomes a repository secret, the 40+ GB of prepared libraries are
+# reused instead of rebuilt from scratch, and self-hosted minutes are free.
+#
+# Credentials are read from ~/seegram-update-keys/api.env on the runner rather
+# than from GitHub secrets, for the same reason.
+
+name: SeeGram Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      counter:
+        description: "Fork build counter within the current upstream version"
+        required: true
+        type: string
+      publish:
+        description: "Upload and update the feed (off = build and sign only)"
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  # Two releases at once would race on the feed and on the build directory.
+  group: seegram-release
+  cancel-in-progress: false
+
+jobs:
+  macos:
+    name: macOS (arm64)
+    runs-on: [self-hosted, macOS, ARM64, seegram]
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out the fork
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Check the release prerequisites
+        run: |
+          set -eu
+          if [ ! -f "$HOME/seegram-update-keys/release-private.pem" ]; then
+            echo "::error::signing key missing on this runner"
+            exit 1
+          fi
+          if [ ! -f "$HOME/seegram-update-keys/api.env" ]; then
+            echo "::error::api.env missing, expected SEEGRAM_API_ID and SEEGRAM_API_HASH"
+            exit 1
+          fi
+          if [ ! -d "$HOME/TBuild/Libraries/local" ]; then
+            echo "::error::prepared libraries missing, run Telegram/build/prepare/mac.sh silent"
+            exit 1
+          fi
+
+      - name: Build, sign and publish
+        run: |
+          set -eu
+          . "$HOME/seegram-update-keys/api.env"
+          export SEEGRAM_API_ID SEEGRAM_API_HASH
+          if [ "${{ inputs.publish }}" = "true" ]; then
+            fork/release.sh "${{ inputs.counter }}"
+          else
+            fork/release.sh "${{ inputs.counter }}" --no-publish
+          fi
+
+      - name: Report what the feed now serves
+        if: always()
+        run: |
+          echo "### SeeGram release" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          curl -fsS https://desktop.see.tg/current4 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
