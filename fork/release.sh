@@ -16,9 +16,13 @@ cd "$(git rev-parse --show-toplevel)"
 
 KEYS_DIR="${SEEGRAM_KEYS_DIR:-$HOME/seegram-update-keys}"
 KEY_ID="${SEEGRAM_KEY_ID:-sg-2026a}"
-SERVER="${SEEGRAM_UPDATE_SERVER:-root@REDACTED-HOST}"
 SERVER_SSH_KEY="${SEEGRAM_SSH_KEY:-$HOME/.ssh/seegram_updates}"
-SERVER_ROOT="/var/www/desktop.see.tg"
+
+# Deliberately without defaults: where the update server lives and which
+# account reaches it are not facts a public repository should carry. Checked
+# below rather than here, so --no-publish needs neither.
+SERVER="${SEEGRAM_UPDATE_SERVER:-}"
+SERVER_ROOT="${SEEGRAM_UPDATE_ROOT:-}"
 BUILD_DIR="out/Release"
 
 COUNTER="${1:-}"
@@ -45,6 +49,16 @@ if [ ! -f "$KEYS_DIR/release-private.pem" ]; then
 	echo "[ERROR] signing key not found at $KEYS_DIR/release-private.pem" >&2
 	echo "        set SEEGRAM_KEYS_DIR if it lives elsewhere." >&2
 	exit 1
+fi
+if [ "$PUBLISH" -eq 1 ]; then
+	if [ -z "$SERVER" ]; then
+		echo "[ERROR] set SEEGRAM_UPDATE_SERVER, e.g. user@host" >&2
+		exit 1
+	fi
+	if [ -z "$SERVER_ROOT" ]; then
+		echo "[ERROR] set SEEGRAM_UPDATE_ROOT, the served directory" >&2
+		exit 1
+	fi
 fi
 
 case "$(uname -s)" in

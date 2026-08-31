@@ -31,9 +31,12 @@ Set-Location $root
 
 $keysDir = if ($env:SEEGRAM_KEYS_DIR) { $env:SEEGRAM_KEYS_DIR } else { "$HOME\seegram-update-keys" }
 $keyId   = if ($env:SEEGRAM_KEY_ID) { $env:SEEGRAM_KEY_ID } else { "sg-2026a" }
-$server  = if ($env:SEEGRAM_UPDATE_SERVER) { $env:SEEGRAM_UPDATE_SERVER } else { "root@REDACTED-HOST" }
 $sshKey  = if ($env:SEEGRAM_SSH_KEY) { $env:SEEGRAM_SSH_KEY } else { "$HOME\.ssh\seegram_updates" }
-$serverRoot  = "/var/www/desktop.see.tg"
+
+# Deliberately without a default: where the update server lives and which
+# account reaches it are not facts a public repository should carry.
+$server     = $env:SEEGRAM_UPDATE_SERVER
+$serverRoot = $env:SEEGRAM_UPDATE_ROOT
 $platformKey = "win64"
 $buildDir    = "out\Release"
 
@@ -53,6 +56,10 @@ if (-not (Test-Path "$keysDir\release-private.pem")) {
 }
 if (-not $env:SEEGRAM_API_ID)   { Fail "set SEEGRAM_API_ID" }
 if (-not $env:SEEGRAM_API_HASH) { Fail "set SEEGRAM_API_HASH" }
+if (-not $NoPublish) {
+    if (-not $server)     { Fail "set SEEGRAM_UPDATE_SERVER, e.g. user@host" }
+    if (-not $serverRoot) { Fail "set SEEGRAM_UPDATE_ROOT, the served directory" }
+}
 
 $versionHeader = "Telegram\SourceFiles\core\version.h"
 $baseMatch = Select-String -Path $versionHeader -Pattern 'AppVersion = (\d+);'
