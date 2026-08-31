@@ -2,11 +2,20 @@
 #
 # Runs on the fork's own self-hosted runners, which is what makes this both
 # safe and cheap: the signing key stays on the machine that already holds it
-# and never becomes a repository secret, the 40+ GB of prepared libraries are
-# reused instead of rebuilt from scratch, and self-hosted minutes are free.
+# and never becomes a repository secret, and self-hosted minutes are free -
+# which matters for a private repository, where macOS is billed ten times
+# over.
 #
 # Credentials are read from ~/seegram-update-keys/api.env on the runner rather
 # than from GitHub secrets, for the same reason.
+#
+# The build deliberately does NOT happen in the runner's own workspace. The
+# project resolves its dependencies as "../Libraries" relative to the
+# checkout, so a repository anywhere else simply cannot see the 40+ GB of
+# prepared libraries - and a fresh workspace would also throw away every
+# object file, turning a one-line counter bump into a full rebuild. The job
+# therefore syncs the long-lived clone next to those libraries and builds
+# there, which keeps an incremental release down to seconds.
 
 name: SeeGram Release
 
@@ -35,33 +44,39 @@ jobs:
     timeout-minutes: 90
 
     steps:
-      - name: Check out the fork
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
       - name: Check the release prerequisites
         run: |
           set -eu
-          if [ ! -f "$HOME/seegram-update-keys/release-private.pem" ]; then
-            echo "::error::signing key missing on this runner"
-            exit 1
-          fi
-          if [ ! -f "$HOME/seegram-update-keys/api.env" ]; then
-            echo "::error::api.env missing, expected SEEGRAM_API_ID and SEEGRAM_API_HASH"
-            exit 1
-          fi
+          for f in release-private.pem api.env; do
+            if [ ! -f "$HOME/seegram-update-keys/$f" ]; then
+              echo "::error::$f missing from ~/seegram-update-keys on this runner"
+              exit 1
+            fi
+          done
           if [ ! -d "$HOME/TBuild/Libraries/local" ]; then
             echo "::error::prepared libraries missing, run Telegram/build/prepare/mac.sh silent"
             exit 1
           fi
+          if [ ! -d "$HOME/TBuild/seegram-desktop/.git" ]; then
+            echo "::error::no clone at ~/TBuild/seegram-desktop to build in"
+            exit 1
+          fi
+
+      - name: Sync the build tree to this commit
+        run: |
+          set -eu
+          cd "$HOME/TBuild/seegram-desktop"
+          git fetch --quiet origin "${{ github.sha }}"
+          git reset --quiet --hard "${{ github.sha }}"
+          git submodule update --quiet --init --recursive
+          echo "building $(git log -1 --format='%h %s')"
 
       - name: Build, sign and publish
         run: |
           set -eu
           . "$HOME/seegram-update-keys/api.env"
           export SEEGRAM_API_ID SEEGRAM_API_HASH
+          cd "$HOME/TBuild/seegram-desktop"
           if [ "${{ inputs.publish }}" = "true" ]; then
             fork/release.sh "${{ inputs.counter }}"
           else
