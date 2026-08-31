@@ -8,8 +8,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/ghost_mode.h"
 
 #include "core/application.h"
-#include "core/core_settings.h"
-#include "base/unixtime.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QJsonDocument>
@@ -56,7 +54,6 @@ void Start() {
 	GlobalSettings.blockTyping = read("blockTyping", false);
 	GlobalSettings.blockOnlineStatus = read("blockOnlineStatus", false);
 	GlobalSettings.blockUploadProgress = read("blockUploadProgress", false);
-	GlobalSettings.useScheduledMessages = read("useScheduledMessages", false);
 }
 
 void Set(const Settings &settings) {
@@ -67,7 +64,6 @@ void Set(const Settings &settings) {
 	object.insert(u"blockTyping"_q, settings.blockTyping);
 	object.insert(u"blockOnlineStatus"_q, settings.blockOnlineStatus);
 	object.insert(u"blockUploadProgress"_q, settings.blockUploadProgress);
-	object.insert(u"useScheduledMessages"_q, settings.useScheduledMessages);
 
 	// QSaveFile so that a crash mid-write cannot leave a truncated file, which
 	// would read back as "ghost mode off" - the failure nobody would notice.
@@ -96,25 +92,6 @@ bool BlocksOnlineStatus() {
 
 bool BlocksUploadProgress() {
 	return GlobalSettings.blockUploadProgress;
-}
-
-bool UsesScheduledMessages() {
-	return GlobalSettings.useScheduledMessages;
-}
-
-void ApplyScheduledSend(TimeId &scheduled) {
-	if (!GlobalSettings.useScheduledMessages || scheduled) {
-		return; // An explicit "send later" is the user's own choice.
-	}
-	// The date has to still be in the future by the time the server reads it,
-	// so a proxy's extra latency gets a wider margin. The 20% figure is
-	// AyuGram's, and it is the kind of detail one only learns by shipping it.
-	constexpr auto kDelaySeconds = 2;
-	const auto proxied = Core::App().settings().proxy().isEnabled();
-	const auto delay = proxied
-		? ((kDelaySeconds * 6 + 4) / 5)
-		: kDelaySeconds;
-	scheduled = base::unixtime::now() + delay;
 }
 
 } // namespace Fork::Ghost
