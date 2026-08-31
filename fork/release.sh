@@ -32,7 +32,12 @@ fi
 
 # ---------------------------------------------------------------- preflight
 
-if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+# The counter file is the one thing a release is allowed to have changed:
+# this script writes it itself, so re-running must not trip over that.
+DIRTY="$(git status --porcelain --untracked-files=no \
+	| grep -v 'fork/build_counter\.h$' || true)"
+if [ -n "$DIRTY" ]; then
+	echo "$DIRTY" >&2
 	echo "[ERROR] working tree is dirty - a release must be reproducible." >&2
 	exit 1
 fi
