@@ -8,7 +8,7 @@ that carries a small set of extra features and follows upstream releases.
 Check out `main`. It carries the fork; upstream's own branch (`dev`) is only
 the base it sits on and contains none of the fork's changes.
 
-    git clone https://github.com/see-tg/seegram-desktop.git
+    git clone https://github.com/seegram/seegram-desktop.git
     cd seegram-desktop
     git checkout main
     git submodule update --init --recursive
