@@ -248,6 +248,8 @@ Installed copies update themselves; these downloads are for a first install.
 **macOS:** the app is not signed with an Apple Developer ID, so the first
 open needs a right-click on SeeGram.app and then Open - double-clicking
 reports it as damaged. Once opened this way it starts normally afterwards.
+If that goes wrong, kramz - one of our subscribers - recorded a walkthrough
+of the macOS install prompts: https://youtu.be/zdlfTSg-kUQ
 
 **Windows:** SmartScreen shows an unknown-publisher prompt on the installer;
 More info, then Run anyway." \
