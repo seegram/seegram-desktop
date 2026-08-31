@@ -94,3 +94,66 @@ jobs:
           echo '```json' >> "$GITHUB_STEP_SUMMARY"
           curl -fsS https://desktop.see.tg/current4 >> "$GITHUB_STEP_SUMMARY" || true
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  windows:
+    name: Windows (x64)
+    runs-on: [self-hosted, Windows, X64, seegram]
+    timeout-minutes: 180
+
+    # Independent of the macOS job on purpose: each platform owns its own
+    # entry in the feed, so one failing must not hold the other back.
+    steps:
+      - name: Check the release prerequisites
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Test-Path "$HOME\seegram-update-keys\release-private.pem")) {
+            Write-Host "::error::signing key missing on this runner"; exit 1
+          }
+          if (-not (Test-Path "$HOME\seegram-update-keys\api.env")) {
+            Write-Host "::error::api.env missing, expected SEEGRAM_API_ID and SEEGRAM_API_HASH"; exit 1
+          }
+          if (-not (Test-Path "$env:SEEGRAM_TREE\.git")) {
+            Write-Host "::error::SEEGRAM_TREE does not point at a clone to build in"; exit 1
+          }
+          if (-not (Test-Path "$env:SEEGRAM_TREE\..\Libraries")) {
+            Write-Host "::error::prepared libraries missing next to the clone"; exit 1
+          }
+
+      - name: Sync the build tree to this commit
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-Location $env:SEEGRAM_TREE
+          # The run's own short-lived token: the runner service has no
+          # credentials of its own for a private repository.
+          git fetch --quiet "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "${{ github.sha }}"
+          git reset --quiet --hard "${{ github.sha }}"
+          git submodule update --quiet --init --recursive
+          Write-Host "building $(git log -1 --format='%h %s')"
+
+      - name: Build, sign and publish
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-Content "$HOME\seegram-update-keys\api.env" | ForEach-Object {
+            if ($_ -match '^\s*([A-Z_]+)\s*=\s*(.+?)\s*$') {
+              Set-Item -Path "env:$($Matches[1])" -Value $Matches[2]
+            }
+          }
+          Set-Location $env:SEEGRAM_TREE
+          if ("${{ inputs.publish }}" -eq "true") {
+            .\fork\release.ps1 -Counter ${{ inputs.counter }}
+          } else {
+            .\fork\release.ps1 -Counter ${{ inputs.counter }} -NoPublish
+          }
+
+      - name: Report what the feed now serves
+        if: always()
+        shell: pwsh
+        run: |
+          "### SeeGram release (Windows)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          '```json' | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          (Invoke-WebRequest -Uri https://desktop.see.tg/current4).Content |
+            Out-File -Append $env:GITHUB_STEP_SUMMARY
+          '```' | Out-File -Append $env:GITHUB_STEP_SUMMARY
