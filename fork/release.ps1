@@ -228,7 +228,10 @@ print('feed updated for ' + platform)
     $feed = Invoke-RestMethod -Uri "https://desktop.see.tg/current4"
     $served = $feed.$platformKey.stable.released
     if ($served -ne "$version") { Fail "the feed says $served, expected $version" }
-    $head = Invoke-WebRequest -Method Head -Uri "https://desktop.see.tg/packages/$remoteName"
+    # -UseBasicParsing or Windows PowerShell drags in the Internet Explorer
+    # engine to parse the response and stops to ask whether that is allowed.
+    $head = Invoke-WebRequest -Method Head -UseBasicParsing `
+        -Uri "https://desktop.see.tg/packages/$remoteName"
     if ($head.StatusCode -ne 200) { Fail "the package is not reachable, HTTP $($head.StatusCode)" }
 
     # ---------------------------------------------------- github release
