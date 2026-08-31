@@ -5,23 +5,20 @@
 # Purpose is portability, not releases. The fork's code has to compile
 # against both Qt 5.15 (the Windows default) and Qt 6 (what macOS uses),
 # and that is exactly the breakage a Windows-only developer never sees.
+#
+# Manual trigger only, on purpose. Run #1 built every dependency and then
+# died with "No space left on device" while compiling the client, after
+# 1h55m - and because the disk was full, actions/cache saved nothing, so a
+# retry would have cost the full two hours again. On a single-developer
+# setup with a 16-core workstation and an Apple Silicon laptop, both Qt
+# variants are verified locally in minutes, so paying that on every push
+# buys nothing. This stays here for when releases or contributors make it
+# worth having; the cleanup step below addresses the confirmed cause but
+# has not yet been proven green.
 
 name: SeeGram Windows
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'docs/**'
-      - '**.md'
-      - 'changelog.txt'
-      - 'LEGAL'
-      - 'LICENSE'
-      - 'fork/**'
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -92,6 +89,36 @@ jobs:
         run: |
           nuget sources Disable -Name "Microsoft Visual Studio Offline Packages"
           nuget sources Add -Source https://api.nuget.org/v3/index.json & exit 0
+
+      # The runner image ships tens of gigabytes of toolchains this build
+      # never touches, and without reclaiming them the client does not fit.
+      # Python and Node are left alone: configure.py needs the first, and
+      # the actions themselves run on the second.
+      - name: Free up runner disk space.
+        shell: pwsh
+        run: |
+          $unused = @(
+            'C:\Android',
+            'C:\Program Files (x86)\Android',
+            'C:\ghcup',
+            'C:\Miniconda',
+            'C:\SeleniumWebDrivers',
+            'C:\hostedtoolcache\windows\CodeQL',
+            'C:\hostedtoolcache\windows\Ruby',
+            'C:\hostedtoolcache\windows\go',
+            'C:\hostedtoolcache\windows\Java_Temurin-Hotspot_jdk',
+            'C:\Program Files\MongoDB',
+            'C:\Program Files\PostgreSQL',
+            'C:\Program Files\MySQL',
+            'C:\Program Files\Amazon',
+            'C:\Program Files (x86)\Microsoft SDKs\Azure'
+          )
+          $before = (Get-PSDrive C).Free
+          foreach ($path in $unused) {
+            if (Test-Path $path) { Remove-Item $path -Recurse -Force -ErrorAction SilentlyContinue }
+          }
+          $after = (Get-PSDrive C).Free
+          "Reclaimed {0:N1} GB, {1:N1} GB free on C:" -f (($after - $before) / 1GB), ($after / 1GB)
 
       - name: ThirdParty cache.
         uses: actions/cache@v6
