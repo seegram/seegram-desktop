@@ -32,6 +32,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #define TDESKTOP_CANARY_METADATA_MSG_ID 0
 #endif // TDESKTOP_CANARY_METADATA_MSG_ID
 
+#include "fork/build_counter.h"
+
 namespace Core {
 
 inline constexpr auto BuildUpdateChannel = Updates::Channel(
@@ -68,7 +70,7 @@ inline constexpr auto CanaryMetadataMessageId
 [[nodiscard]] inline constexpr quint64 RunningUpdateVersion() {
 	return Updates::MakeUpdateVersion(
 		quint32(AppVersion),
-		CanaryBuildCounter);
+		CanaryBuildCounter + Fork::BuildCounter);
 }
 
 [[nodiscard]] inline QString CanaryVersionSuffix() {

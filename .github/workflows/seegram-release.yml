@@ -1,0 +1,179 @@
+# Build, sign and publish a fork release.
+#
+# Runs on the fork's own self-hosted runners, which is what makes this both
+# safe and cheap: the signing key stays on the machine that already holds it
+# and never becomes a repository secret, and self-hosted minutes are free -
+# which matters for a private repository, where macOS is billed ten times
+# over.
+#
+# Credentials are read from ~/seegram-update-keys/api.env on the runner rather
+# than from GitHub secrets, for the same reason.
+#
+# The build deliberately does NOT happen in the runner's own workspace. The
+# project resolves its dependencies as "../Libraries" relative to the
+# checkout, so a repository anywhere else simply cannot see the 40+ GB of
+# prepared libraries - and a fresh workspace would also throw away every
+# object file, turning a one-line counter bump into a full rebuild. The job
+# therefore syncs the long-lived clone next to those libraries and builds
+# there, which keeps an incremental release down to seconds.
+
+name: SeeGram Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      counter:
+        description: "Fork build counter within the current upstream version"
+        required: true
+        type: string
+      publish:
+        description: "Upload and update the feed (off = build and sign only)"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  # The run's own token starts read-only, which is the repository default and
+  # the right default - but creating the release and attaching the packages to
+  # it is a write to the repository. Without this the whole build succeeds and
+  # only the last step fails, with GitHub's least helpful error:
+  # "Resource not accessible by integration". Nothing else here needs write.
+  contents: write
+
+concurrency:
+  # Two releases at once would race on the feed and on the build directory.
+  group: seegram-release
+  cancel-in-progress: false
+
+jobs:
+  macos:
+    name: macOS (arm64)
+    runs-on: [self-hosted, macOS, ARM64, seegram]
+    timeout-minutes: 90
+
+    steps:
+      - name: Check the release prerequisites
+        run: |
+          set -eu
+          for f in release-private.pem api.env; do
+            if [ ! -f "$HOME/seegram-update-keys/$f" ]; then
+              echo "::error::$f missing from ~/seegram-update-keys on this runner"
+              exit 1
+            fi
+          done
+          if [ ! -d "$HOME/TBuild/Libraries/local" ]; then
+            echo "::error::prepared libraries missing, run Telegram/build/prepare/mac.sh silent"
+            exit 1
+          fi
+          if [ ! -d "$HOME/TBuild/seegram-desktop/.git" ]; then
+            echo "::error::no clone at ~/TBuild/seegram-desktop to build in"
+            exit 1
+          fi
+
+      - name: Sync the build tree to this commit
+        run: |
+          set -eu
+          cd "$HOME/TBuild/seegram-desktop"
+          # The run's own short-lived token: the runner service cannot reach
+          # the keychain where this machine's git credentials live.
+          git fetch --quiet \
+            "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" \
+            "${{ github.sha }}"
+          git reset --quiet --hard "${{ github.sha }}"
+          git submodule update --quiet --init --recursive
+          echo "building $(git log -1 --format='%h %s')"
+
+      - name: Build, sign and publish
+        env:
+          # gh cannot reach the keychain from the runner service; the run's
+          # own token is enough to create and upload a release.
+          GH_TOKEN: ${{ github.token }}
+          # Where the update server lives is runner-local, kept out of the
+          # repository and out of GitHub secrets alike.
+          SEEGRAM_UPDATE_SERVER: ${{ vars.SEEGRAM_UPDATE_SERVER }}
+          SEEGRAM_UPDATE_ROOT: ${{ vars.SEEGRAM_UPDATE_ROOT }}
+        run: |
+          set -eu
+          . "$HOME/seegram-update-keys/api.env"
+          export SEEGRAM_API_ID SEEGRAM_API_HASH
+          cd "$HOME/TBuild/seegram-desktop"
+          if [ "${{ inputs.publish }}" = "true" ]; then
+            fork/release.sh "${{ inputs.counter }}"
+          else
+            fork/release.sh "${{ inputs.counter }}" --no-publish
+          fi
+
+      - name: Report what the feed now serves
+        if: always()
+        run: |
+          echo "### SeeGram release" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          curl -fsS https://desktop.see.tg/current4 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  windows:
+    name: Windows (x64)
+    runs-on: [self-hosted, Windows, X64, seegram]
+    timeout-minutes: 180
+
+    # Independent of the macOS job on purpose: each platform owns its own
+    # entry in the feed, so one failing must not hold the other back.
+    steps:
+      - name: Check the release prerequisites
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Test-Path "$HOME\seegram-update-keys\release-private.pem")) {
+            Write-Host "::error::signing key missing on this runner"; exit 1
+          }
+          if (-not (Test-Path "$HOME\seegram-update-keys\api.env")) {
+            Write-Host "::error::api.env missing, expected SEEGRAM_API_ID and SEEGRAM_API_HASH"; exit 1
+          }
+          if (-not (Test-Path "$env:SEEGRAM_TREE\.git")) {
+            Write-Host "::error::SEEGRAM_TREE does not point at a clone to build in"; exit 1
+          }
+          if (-not (Test-Path "$env:SEEGRAM_TREE\..\Libraries")) {
+            Write-Host "::error::prepared libraries missing next to the clone"; exit 1
+          }
+
+      - name: Sync the build tree to this commit
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-Location $env:SEEGRAM_TREE
+          # The run's own short-lived token: the runner service has no
+          # credentials of its own for a private repository.
+          git fetch --quiet "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "${{ github.sha }}"
+          git reset --quiet --hard "${{ github.sha }}"
+          git submodule update --quiet --init --recursive
+          Write-Host "building $(git log -1 --format='%h %s')"
+
+      - name: Build, sign and publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SEEGRAM_UPDATE_SERVER: ${{ vars.SEEGRAM_UPDATE_SERVER }}
+          SEEGRAM_UPDATE_ROOT: ${{ vars.SEEGRAM_UPDATE_ROOT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-Content "$HOME\seegram-update-keys\api.env" | ForEach-Object {
+            if ($_ -match '^\s*([A-Z_]+)\s*=\s*(.+?)\s*$') {
+              Set-Item -Path "env:$($Matches[1])" -Value $Matches[2]
+            }
+          }
+          Set-Location $env:SEEGRAM_TREE
+          if ("${{ inputs.publish }}" -eq "true") {
+            .\fork\release.ps1 -Counter ${{ inputs.counter }}
+          } else {
+            .\fork\release.ps1 -Counter ${{ inputs.counter }} -NoPublish
+          }
+
+      - name: Report what the feed now serves
+        if: always()
+        shell: pwsh
+        run: |
+          "### SeeGram release (Windows)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          '```json' | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          (Invoke-WebRequest -Uri https://desktop.see.tg/current4).Content |
+            Out-File -Append $env:GITHUB_STEP_SUMMARY
+          '```' | Out-File -Append $env:GITHUB_STEP_SUMMARY
