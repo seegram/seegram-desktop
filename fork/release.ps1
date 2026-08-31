@@ -128,9 +128,19 @@ Remove-Item $buildLog -ErrorAction SilentlyContinue
 $stage = Join-Path ([System.IO.Path]::GetTempPath()) ("seegram-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $stage | Out-Null
 try {
-    # The packer takes a directory, so stage exactly what ships and nothing else.
+    # The packer takes a directory, so stage exactly what ships and nothing
+    # else. d3dcompiler is part of it: upstream's own build packs it, and a
+    # client that never receives it falls back to software rendering.
     Copy-Item "$buildDir\SeeGram.exe" $stage
     if (Test-Path "$buildDir\Updater.exe") { Copy-Item "$buildDir\Updater.exe" $stage }
+    $d3d = Get-ChildItem -Path $buildDir -Filter "d3dcompiler_47.dll" -Recurse -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if ($d3d) {
+        New-Item -ItemType Directory -Path "$stage\modules\x64\d3d" -Force | Out-Null
+        Copy-Item $d3d.FullName "$stage\modules\x64\d3d\"
+    } else {
+        Write-Host "    note: d3dcompiler_47.dll not found, packaging without it"
+    }
 
     Write-Host "==> packing and signing"
     Push-Location $stage
@@ -228,8 +238,40 @@ print('feed updated for ' + platform)
     # from the remotes - it picked telegramdesktop/tdesktop and got a 404.
     $slug = (git remote get-url origin) -replace '.*github\.com[:/]([^/]+/[^/.]+?)(\.git)?$', '$1'
 
+    # ------------------------------------------------------------ installer
+    #
+    # Built from the same staged files the update package was made of, so the
+    # two can never describe different builds. Unsigned: Authenticode needs a
+    # certificate tied to a real identity, and SmartScreen showing an
+    # unknown-publisher prompt once is a distribution problem, not a build one.
+
+    $installer = $null
+    $iscc = @(
+        "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+        "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+    ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if ($iscc) {
+        Write-Host "==> building the installer"
+        $full = "$versionStr.$Counter"
+        & $iscc /Q `
+            "/dMyAppVersion=$versionStr" `
+            "/dMyAppVersionZero=$versionStr" `
+            "/dMyAppVersionFull=$full" `
+            "/dReleasePath=$stage" `
+            "/dMyBuildTarget=win64" `
+            "$root\Telegram\build\setup.iss"
+        if ($LASTEXITCODE -ne 0) { Fail "the installer build failed" }
+        $installer = Get-ChildItem -Path $stage -Filter "seegram-setup-*.exe" -File |
+            Select-Object -First 1
+        if ($installer) {
+            Write-Host ("    {0} ({1} MB)" -f $installer.Name, [int]($installer.Length / 1MB))
+        }
+    } else {
+        Write-Host "==> Inno Setup not found, skipping the installer"
+    }
+
     if (Get-Command gh -ErrorAction SilentlyContinue) {
-        Write-Host "==> attaching a portable build to release $tag in $slug"
+        Write-Host "==> attaching builds to release $tag in $slug"
         $items = @("$buildDir\SeeGram.exe")
         if (Test-Path "$buildDir\Updater.exe") { $items += "$buildDir\Updater.exe" }
         Compress-Archive -Path $items -DestinationPath $archive -Force
@@ -239,8 +281,10 @@ print('feed updated for ' + platform)
                 "Installed copies update themselves; this archive is for a first install."
             gh release create $tag --repo $slug --title "SeeGram $versionStr build $Counter" --notes $notes | Out-Null
         }
-        gh release upload $tag $archive --repo $slug --clobber | Out-Null
-        Write-Host "    $(Split-Path $archive -Leaf)"
+        $upload = @($archive)
+        if ($installer) { $upload += $installer.FullName }
+        gh release upload $tag $upload --repo $slug --clobber | Out-Null
+        $upload | ForEach-Object { Write-Host "    $(Split-Path $_ -Leaf)" }
     } else {
         Write-Host "==> gh not installed, skipping the GitHub release"
     }
