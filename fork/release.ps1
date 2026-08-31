@@ -224,18 +224,22 @@ print('feed updated for ' + platform)
     $tag = "v$versionStr-$Counter"
     $archive = Join-Path $stage "SeeGram-$versionStr-build$Counter-Windows-x64.zip"
 
+    # Named explicitly: the clone also has an "upstream" remote, and gh guesses
+    # from the remotes - it picked telegramdesktop/tdesktop and got a 404.
+    $slug = (git remote get-url origin) -replace '.*github\.com[:/]([^/]+/[^/.]+?)(\.git)?$', '$1'
+
     if (Get-Command gh -ErrorAction SilentlyContinue) {
-        Write-Host "==> attaching a portable build to release $tag"
+        Write-Host "==> attaching a portable build to release $tag in $slug"
         $items = @("$buildDir\SeeGram.exe")
         if (Test-Path "$buildDir\Updater.exe") { $items += "$buildDir\Updater.exe" }
         Compress-Archive -Path $items -DestinationPath $archive -Force
-        gh release view $tag *> $null
+        gh release view $tag --repo $slug *> $null
         if ($LASTEXITCODE -ne 0) {
             $notes = "Telegram Desktop $versionStr, SeeGram build $Counter.`n`n" +
                 "Installed copies update themselves; this archive is for a first install."
-            gh release create $tag --title "SeeGram $versionStr build $Counter" --notes $notes | Out-Null
+            gh release create $tag --repo $slug --title "SeeGram $versionStr build $Counter" --notes $notes | Out-Null
         }
-        gh release upload $tag $archive --clobber | Out-Null
+        gh release upload $tag $archive --repo $slug --clobber | Out-Null
         Write-Host "    $(Split-Path $archive -Leaf)"
     } else {
         Write-Host "==> gh not installed, skipping the GitHub release"

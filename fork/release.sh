@@ -199,18 +199,23 @@ VERSION_STR="$(sed -n 's/.*AppVersionStr = "\([^"]*\)".*/\1/p' \
 TAG="v$VERSION_STR-$COUNTER"
 ARCHIVE="$STAGE/SeeGram-$VERSION_STR-build$COUNTER-macOS-arm64.zip"
 
+# Named explicitly: the clone also has an "upstream" remote, and gh guesses
+# from the remotes - it picked telegramdesktop/tdesktop and got a 404.
+GH_REPO_SLUG="$(git remote get-url origin \
+	| sed -E 's#.*github\.com[:/]([^/]+/[^/.]+)(\.git)?$#\1#')"
+
 if command -v gh >/dev/null 2>&1; then
-	echo "==> attaching a portable build to release $TAG"
+	echo "==> attaching a portable build to release $TAG in $GH_REPO_SLUG"
 	( cd "$BUILD_DIR" && zip -qry "$ARCHIVE" "$APP" )
-	if ! gh release view "$TAG" >/dev/null 2>&1; then
-		gh release create "$TAG" \
+	if ! gh release view "$TAG" --repo "$GH_REPO_SLUG" >/dev/null 2>&1; then
+		gh release create "$TAG" --repo "$GH_REPO_SLUG" \
 			--title "SeeGram $VERSION_STR build $COUNTER" \
 			--notes "Telegram Desktop $VERSION_STR, SeeGram build $COUNTER.
 
 Installed copies update themselves; this archive is for a first install." \
 			>/dev/null
 	fi
-	gh release upload "$TAG" "$ARCHIVE" --clobber >/dev/null
+	gh release upload "$TAG" "$ARCHIVE" --repo "$GH_REPO_SLUG" --clobber >/dev/null
 	echo "    $(basename "$ARCHIVE")"
 else
 	echo "==> gh not installed, skipping the GitHub release"
