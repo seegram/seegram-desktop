@@ -40,7 +40,12 @@ $buildDir    = "out\Release"
 # ------------------------------------------------------------------ preflight
 
 if ($Counter -lt 1) { Fail "the counter must be 1 or greater" }
-if ((git status --porcelain --untracked-files=no)) {
+# The counter file is the one thing a release is allowed to have changed:
+# this script writes it itself, so re-running must not trip over that.
+$dirty = @(git status --porcelain --untracked-files=no |
+    Where-Object { $_ -notmatch 'fork/build_counter\.h$' })
+if ($dirty) {
+    Write-Host ($dirty -join "`n")
     Fail "working tree is dirty - a release must be reproducible."
 }
 if (-not (Test-Path "$keysDir\release-private.pem")) {
@@ -72,6 +77,28 @@ if ($current -ne "$Counter") {
         -replace '^#define SEEGRAM_BUILD_COUNTER .*', "#define SEEGRAM_BUILD_COUNTER $Counter" `
         | Set-Content $counterFile -Encoding UTF8
     Write-Host "    remember to commit $counterFile"
+}
+
+# cmake, MSBuild and the toolchain only exist inside the Visual Studio
+# environment, which a plain PowerShell session does not have. Import it here
+# so a release does not depend on being started from a developer prompt.
+if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
+    Write-Host "==> entering the Visual Studio environment"
+    $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    if (-not (Test-Path $vswhere)) { Fail "vswhere.exe not found - is Visual Studio installed?" }
+    $vsPath = & $vswhere -latest -products * `
+        -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+        -property installationPath
+    if (-not $vsPath) { Fail "no Visual Studio install with the C++ toolchain found" }
+    $devShell = Join-Path $vsPath "Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+    if (-not (Test-Path $devShell)) { Fail "DevShell module missing at $devShell" }
+    Import-Module $devShell
+    Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation `
+        -DevCmdArguments "-arch=x64 -host_arch=x64" | Out-Null
+    Set-Location $root
+    if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
+        Fail "cmake still not on PATH after entering the VS environment"
+    }
 }
 
 Write-Host "==> configuring"
