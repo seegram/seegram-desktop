@@ -679,8 +679,8 @@ int main(int argc, char *argv[])
 		} else if (V2KeysLoc.isEmpty()) {
 			cout << "The -keys-loc param is required for -channel packing!\n";
 			return -1;
-		} else if (canary != (V2Counter > 0)) {
-			cout << "Canary channels require a positive -counter, others require none!\n";
+		} else if (canary && V2Counter == 0) {
+			cout << "Canary channels require a positive -counter!\n";
 			return -1;
 		} else if (!V2EmbedSignatures.empty()) {
 			cout << "The -embed-signatures param requires -unsigned!\n";
