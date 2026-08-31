@@ -252,12 +252,26 @@ print('feed updated for ' + platform)
     # certificate tied to a real identity, and SmartScreen showing an
     # unknown-publisher prompt once is a distribution problem, not a build one.
 
+    # Looked for in several places on purpose: winget, the standalone
+    # installer and a portable copy all put ISCC somewhere different, and
+    # "installer silently missing from the release" is a bad way to find out.
     $installer = $null
-    $iscc = @(
-        "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
-        "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
-    ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+    $iscc = (Get-Command ISCC.exe -ErrorAction SilentlyContinue).Source
+    if (-not $iscc) {
+        $iscc = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+            "${env:ProgramFiles(x86)}\Inno Setup 5\ISCC.exe",
+            "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
+        ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+    }
+    if (-not $iscc) {
+        $iscc = Get-ChildItem -Path @("${env:ProgramFiles(x86)}", "$env:ProgramFiles", "$env:LOCALAPPDATA\Programs") `
+            -Filter ISCC.exe -Recurse -Depth 3 -ErrorAction SilentlyContinue |
+            Select-Object -First 1 -ExpandProperty FullName
+    }
     if ($iscc) {
+        Write-Host "    using $iscc"
         Write-Host "==> building the installer"
         $full = "$versionStr.$Counter"
         & $iscc /Q `
