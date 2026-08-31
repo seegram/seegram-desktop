@@ -28,7 +28,7 @@ const PROPERTYKEY pkey_AppUserModel_ToastActivator = { { 0x9F4C2855, 0x9F79, 0x4
 #ifdef OS_WIN_STORE
 const WCHAR AppUserModelIdBase[] = L"Telegram.TelegramDesktop.Store";
 #else // OS_WIN_STORE
-const WCHAR AppUserModelIdBase[] = L"Telegram.TelegramDesktop";
+const WCHAR AppUserModelIdBase[] = L"SeeTg.SeeGramDesktop";
 #endif // OS_WIN_STORE
 
 [[nodiscard]] QString PinnedIconsPath() {
