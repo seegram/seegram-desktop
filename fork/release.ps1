@@ -102,7 +102,10 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
 }
 
 Write-Host "==> configuring"
-& "Telegram\configure.bat" `
+# "x64" is positional and picked up by cmake/run_cmake.py, which otherwise
+# defaults the Visual Studio generator to Win32 and then collides with an
+# existing x64 build directory.
+& "Telegram\configure.bat" x64 `
     -D TDESKTOP_API_ID="$env:SEEGRAM_API_ID" `
     -D TDESKTOP_API_HASH="$env:SEEGRAM_API_HASH" `
     -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF `
