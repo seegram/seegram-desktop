@@ -187,6 +187,35 @@ if [ "$HTTP" != "200" ]; then
 	exit 1
 fi
 
+# --------------------------------------------------------- github release
+#
+# A second, separate channel: the updater serves people who already run
+# SeeGram, this serves people installing it for the first time. Attach a
+# portable archive rather than the .tdup, which is only meaningful to the
+# updater.
+
+VERSION_STR="$(sed -n 's/.*AppVersionStr = "\([^"]*\)".*/\1/p' \
+	Telegram/SourceFiles/core/version.h)"
+TAG="v$VERSION_STR-$COUNTER"
+ARCHIVE="$STAGE/SeeGram-$VERSION_STR-build$COUNTER-macOS-arm64.zip"
+
+if command -v gh >/dev/null 2>&1; then
+	echo "==> attaching a portable build to release $TAG"
+	( cd "$BUILD_DIR" && zip -qry "$ARCHIVE" "$APP" )
+	if ! gh release view "$TAG" >/dev/null 2>&1; then
+		gh release create "$TAG" \
+			--title "SeeGram $VERSION_STR build $COUNTER" \
+			--notes "Telegram Desktop $VERSION_STR, SeeGram build $COUNTER.
+
+Installed copies update themselves; this archive is for a first install." \
+			>/dev/null
+	fi
+	gh release upload "$TAG" "$ARCHIVE" --clobber >/dev/null
+	echo "    $(basename "$ARCHIVE")"
+else
+	echo "==> gh not installed, skipping the GitHub release"
+fi
+
 echo
 echo "==> released $BASE build $COUNTER for $PLATFORM_KEY"
 echo "    clients on an older build pick it up within 8 hours, or at once"
