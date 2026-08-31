@@ -17,6 +17,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_chat.h"
 #include "data/data_document.h"
 #include "data/data_folder.h"
+#include "fork/ghost_mode.h"
 #include "data/data_forum.h"
 #include "data/data_forum_topic.h"
 #include "data/data_saved_music.h"
@@ -741,6 +742,13 @@ void Histories::sendReadRequest(not_null<History*> history, State &state) {
 			sendReadRequests();
 			finish();
 		};
+		// Ghost mode settles the read locally and tells the server nothing.
+		// The bookkeeping in finished() still has to run: skipping it would
+		// leave the history asking to be read and retrying forever.
+		if (Fork::Ghost::BlocksReadReceipts()) {
+			finished();
+			return mtpRequestId(0);
+		}
 		if (const auto channel = history->peer->asChannel()) {
 			return session().api().request(MTPchannels_ReadHistory(
 				channel->inputChannel(),
