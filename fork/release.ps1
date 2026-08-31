@@ -173,10 +173,13 @@ try {
     # version has to be a JSON string - the client parses a numeric one through
     # a double, and a 64 bit version is past the point where a double is exact.
     Write-Host "==> updating the feed entry for $platformKey"
-    $remoteScript = @"
-SEEGRAM_PLATFORM='$platformKey' SEEGRAM_VERSION='$version' python3 - <<'PY'
+    # Sent base64-encoded rather than as a here-document: PowerShell writes
+    # CRLF line endings, which leave the closing delimiter unmatched and spill
+    # the script into the shell. Encoding sidesteps line endings and quoting
+    # both.
+    $py = @'
 import json, os, shutil
-root = '$serverRoot'
+root = os.environ['SEEGRAM_ROOT']
 path = root + '/current4'
 platform = os.environ['SEEGRAM_PLATFORM']
 with open(path) as f:
@@ -194,9 +197,14 @@ shutil.copyfile(path, root + '/current')
 for p in (path, root + '/current'):
     shutil.chown(p, 'www-data', 'www-data')
 print('feed updated for ' + platform)
-PY
-"@
-    & ssh -i $sshKey $server $remoteScript
+'@
+    $py = $py -replace "`r", ""
+    $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($py))
+    $remote = "echo $b64 | base64 -d | " +
+        "SEEGRAM_ROOT='$serverRoot' " +
+        "SEEGRAM_PLATFORM='$platformKey' " +
+        "SEEGRAM_VERSION='$version' python3 -"
+    & ssh -i $sshKey $server $remote
     if ($LASTEXITCODE -ne 0) { Fail "feed update failed" }
 
     Write-Host "==> verifying what clients will actually see"
