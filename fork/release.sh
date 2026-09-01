@@ -63,8 +63,10 @@ fi
 
 case "$(uname -s)" in
 Darwin)
-	PLATFORM_KEY="armac"
-	PACK_ARCH="arm64"
+	# One universal binary, published under both feed keys. The feed has a slot
+	# per architecture and a client asks for the slot it runs on, so an Intel
+	# Mac looks up "mac" however much arm64 the binary it downloads also holds.
+	PLATFORMS="armac:arm64 mac:x86_64"
 	APP="SeeGram.app"
 	;;
 *)
@@ -86,7 +88,7 @@ VERSION="$(( (BASE << 32) | COUNTER ))"
 echo "==> upstream version : $BASE"
 echo "    fork build       : $COUNTER"
 echo "    update version   : $VERSION"
-echo "    platform         : $PLATFORM_KEY"
+echo "    platforms        : $PLATFORMS"
 
 # ------------------------------------------------------------------- build
 
@@ -102,7 +104,6 @@ fi
 echo "==> configuring"
 Telegram/configure.sh \
 	-D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF \
-	-D DESKTOP_APP_MAC_ARCH=arm64 \
 	-D DESKTOP_APP_SPECIAL_TARGET=mac \
 	-D CMAKE_CXX_FLAGS=-DPACKER_DISABLE_PRIVATE \
 	-D CMAKE_EXE_LINKER_FLAGS="-Wl,-S -Wl,-x" >/dev/null
@@ -126,44 +127,58 @@ STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 cp -R "$BUILD_DIR/$APP" "$STAGE/"
 
+# The same universal app, signed once per architecture: the packer stamps the
+# target into the package and a client refuses one that does not match what it
+# asked the feed for. Two signatures over identical bytes, not two builds.
 echo "==> packing and signing"
-( cd "$STAGE" && "$ROOT/$BUILD_DIR/Packer" \
-	-path "$APP" \
-	-version "$BASE" \
-	-counter "$COUNTER" \
-	-arch "$PACK_ARCH" \
-	-channel stable \
-	-keys-loc "$ROOT/Telegram/Resources/update" \
-	-local-key "$KEYS_DIR/release-private.pem" \
-	-local-key-id "$KEY_ID" ) | tail -3
+for entry in $PLATFORMS; do
+	KEY="${entry%%:*}"
+	ARCH="${entry##*:}"
+	( cd "$STAGE" && "$ROOT/$BUILD_DIR/Packer" \
+		-path "$APP" \
+		-version "$BASE" \
+		-counter "$COUNTER" \
+		-arch "$ARCH" \
+		-channel stable \
+		-keys-loc "$ROOT/Telegram/Resources/update" \
+		-local-key "$KEYS_DIR/release-private.pem" \
+		-local-key-id "$KEY_ID" ) | tail -3
 
-PACKAGE="$(find "$STAGE" -maxdepth 1 -type f -name 'td-update-*' | head -1)"
-if [ -z "$PACKAGE" ]; then
-	echo "[ERROR] the packer produced no package" >&2
-	exit 1
-fi
-echo "    package: $(basename "$PACKAGE") ($(( $(stat -f %z "$PACKAGE") / 1048576 )) MB)"
+	PRODUCED="$(find "$STAGE" -maxdepth 1 -type f -name 'td-update-*' | head -1)"
+	if [ -z "$PRODUCED" ]; then
+		echo "[ERROR] the packer produced no package for $KEY" >&2
+		exit 1
+	fi
+	# Renamed out of the way so the next architecture starts from a clean
+	# directory and cannot pick up this one's file.
+	mv "$PRODUCED" "$STAGE/$KEY.tdup"
+	echo "    $KEY: $(( $(stat -f %z "$STAGE/$KEY.tdup") / 1048576 )) MB"
+done
 
 if [ "$PUBLISH" -eq 0 ]; then
-	OUT="$ROOT/seegram-$VERSION-$PLATFORM_KEY.tdup"
-	cp "$PACKAGE" "$OUT"
-	echo "==> not publishing, package left at $OUT"
+	for entry in $PLATFORMS; do
+		KEY="${entry%%:*}"
+		cp "$STAGE/$KEY.tdup" "$ROOT/seegram-$VERSION-$KEY.tdup"
+	done
+	echo "==> not publishing, packages left in $ROOT"
 	exit 0
 fi
 
 # ----------------------------------------------------------------- publish
 
-REMOTE_NAME="seegram-$VERSION-$PLATFORM_KEY.tdup"
+for entry in $PLATFORMS; do
+KEY="${entry%%:*}"
+REMOTE_NAME="seegram-$VERSION-$KEY.tdup"
 echo "==> uploading $REMOTE_NAME"
-scp -q -i "$SERVER_SSH_KEY" "$PACKAGE" "$SERVER:$SERVER_ROOT/packages/$REMOTE_NAME"
+scp -q -i "$SERVER_SSH_KEY" "$STAGE/$KEY.tdup" "$SERVER:$SERVER_ROOT/packages/$REMOTE_NAME"
 
 # The feed is edited one platform at a time on purpose: rewriting the whole
 # file risks taking every other platform down with a single bad line. The
 # version has to be a JSON string - the client parses a numeric one through a
 # double, and a 64 bit version is past the point where a double is exact.
-echo "==> updating the feed entry for $PLATFORM_KEY"
+echo "==> updating the feed entry for $KEY"
 ssh -i "$SERVER_SSH_KEY" "$SERVER" \
-	"SEEGRAM_PLATFORM='$PLATFORM_KEY' SEEGRAM_VERSION='$VERSION' python3 - <<'PY'
+	"SEEGRAM_PLATFORM='$KEY' SEEGRAM_VERSION='$VERSION' python3 - <<'PY'
 import json, os, shutil
 root = '$SERVER_ROOT'
 path = root + '/current4'
@@ -185,19 +200,20 @@ for p in (path, root + '/current'):
 print('feed updated for ' + platform)
 PY"
 
-echo "==> verifying what clients will actually see"
+echo "==> verifying what clients will actually see for $KEY"
 FEED_VERSION="$(curl -fsS https://desktop.see.tg/current4 | python3 -c \
-	"import sys, json; print(json.load(sys.stdin)['$PLATFORM_KEY']['stable']['released'])")"
+	"import sys, json; print(json.load(sys.stdin)['$KEY']['stable']['released'])")"
 if [ "$FEED_VERSION" != "$VERSION" ]; then
-	echo "[ERROR] the feed says $FEED_VERSION, expected $VERSION" >&2
+	echo "[ERROR] the feed says $FEED_VERSION for $KEY, expected $VERSION" >&2
 	exit 1
 fi
 HTTP="$(curl -fsS -o /dev/null -w '%{http_code}' -I \
 	"https://desktop.see.tg/packages/$REMOTE_NAME")"
 if [ "$HTTP" != "200" ]; then
-	echo "[ERROR] the package is not reachable, HTTP $HTTP" >&2
+	echo "[ERROR] the $KEY package is not reachable, HTTP $HTTP" >&2
 	exit 1
 fi
+done
 
 # --------------------------------------------------------- github release
 #
@@ -209,7 +225,7 @@ fi
 VERSION_STR="$(sed -n 's/.*AppVersionStr = "\([^"]*\)".*/\1/p' \
 	Telegram/SourceFiles/core/version.h)"
 TAG="v$VERSION_STR-$COUNTER"
-ARCHIVE="$STAGE/SeeGram-$VERSION_STR-build$COUNTER-macOS-arm64.zip"
+ARCHIVE="$STAGE/SeeGram-$VERSION_STR-build$COUNTER-macOS.zip"
 
 # Named explicitly: the clone also has an "upstream" remote, and gh guesses
 # from the remotes - it picked telegramdesktop/tdesktop and got a 404.
@@ -223,7 +239,7 @@ GH_REPO_SLUG="$(git remote get-url origin \
 # refusing an unsigned download once is a distribution problem rather than a
 # build one - hence the note in the release body.
 
-DMG="$STAGE/SeeGram-$VERSION_STR-build$COUNTER-macOS-arm64.dmg"
+DMG="$STAGE/SeeGram-$VERSION_STR-build$COUNTER-macOS.dmg"
 echo "==> building the disk image"
 DMG_STAGE="$STAGE/dmg"
 mkdir -p "$DMG_STAGE"
@@ -257,8 +273,8 @@ More info, then Run anyway." \
 	# file name for the download, which is how upstream's page reads as
 	# "Windows 64 bit: Portable" over a file called tportable.x64.zip.
 	gh release upload "$TAG" \
-		"$DMG#macOS on Apple Silicon: Installer" \
-		"$ARCHIVE#macOS on Apple Silicon: Portable" \
+		"$DMG#macOS 10.13+: Installer" \
+		"$ARCHIVE#macOS 10.13+: Portable" \
 		--repo "$GH_REPO_SLUG" --clobber >/dev/null
 	echo "    $(basename "$ARCHIVE")"
 	echo "    $(basename "$DMG")"
