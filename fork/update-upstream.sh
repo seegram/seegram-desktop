@@ -21,9 +21,25 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
 fi
 
 echo "==> fetching upstream"
-git fetch upstream --tags --prune
+git fetch upstream "$UPSTREAM_BRANCH" --prune
 
-TARGET="${1:-upstream/$UPSTREAM_BRANCH}"
+# Upstream's tags go into a namespace of their own instead of refs/tags. This
+# fork's history was rewritten once, so its v7.1.3 is a different object with
+# the same name as upstream's, and a plain --tags fetch refuses to overwrite
+# it - which failed the whole script, because the refusal is an error.
+git fetch upstream "refs/tags/*:refs/upstream-tags/*" --force --prune
+
+# A tag argument means upstream's tag, not the fork's same-named one, so the
+# namespace is tried first and a plain ref still works.
+if [ -n "${1:-}" ]; then
+	if git rev-parse -q --verify "refs/upstream-tags/$1^{commit}" >/dev/null; then
+		TARGET="refs/upstream-tags/$1"
+	else
+		TARGET="$1"
+	fi
+else
+	TARGET="upstream/$UPSTREAM_BRANCH"
+fi
 BASE="$(fork_base "$BRANCH")"
 NEW="$(git rev-parse "${TARGET}^{commit}")"
 OLD_HEAD="$(git rev-parse "$BRANCH")"
