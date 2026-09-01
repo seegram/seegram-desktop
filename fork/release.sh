@@ -104,6 +104,7 @@ fi
 echo "==> configuring"
 Telegram/configure.sh \
 	-D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF \
+	-D DESKTOP_APP_MAC_ARCH= \
 	-D DESKTOP_APP_SPECIAL_TARGET=mac \
 	-D CMAKE_CXX_FLAGS=-DPACKER_DISABLE_PRIVATE \
 	-D CMAKE_EXE_LINKER_FLAGS="-Wl,-S -Wl,-x" >/dev/null
@@ -119,6 +120,25 @@ if ! ( cd out && xcodebuild -project Telegram.xcodeproj \
 	exit 1
 fi
 rm -f "$BUILD_LOG"
+
+# Both architectures, or nothing. A build that quietly came out arm64 only
+# still packs, still signs, still uploads - and the package the feed then
+# hands an Intel Mac is stamped x86_64 with arm64 code inside it. Nothing
+# downstream can tell; only this can.
+BINARY_PATH="$BUILD_DIR/$APP/Contents/MacOS/${APP%.app}"
+ARCHS="$(lipo -archs "$BINARY_PATH")"
+for want in x86_64 arm64; do
+	case " $ARCHS " in
+	*" $want "*) ;;
+	*)
+		echo "[ERROR] the build has no $want in it - lipo says: $ARCHS" >&2
+		echo "        DESKTOP_APP_MAC_ARCH in out/CMakeCache.txt is the usual" >&2
+		echo "        reason: it is a cache entry and outlives the flag." >&2
+		exit 1
+		;;
+	esac
+done
+echo "==> universal: $ARCHS"
 
 # --------------------------------------------------------------- pack, sign
 
