@@ -19,6 +19,11 @@ KEY_FILE="${SEEGRAM_KEY_FILE:-signing.pem}"
 KEY_ID="${SEEGRAM_KEY_ID:-sg-2026a}"
 SERVER_SSH_KEY="${SEEGRAM_SSH_KEY:?set to the deploy key path}"
 
+# Relative values are taken from the home directory, so one setting fits every
+# runner whatever its home is called.
+case "$KEYS_DIR" in /*) ;; *) KEYS_DIR="$HOME/$KEYS_DIR";; esac
+case "$SERVER_SSH_KEY" in /*) ;; *) SERVER_SSH_KEY="$HOME/$SERVER_SSH_KEY";; esac
+
 # Deliberately without defaults: where the update server lives and which
 # account reaches it are not facts a public repository should carry. Checked
 # below rather than here, so --no-publish needs neither.
