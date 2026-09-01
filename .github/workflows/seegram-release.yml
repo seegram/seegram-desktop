@@ -108,6 +108,65 @@ jobs:
           curl -fsS https://desktop.see.tg/current4 >> "$GITHUB_STEP_SUMMARY" || true
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
+  linux:
+    name: Linux (x64)
+    runs-on: [self-hosted, Linux, X64, seegram]
+    timeout-minutes: 180
+
+    # Built inside upstream's rockylinux container so that the binary runs on
+    # distributions older than the runner. The image is built once by hand,
+    # see the header of fork/release-linux.sh; it is not rebuilt per release
+    # because it compiles every dependency from source and takes hours.
+    steps:
+      - name: Check the release prerequisites
+        run: |
+          set -eu
+          if [ ! -f "$HOME/seegram-update-keys/release-private.pem" ]; then
+            echo "::error::release-private.pem missing from ~/seegram-update-keys"
+            exit 1
+          fi
+          if ! docker image inspect tdesktop:centos_env >/dev/null 2>&1; then
+            echo "::error::docker image tdesktop:centos_env missing on this runner"
+            exit 1
+          fi
+          if [ ! -d "$HOME/TBuild/seegram-desktop/.git" ]; then
+            echo "::error::no clone at ~/TBuild/seegram-desktop to build in"
+            exit 1
+          fi
+
+      - name: Sync the build tree to this commit
+        run: |
+          set -eu
+          cd "$HOME/TBuild/seegram-desktop"
+          git fetch --quiet \
+            "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" \
+            "${{ github.sha }}"
+          git reset --quiet --hard "${{ github.sha }}"
+          git submodule update --quiet --init --recursive
+          echo "building $(git log -1 --format='%h %s')"
+
+      - name: Build, sign and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SEEGRAM_UPDATE_SERVER: ${{ vars.SEEGRAM_UPDATE_SERVER }}
+          SEEGRAM_UPDATE_ROOT: ${{ vars.SEEGRAM_UPDATE_ROOT }}
+        run: |
+          set -eu
+          cd "$HOME/TBuild/seegram-desktop"
+          if [ "${{ inputs.publish }}" = "true" ]; then
+            fork/release-linux.sh "${{ inputs.counter }}"
+          else
+            fork/release-linux.sh "${{ inputs.counter }}" --no-publish
+          fi
+
+      - name: Report what the feed now serves
+        if: always()
+        run: |
+          echo "### SeeGram release" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          curl -fsS https://desktop.see.tg/current4 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
   windows:
     name: Windows (x64)
     runs-on: [self-hosted, Windows, X64, seegram]
