@@ -48,7 +48,7 @@ fork_ensure_setup() {
 fork_ensure_upstream_ref() {
 	if ! git rev-parse --verify --quiet "upstream/$UPSTREAM_BRANCH" >/dev/null; then
 		echo "==> fetching upstream for the first time, this downloads a lot"
-		git fetch upstream "$UPSTREAM_BRANCH" --tags
+		git fetch upstream "$UPSTREAM_BRANCH"
 	fi
 }
 
