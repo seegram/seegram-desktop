@@ -27,6 +27,12 @@ KEY_ID="${SEEGRAM_KEY_ID:-sg-2026a}"
 SERVER_SSH_KEY="${SEEGRAM_SSH_KEY:-$HOME/.ssh/seegram_updates}"
 IMAGE="${SEEGRAM_LINUX_IMAGE:-tdesktop:centos_env}"
 
+# Half a 32 core box, because the runner may well share the machine with
+# something that has users waiting on it. A systemd limit on the runner
+# service would not do this: docker runs the build in the daemon's own cgroup
+# slice, not in the runner's, so the cap has to be on the container.
+CPUS="${SEEGRAM_LINUX_CPUS:-16}"
+
 SERVER="${SEEGRAM_UPDATE_SERVER:-}"
 SERVER_ROOT="${SEEGRAM_UPDATE_ROOT:-}"
 BUILD_DIR="out/Release"
@@ -94,6 +100,7 @@ fi
 echo "==> building in $IMAGE"
 BUILD_LOG="$(mktemp)"
 if ! docker run --rm \
+		--cpus "$CPUS" \
 		-u "$(id -u):$(id -g)" \
 		-v "$PWD:/usr/src/tdesktop" \
 		"$IMAGE" \
