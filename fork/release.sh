@@ -14,9 +14,10 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-KEYS_DIR="${SEEGRAM_KEYS_DIR:-$HOME/seegram-update-keys}"
+KEYS_DIR="${SEEGRAM_KEYS_DIR:?set to the signing-key directory}"
+KEY_FILE="${SEEGRAM_KEY_FILE:-signing.pem}"
 KEY_ID="${SEEGRAM_KEY_ID:-sg-2026a}"
-SERVER_SSH_KEY="${SEEGRAM_SSH_KEY:-$HOME/.ssh/seegram_updates}"
+SERVER_SSH_KEY="${SEEGRAM_SSH_KEY:?set to the deploy key path}"
 
 # Deliberately without defaults: where the update server lives and which
 # account reaches it are not facts a public repository should carry. Checked
@@ -45,8 +46,8 @@ if [ -n "$DIRTY" ]; then
 	echo "[ERROR] working tree is dirty - a release must be reproducible." >&2
 	exit 1
 fi
-if [ ! -f "$KEYS_DIR/release-private.pem" ]; then
-	echo "[ERROR] signing key not found at $KEYS_DIR/release-private.pem" >&2
+if [ ! -f "$KEYS_DIR/$KEY_FILE" ]; then
+	echo "[ERROR] signing key not found in $KEYS_DIR" >&2
 	echo "        set SEEGRAM_KEYS_DIR if it lives elsewhere." >&2
 	exit 1
 fi
@@ -161,7 +162,7 @@ for entry in $PLATFORMS; do
 		-arch "$ARCH" \
 		-channel stable \
 		-keys-loc "$ROOT/Telegram/Resources/update" \
-		-local-key "$KEYS_DIR/release-private.pem" \
+		-local-key "$KEYS_DIR/$KEY_FILE" \
 		-local-key-id "$KEY_ID" ) | tail -3
 
 	PRODUCED="$(find "$STAGE" -maxdepth 1 -type f -name 'td-update-*' | head -1)"
