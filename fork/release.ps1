@@ -54,8 +54,6 @@ if ($dirty) {
 if (-not (Test-Path "$keysDir\release-private.pem")) {
     Fail "signing key missing at $keysDir\release-private.pem"
 }
-if (-not $env:SEEGRAM_API_ID)   { Fail "set SEEGRAM_API_ID" }
-if (-not $env:SEEGRAM_API_HASH) { Fail "set SEEGRAM_API_HASH" }
 if (-not $NoPublish) {
     if (-not $server)     { Fail "set SEEGRAM_UPDATE_SERVER, e.g. user@host" }
     if (-not $serverRoot) { Fail "set SEEGRAM_UPDATE_ROOT, the served directory" }
@@ -113,8 +111,6 @@ Write-Host "==> configuring"
 # defaults the Visual Studio generator to Win32 and then collides with an
 # existing x64 build directory.
 & "Telegram\configure.bat" x64 `
-    -D TDESKTOP_API_ID="$env:SEEGRAM_API_ID" `
-    -D TDESKTOP_API_HASH="$env:SEEGRAM_API_HASH" `
     -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF `
     -D DESKTOP_APP_SPECIAL_TARGET=win64 `
     -D CMAKE_CXX_FLAGS=-DPACKER_DISABLE_PRIVATE | Out-Null
