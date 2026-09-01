@@ -32,6 +32,14 @@ on:
         default: true
         type: boolean
 
+permissions:
+  # The run's own token starts read-only, which is the repository default and
+  # the right default - but creating the release and attaching the packages to
+  # it is a write to the repository. Without this the whole build succeeds and
+  # only the last step fails, with GitHub's least helpful error:
+  # "Resource not accessible by integration". Nothing else here needs write.
+  contents: write
+
 concurrency:
   # Two releases at once would race on the feed and on the build directory.
   group: seegram-release
