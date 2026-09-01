@@ -6,8 +6,9 @@
 # which matters for a private repository, where macOS is billed ten times
 # over.
 #
-# Credentials are read from ~/seegram-update-keys/api.env on the runner rather
-# than from GitHub secrets, for the same reason.
+# The signing key is read from ~/seegram-update-keys on the runner rather than
+# from GitHub secrets, for the same reason. The API credentials are not secret
+# and live in fork/api_credentials.cmake.
 #
 # The build deliberately does NOT happen in the runner's own workspace. The
 # project resolves its dependencies as "../Libraries" relative to the
@@ -55,12 +56,10 @@ jobs:
       - name: Check the release prerequisites
         run: |
           set -eu
-          for f in release-private.pem api.env; do
-            if [ ! -f "$HOME/seegram-update-keys/$f" ]; then
-              echo "::error::$f missing from ~/seegram-update-keys on this runner"
-              exit 1
-            fi
-          done
+          if [ ! -f "$HOME/seegram-update-keys/release-private.pem" ]; then
+            echo "::error::release-private.pem missing from ~/seegram-update-keys"
+            exit 1
+          fi
           if [ ! -d "$HOME/TBuild/Libraries/local" ]; then
             echo "::error::prepared libraries missing, run Telegram/build/prepare/mac.sh silent"
             exit 1
@@ -94,8 +93,6 @@ jobs:
           SEEGRAM_UPDATE_ROOT: ${{ vars.SEEGRAM_UPDATE_ROOT }}
         run: |
           set -eu
-          . "$HOME/seegram-update-keys/api.env"
-          export SEEGRAM_API_ID SEEGRAM_API_HASH
           cd "$HOME/TBuild/seegram-desktop"
           if [ "${{ inputs.publish }}" = "true" ]; then
             fork/release.sh "${{ inputs.counter }}"
@@ -126,9 +123,6 @@ jobs:
           if (-not (Test-Path "$HOME\seegram-update-keys\release-private.pem")) {
             Write-Host "::error::signing key missing on this runner"; exit 1
           }
-          if (-not (Test-Path "$HOME\seegram-update-keys\api.env")) {
-            Write-Host "::error::api.env missing, expected SEEGRAM_API_ID and SEEGRAM_API_HASH"; exit 1
-          }
           if (-not (Test-Path "$env:SEEGRAM_TREE\.git")) {
             Write-Host "::error::SEEGRAM_TREE does not point at a clone to build in"; exit 1
           }
@@ -156,11 +150,6 @@ jobs:
           SEEGRAM_UPDATE_ROOT: ${{ vars.SEEGRAM_UPDATE_ROOT }}
         run: |
           $ErrorActionPreference = 'Stop'
-          Get-Content "$HOME\seegram-update-keys\api.env" | ForEach-Object {
-            if ($_ -match '^\s*([A-Z_]+)\s*=\s*(.+?)\s*$') {
-              Set-Item -Path "env:$($Matches[1])" -Value $Matches[2]
-            }
-          }
           Set-Location $env:SEEGRAM_TREE
           if ("${{ inputs.publish }}" -eq "true") {
             .\fork\release.ps1 -Counter ${{ inputs.counter }}
