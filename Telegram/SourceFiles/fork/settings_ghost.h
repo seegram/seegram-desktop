@@ -15,7 +15,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 // without opening anything.
 //
 // Both live here rather than in upstream's own settings and menu files, so
-// that those keep the one-line call each and nothing more.
+// that those keep the one-line call each and nothing more. See fork/RULES.md.
 
 namespace Ui {
 class VerticalLayout;
