@@ -87,10 +87,11 @@ jobs:
           # gh cannot reach the keychain from the runner service; the run's
           # own token is enough to create and upload a release.
           GH_TOKEN: ${{ github.token }}
-          # Where the update server lives is runner-local, kept out of the
-          # repository and out of GitHub secrets alike.
-          SEEGRAM_UPDATE_SERVER: ${{ vars.SEEGRAM_UPDATE_SERVER }}
-          SEEGRAM_UPDATE_ROOT: ${{ vars.SEEGRAM_UPDATE_ROOT }}
+          # Secrets rather than variables: GitHub prints every step's env
+          # block into the log and masks only secrets, so as variables these
+          # put "root@<host>" in plain sight in every job that ever ran.
+          SEEGRAM_UPDATE_SERVER: ${{ secrets.SEEGRAM_UPDATE_SERVER }}
+          SEEGRAM_UPDATE_ROOT: ${{ secrets.SEEGRAM_UPDATE_ROOT }}
         run: |
           set -eu
           cd "$HOME/TBuild/seegram-desktop"
@@ -148,8 +149,8 @@ jobs:
       - name: Build, sign and publish
         env:
           GH_TOKEN: ${{ github.token }}
-          SEEGRAM_UPDATE_SERVER: ${{ vars.SEEGRAM_UPDATE_SERVER }}
-          SEEGRAM_UPDATE_ROOT: ${{ vars.SEEGRAM_UPDATE_ROOT }}
+          SEEGRAM_UPDATE_SERVER: ${{ secrets.SEEGRAM_UPDATE_SERVER }}
+          SEEGRAM_UPDATE_ROOT: ${{ secrets.SEEGRAM_UPDATE_ROOT }}
         run: |
           set -eu
           cd "$HOME/TBuild/seegram-desktop"
@@ -205,8 +206,8 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          SEEGRAM_UPDATE_SERVER: ${{ vars.SEEGRAM_UPDATE_SERVER }}
-          SEEGRAM_UPDATE_ROOT: ${{ vars.SEEGRAM_UPDATE_ROOT }}
+          SEEGRAM_UPDATE_SERVER: ${{ secrets.SEEGRAM_UPDATE_SERVER }}
+          SEEGRAM_UPDATE_ROOT: ${{ secrets.SEEGRAM_UPDATE_ROOT }}
         run: |
           $ErrorActionPreference = 'Stop'
           Set-Location $env:SEEGRAM_TREE
