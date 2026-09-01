@@ -301,10 +301,17 @@ print('feed updated for ' + platform)
                 "Installed copies update themselves; this archive is for a first install."
             gh release create $tag --repo $slug --title "SeeGram $versionStr build $Counter" --notes $notes | Out-Null
         }
-        $upload = @($archive)
-        if ($installer) { $upload += $installer.FullName }
+        # "file#label": GitHub shows the label on the release page and keeps
+        # the file name for the download, which is how upstream's page reads
+        # as "Windows 64 bit: Portable" over a file called tportable.x64.zip.
+        $upload = @("${archive}#Windows 64 bit: Portable")
+        if ($installer) {
+            $upload += "$($installer.FullName)#Windows 64 bit: Installer"
+        }
         gh release upload $tag $upload --repo $slug --clobber | Out-Null
-        $upload | ForEach-Object { Write-Host "    $(Split-Path $_ -Leaf)" }
+        $upload | ForEach-Object {
+            Write-Host "    $(Split-Path ($_ -split '#')[0] -Leaf)"
+        }
     } else {
         Write-Host "==> gh not installed, skipping the GitHub release"
     }
