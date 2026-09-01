@@ -33,6 +33,10 @@ $keysDir = $env:SEEGRAM_KEYS_DIR
 $keyFile = if ($env:SEEGRAM_KEY_FILE) { $env:SEEGRAM_KEY_FILE } else { "signing.pem" }
 $keyId   = if ($env:SEEGRAM_KEY_ID) { $env:SEEGRAM_KEY_ID } else { "sg-2026a" }
 $sshKey  = $env:SEEGRAM_SSH_KEY
+# Relative values are taken from the home directory, so one setting fits every
+# runner whatever its home is called.
+if ($keysDir -and -not [System.IO.Path]::IsPathRooted($keysDir)) { $keysDir = Join-Path $HOME $keysDir }
+if ($sshKey  -and -not [System.IO.Path]::IsPathRooted($sshKey))  { $sshKey  = Join-Path $HOME $sshKey }
 
 # Deliberately without a default: where the update server lives and which
 # account reaches it are not facts a public repository should carry.
