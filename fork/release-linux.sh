@@ -232,17 +232,22 @@ echo "==> building the tarball"
 tar -C "$STAGE" -cJf "$ARCHIVE" "$BINARY"
 echo "    $(basename "$ARCHIVE") ($(( $(stat -c %s "$ARCHIVE") / 1048576 )) MB)"
 
-if command -v gh >/dev/null 2>&1; then
-	echo "==> attaching the build to release $TAG in $GH_REPO_SLUG"
-	if ! gh release view "$TAG" --repo "$GH_REPO_SLUG" >/dev/null 2>&1; then
-		echo "[ERROR] release $TAG does not exist yet." >&2
-		echo "        the macOS job creates it; nothing to attach to." >&2
-		exit 1
-	fi
-	gh release upload "$TAG" \
-		"$ARCHIVE#Linux 64 bit: Binary" \
-		--repo "$GH_REPO_SLUG" --clobber >/dev/null
-	echo "    $(basename "$ARCHIVE")"
-else
-	echo "==> gh not installed, skipping the GitHub release"
+# Not "skip if gh is missing", which is what the macOS script does and what
+# hid this: the Linux runner had no gh, the release step quietly did nothing,
+# and the job went green with the feed updated and no file on the release page.
+# On a release runner a missing gh is a broken runner.
+if ! command -v gh >/dev/null 2>&1; then
+	echo "[ERROR] gh is not installed on this runner." >&2
+	exit 1
 fi
+
+echo "==> attaching the build to release $TAG in $GH_REPO_SLUG"
+if ! gh release view "$TAG" --repo "$GH_REPO_SLUG" >/dev/null 2>&1; then
+	echo "[ERROR] release $TAG does not exist yet." >&2
+	echo "        the macOS job creates it; nothing to attach to." >&2
+	exit 1
+fi
+gh release upload "$TAG" \
+	"$ARCHIVE#Linux 64 bit: Binary" \
+	--repo "$GH_REPO_SLUG" --clobber >/dev/null
+echo "    $(basename "$ARCHIVE")"
