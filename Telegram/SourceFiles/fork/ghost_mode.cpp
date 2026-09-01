@@ -9,6 +9,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "core/application.h"
 
+#include <rpl/event_stream.h>
+
 #include <QtCore/QFile>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
@@ -23,6 +25,7 @@ namespace {
 constexpr auto kFileName = "tdata/fork_ghost.json";
 
 Settings GlobalSettings;
+rpl::event_stream<Settings> GlobalChanges;
 
 [[nodiscard]] QString FilePath() {
 	return cWorkingDir() + QString::fromLatin1(kFileName);
@@ -57,7 +60,11 @@ void Start() {
 }
 
 void Set(const Settings &settings) {
+	if (GlobalSettings == settings) {
+		return;
+	}
 	GlobalSettings = settings;
+	GlobalChanges.fire_copy(settings);
 
 	auto object = QJsonObject();
 	object.insert(u"blockReadReceipts"_q, settings.blockReadReceipts);
@@ -76,6 +83,27 @@ void Set(const Settings &settings) {
 	if (!file.commit()) {
 		LOG(("Ghost Error: cant commit '%1'.").arg(FilePath()));
 	}
+}
+
+rpl::producer<Settings> Changes() {
+	return GlobalChanges.events();
+}
+
+rpl::producer<Settings> Value() {
+	return rpl::single(GlobalSettings) | rpl::then(Changes());
+}
+
+bool Enabled() {
+	return GlobalSettings.allEnabled();
+}
+
+void SetEnabled(bool enabled) {
+	Set({
+		.blockReadReceipts = enabled,
+		.blockTyping = enabled,
+		.blockOnlineStatus = enabled,
+		.blockUploadProgress = enabled,
+	});
 }
 
 bool BlocksReadReceipts() {
