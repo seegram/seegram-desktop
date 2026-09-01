@@ -91,6 +91,9 @@ jobs:
           # gh cannot reach the keychain from the runner service; the run's
           # own token is enough to create and upload a release.
           GH_TOKEN: ${{ github.token }}
+          SEEGRAM_KEYS_DIR: ${{ secrets.SEEGRAM_KEYS_DIR }}
+          SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
+          SEEGRAM_SSH_KEY: ${{ secrets.SEEGRAM_SSH_KEY }}
           # Secrets rather than variables: GitHub prints every step's env
           # block into the log and masks only secrets, so as variables these
           # put "root@<host>" in plain sight in every job that ever ran.
