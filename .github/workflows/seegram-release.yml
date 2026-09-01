@@ -59,7 +59,8 @@ jobs:
           SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
         run: |
           set -eu
-          if [ ! -f "${SEEGRAM_KEYS_DIR:?}/${SEEGRAM_KEY_FILE:-signing.pem}" ]; then
+          KD="${SEEGRAM_KEYS_DIR:?}"; case "$KD" in /*) ;; *) KD="$HOME/$KD";; esac
+          if [ ! -f "$KD/${SEEGRAM_KEY_FILE:-signing.pem}" ]; then
             echo "::error::signing key missing on this runner"
             exit 1
           fi
@@ -128,7 +129,8 @@ jobs:
           SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
         run: |
           set -eu
-          if [ ! -f "${SEEGRAM_KEYS_DIR:?}/${SEEGRAM_KEY_FILE:-signing.pem}" ]; then
+          KD="${SEEGRAM_KEYS_DIR:?}"; case "$KD" in /*) ;; *) KD="$HOME/$KD";; esac
+          if [ ! -f "$KD/${SEEGRAM_KEY_FILE:-signing.pem}" ]; then
             echo "::error::signing key missing on this runner"
             exit 1
           fi
@@ -192,7 +194,9 @@ jobs:
           SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if (-not (Test-Path "$env:SEEGRAM_KEYS_DIR\$(if ($env:SEEGRAM_KEY_FILE) { $env:SEEGRAM_KEY_FILE } else { 'signing.pem' })")) {
+          $kd = $env:SEEGRAM_KEYS_DIR
+          if (-not [System.IO.Path]::IsPathRooted($kd)) { $kd = Join-Path $HOME $kd }
+          if (-not (Test-Path (Join-Path $kd $(if ($env:SEEGRAM_KEY_FILE) { $env:SEEGRAM_KEY_FILE } else { 'signing.pem' })))) {
             Write-Host "::error::signing key missing on this runner"; exit 1
           }
           if (-not (Test-Path "$env:SEEGRAM_TREE\.git")) {

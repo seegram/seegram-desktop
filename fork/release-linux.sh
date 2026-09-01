@@ -26,6 +26,11 @@ KEYS_DIR="${SEEGRAM_KEYS_DIR:?set to the signing-key directory}"
 KEY_FILE="${SEEGRAM_KEY_FILE:-signing.pem}"
 KEY_ID="${SEEGRAM_KEY_ID:-sg-2026a}"
 SERVER_SSH_KEY="${SEEGRAM_SSH_KEY:?set to the deploy key path}"
+
+# Relative values are taken from the home directory, so one setting fits every
+# runner whatever its home is called.
+case "$KEYS_DIR" in /*) ;; *) KEYS_DIR="$HOME/$KEYS_DIR";; esac
+case "$SERVER_SSH_KEY" in /*) ;; *) SERVER_SSH_KEY="$HOME/$SERVER_SSH_KEY";; esac
 IMAGE="${SEEGRAM_LINUX_IMAGE:-tdesktop:centos_env}"
 
 # Half a 32 core box, because the runner may well share the machine with
