@@ -25,7 +25,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 //
 // Settings live in their own file, never in Core::Settings - that one has a
 // hand-written binary serializer, so every upstream field addition would
-// collide. See fork/README.md.
+// collide. See fork/RULES.md.
 
 namespace Fork::Ghost {
 
