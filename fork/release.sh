@@ -253,7 +253,12 @@ of the macOS install prompts: https://youtu.be/zdlfTSg-kUQ
 More info, then Run anyway." \
 			>/dev/null
 	fi
-	gh release upload "$TAG" "$ARCHIVE" "$DMG" \
+	# "file#label": GitHub shows the label on the release page and keeps the
+	# file name for the download, which is how upstream's page reads as
+	# "Windows 64 bit: Portable" over a file called tportable.x64.zip.
+	gh release upload "$TAG" \
+		"$DMG#macOS on Apple Silicon: Installer" \
+		"$ARCHIVE#macOS on Apple Silicon: Portable" \
 		--repo "$GH_REPO_SLUG" --clobber >/dev/null
 	echo "    $(basename "$ARCHIVE")"
 	echo "    $(basename "$DMG")"
