@@ -6,9 +6,9 @@
 # which matters for a private repository, where macOS is billed ten times
 # over.
 #
-# The signing key is read from ~/seegram-update-keys on the runner rather than
-# from GitHub secrets, for the same reason. The API credentials are not secret
-# and live in fork/api_credentials.cmake.
+# The signing key lives on the runner's filesystem and never in GitHub; where
+# it lives is a secret too, so this file names no paths. The API credentials
+# are not secret and live in fork/api_credentials.cmake.
 #
 # The build deliberately does NOT happen in the runner's own workspace. The
 # project resolves its dependencies as "../Libraries" relative to the
@@ -54,10 +54,13 @@ jobs:
 
     steps:
       - name: Check the release prerequisites
+        env:
+          SEEGRAM_KEYS_DIR: ${{ secrets.SEEGRAM_KEYS_DIR }}
+          SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
         run: |
           set -eu
-          if [ ! -f "$HOME/seegram-update-keys/release-private.pem" ]; then
-            echo "::error::release-private.pem missing from ~/seegram-update-keys"
+          if [ ! -f "${SEEGRAM_KEYS_DIR:?}/${SEEGRAM_KEY_FILE:-signing.pem}" ]; then
+            echo "::error::signing key missing on this runner"
             exit 1
           fi
           if [ ! -d "$HOME/TBuild/Libraries/local" ]; then
@@ -120,10 +123,13 @@ jobs:
     # because it compiles every dependency from source and takes hours.
     steps:
       - name: Check the release prerequisites
+        env:
+          SEEGRAM_KEYS_DIR: ${{ secrets.SEEGRAM_KEYS_DIR }}
+          SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
         run: |
           set -eu
-          if [ ! -f "$HOME/seegram-update-keys/release-private.pem" ]; then
-            echo "::error::release-private.pem missing from ~/seegram-update-keys"
+          if [ ! -f "${SEEGRAM_KEYS_DIR:?}/${SEEGRAM_KEY_FILE:-signing.pem}" ]; then
+            echo "::error::signing key missing on this runner"
             exit 1
           fi
           if ! docker image inspect tdesktop:centos_env >/dev/null 2>&1; then
@@ -149,6 +155,9 @@ jobs:
       - name: Build, sign and publish
         env:
           GH_TOKEN: ${{ github.token }}
+          SEEGRAM_KEYS_DIR: ${{ secrets.SEEGRAM_KEYS_DIR }}
+          SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
+          SEEGRAM_SSH_KEY: ${{ secrets.SEEGRAM_SSH_KEY }}
           SEEGRAM_UPDATE_SERVER: ${{ secrets.SEEGRAM_UPDATE_SERVER }}
           SEEGRAM_UPDATE_ROOT: ${{ secrets.SEEGRAM_UPDATE_ROOT }}
         run: |
@@ -178,9 +187,12 @@ jobs:
     steps:
       - name: Check the release prerequisites
         shell: pwsh
+        env:
+          SEEGRAM_KEYS_DIR: ${{ secrets.SEEGRAM_KEYS_DIR }}
+          SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if (-not (Test-Path "$HOME\seegram-update-keys\release-private.pem")) {
+          if (-not (Test-Path "$env:SEEGRAM_KEYS_DIR\$(if ($env:SEEGRAM_KEY_FILE) { $env:SEEGRAM_KEY_FILE } else { 'signing.pem' })")) {
             Write-Host "::error::signing key missing on this runner"; exit 1
           }
           if (-not (Test-Path "$env:SEEGRAM_TREE\.git")) {
@@ -206,6 +218,9 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          SEEGRAM_KEYS_DIR: ${{ secrets.SEEGRAM_KEYS_DIR }}
+          SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
+          SEEGRAM_SSH_KEY: ${{ secrets.SEEGRAM_SSH_KEY }}
           SEEGRAM_UPDATE_SERVER: ${{ secrets.SEEGRAM_UPDATE_SERVER }}
           SEEGRAM_UPDATE_ROOT: ${{ secrets.SEEGRAM_UPDATE_ROOT }}
         run: |

@@ -29,9 +29,10 @@ $root = (git rev-parse --show-toplevel)
 if (-not $root) { Fail "not inside a git repository" }
 Set-Location $root
 
-$keysDir = if ($env:SEEGRAM_KEYS_DIR) { $env:SEEGRAM_KEYS_DIR } else { "$HOME\seegram-update-keys" }
+$keysDir = $env:SEEGRAM_KEYS_DIR
+$keyFile = if ($env:SEEGRAM_KEY_FILE) { $env:SEEGRAM_KEY_FILE } else { "signing.pem" }
 $keyId   = if ($env:SEEGRAM_KEY_ID) { $env:SEEGRAM_KEY_ID } else { "sg-2026a" }
-$sshKey  = if ($env:SEEGRAM_SSH_KEY) { $env:SEEGRAM_SSH_KEY } else { "$HOME\.ssh\seegram_updates" }
+$sshKey  = $env:SEEGRAM_SSH_KEY
 
 # Deliberately without a default: where the update server lives and which
 # account reaches it are not facts a public repository should carry.
@@ -51,8 +52,9 @@ if ($dirty) {
     Write-Host ($dirty -join "`n")
     Fail "working tree is dirty - a release must be reproducible."
 }
-if (-not (Test-Path "$keysDir\release-private.pem")) {
-    Fail "signing key missing at $keysDir\release-private.pem"
+if (-not $keysDir) { Fail "set SEEGRAM_KEYS_DIR" }
+if (-not (Test-Path "$keysDir\$keyFile")) {
+    Fail "signing key missing from the configured directory"
 }
 if (-not $NoPublish) {
     if (-not $server)     { Fail "set SEEGRAM_UPDATE_SERVER, e.g. user@host" }
@@ -157,7 +159,7 @@ try {
         -target win64 `
         -channel stable `
         -keys-loc "$root\Telegram\Resources\update" `
-        -local-key "$keysDir\release-private.pem" `
+        -local-key "$keysDir\$keyFile" `
         -local-key-id $keyId
     $packed = $LASTEXITCODE
     Pop-Location
