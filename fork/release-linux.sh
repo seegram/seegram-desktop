@@ -22,9 +22,10 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-KEYS_DIR="${SEEGRAM_KEYS_DIR:-$HOME/seegram-update-keys}"
+KEYS_DIR="${SEEGRAM_KEYS_DIR:?set to the signing-key directory}"
+KEY_FILE="${SEEGRAM_KEY_FILE:-signing.pem}"
 KEY_ID="${SEEGRAM_KEY_ID:-sg-2026a}"
-SERVER_SSH_KEY="${SEEGRAM_SSH_KEY:-$HOME/.ssh/seegram_updates}"
+SERVER_SSH_KEY="${SEEGRAM_SSH_KEY:?set to the deploy key path}"
 IMAGE="${SEEGRAM_LINUX_IMAGE:-tdesktop:centos_env}"
 
 # Half a 32 core box, because the runner may well share the machine with
@@ -61,8 +62,8 @@ if [ -n "$DIRTY" ]; then
 	echo "[ERROR] working tree is dirty - a release must be reproducible." >&2
 	exit 1
 fi
-if [ ! -f "$KEYS_DIR/release-private.pem" ]; then
-	echo "[ERROR] signing key not found at $KEYS_DIR/release-private.pem" >&2
+if [ ! -f "$KEYS_DIR/$KEY_FILE" ]; then
+	echo "[ERROR] signing key not found in $KEYS_DIR" >&2
 	exit 1
 fi
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
@@ -157,7 +158,7 @@ docker run --rm \
 	-arch "$PACK_ARCH" \
 	-channel stable \
 	-keys-loc /usr/src/tdesktop/Telegram/Resources/update \
-	-local-key /keys/release-private.pem \
+	-local-key /keys/$KEY_FILE \
 	-local-key-id "$KEY_ID" | tail -3
 
 PACKAGE="$(find "$STAGE" -maxdepth 1 -type f -name 'td-update-*' | head -1)"
