@@ -58,6 +58,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_changes.h"
 #include "data/data_group_call.h"
 #include "data/data_folder.h"
+#include "fork/deleted_messages.h"
+#include "fork/edit_history.h"
 #include "data/data_channel.h"
 #include "data/data_chat.h"
 #include "data/data_user.h"
@@ -3059,6 +3061,7 @@ void Session::updateEditedMessage(const MTPMessage &data) {
 		Reactions::CheckUnknownForUnread(this, data);
 		return;
 	}
+	Fork::Edits::Record(existing, data);
 	if (existing->isLocalUpdateMedia() && data.type() == mtpc_message) {
 		updateExistingMessage(data.c_message());
 	}
@@ -3209,6 +3212,7 @@ void Session::checkTTLs() {
 		}
 		expired.insert(expired.end(), items.begin(), items.end());
 	}
+	Fork::Deleted::InterceptAll(expired);
 	if (!expired.empty()) {
 		notifyItemsAboutToBeDestroyed(expired);
 		for (const auto &item : expired) {
@@ -3344,7 +3348,9 @@ void Session::processMessagesDeleted(
 		const auto i = list ? list->find(messageId.v) : Messages::iterator();
 		if (list && i != list->end()) {
 			const auto history = i->second->history();
-			toDestroy.push_back(i->second);
+			if (!Fork::Deleted::Intercept(i->second)) {
+				toDestroy.push_back(i->second);
+			}
 			historiesToCheck.emplace(history);
 		} else if (affected) {
 			affected->unknownMessageDeleted(messageId.v);
@@ -3369,7 +3375,9 @@ void Session::processNonChannelMessagesDeleted(const QVector<MTPint> &data) {
 	for (const auto &messageId : data) {
 		if (const auto item = nonChannelMessage(messageId.v)) {
 			const auto history = item->history();
-			toDestroy.push_back(item);
+			if (!Fork::Deleted::Intercept(item)) {
+				toDestroy.push_back(item);
+			}
 			historiesToCheck.emplace(history);
 		}
 	}
