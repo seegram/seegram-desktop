@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_message.h"
 
+#include "fork/deleted_messages.h"
 #include "api/api_suggest_post.h"
 #include "api/api_transcribes.h"
 #include "base/options.h"
@@ -1837,6 +1838,8 @@ void Message::draw(Painter &p, const PaintContext &context) const {
 			p.translate(selectionTranslation, 0);
 		}
 	}
+
+	const auto forkFade = Fork::Deleted::FadeGuard(p, item);
 
 	const auto roll = media ? media->bubbleRoll() : Media::BubbleRoll();
 	if (roll) {
