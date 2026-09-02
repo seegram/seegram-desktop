@@ -17,6 +17,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_chat.h"
 #include "data/data_document.h"
 #include "data/data_folder.h"
+#include "fork/deleted_messages.h"
 #include "fork/ghost_mode.h"
 #include "data/data_forum.h"
 #include "data/data_forum_topic.h"
@@ -994,7 +995,7 @@ void Histories::deleteMessages(const MessageIdsList &ids, bool revoke) {
 				continue;
 			}
 			remove.push_back(item);
-			if (item->isRegular()) {
+			if (item->isRegular() && !Fork::Deleted::TakeLocal(item)) {
 				idsByPeer[history].push_back(MTP_int(itemId.msg));
 			}
 		}

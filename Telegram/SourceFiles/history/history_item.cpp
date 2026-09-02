@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/history_item.h"
 
+#include "fork/deleted_messages.h"
 #include "api/api_premium.h"
 #include "api/api_sensitive_content.h"
 #include "api/api_transcribes.h"
@@ -961,6 +962,7 @@ HistoryItem::HistoryItem(
 }
 
 HistoryItem::~HistoryItem() {
+	Fork::Deleted::Forget(this);
 	_media = nullptr;
 	clearSavedMedia();
 	if (const auto reply = Get<HistoryMessageReply>()) {
@@ -3163,6 +3165,9 @@ void HistoryItem::setRealId(MsgId newId) {
 }
 
 bool HistoryItem::canPin() const {
+	if (Fork::Deleted::Is(this)) {
+		return false;
+	}
 	if (!isRegular() || isService()) {
 		return false;
 	} else if (const auto m = media(); m && m->call()) {
@@ -3200,6 +3205,9 @@ bool HistoryItem::isTooOldForEdit(TimeId now) const {
 }
 
 bool HistoryItem::allowsEdit(TimeId now) const {
+	if (Fork::Deleted::Is(this)) {
+		return false;
+	}
 	const auto richPageSource = Get<HistoryMessageRichPageSource>();
 	const auto richPage = BestRichPage(richPageSource);
 	return !isService()
@@ -3362,6 +3370,9 @@ bool HistoryItem::canBeSelected() const {
 }
 
 bool HistoryItem::suggestReport() const {
+	if (Fork::Deleted::Is(this)) {
+		return false;
+	}
 	if (out() || isService() || !isRegular() || IsAnchoredEphemeral(this)) {
 		return false;
 	} else if (_history->peer->isChannel()) {
@@ -3562,6 +3573,9 @@ void HistoryItem::translationDone(
 }
 
 bool HistoryItem::canReact() const {
+	if (Fork::Deleted::Is(this)) {
+		return false;
+	}
 	if (!isRegular()) {
 		return false;
 	} else if (isService()) {
@@ -4245,7 +4259,9 @@ void HistoryItem::applyTTL(TimeId destroyAt) {
 		const auto session = &_history->session();
 		crl::on_main(session, [session, id = fullId()]{
 			if (const auto item = session->data().message(id)) {
-				session->data().destroyMessageWithCacheCleanup(item);
+				if (!Fork::Deleted::Intercept(item)) {
+					session->data().destroyMessageWithCacheCleanup(item);
+				}
 			}
 		});
 	} else {

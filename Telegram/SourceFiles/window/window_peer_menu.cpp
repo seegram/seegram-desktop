@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "window/window_peer_menu.h"
 
+#include "fork/spy_ui.h"
+
 #include "base/call_delayed.h"
 #include "menu/menu_check_item.h"
 #include "menu/menu_mark_as_read.h"
@@ -1921,6 +1923,7 @@ void Filler::fillContextMenuActions() {
 
 void Filler::fillHistoryActions() {
 	addToggleMuteSubmenu(true);
+	Fork::SpyUi::AddChatActions(_peer, _thread, _controller, _addAction);
 	addCreateTopic();
 	addInfo();
 	addViewAsTopics();
@@ -1972,6 +1975,7 @@ void Filler::fillProfileActions() {
 }
 
 void Filler::fillRepliesActions() {
+	Fork::SpyUi::AddChatActions(_peer, _thread, _controller, _addAction);
 	if (_topic) {
 		addInfo();
 		addManageTopic();

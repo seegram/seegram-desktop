@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_bottom_info.h"
 
+#include "fork/deleted_messages.h"
+#include "fork/message_marks.h"
 #include "ui/chat/message_bubble.h"
 #include "ui/chat/chat_style.h"
 #include "ui/effects/reaction_fly_animation.h"
@@ -492,7 +494,7 @@ void BottomInfo::layoutDateText() {
 		: updated
 		? (tr::lng_ephemeral_updated(tr::now) + ' ')
 		: (_data.flags & Data::Flag::Edited)
-		? (tr::lng_edited(tr::now) + ' ')
+		? (Fork::Marks::EditedMark() + ' ')
 		: (_data.flags & Data::Flag::EstimateDate)
 		? (tr::lng_approximate(tr::now) + ' ')
 		: _data.scheduleRepeatPeriod
@@ -541,6 +543,9 @@ void BottomInfo::layoutDateText() {
 			.margin = QMargins(0, st::stakeIconEmojiTop, 0, 0),
 			.textColor = false,
 		})).append("  ");
+	}
+	if (_data.flags & Data::Flag::ForkDeleted) {
+		marked.append(Fork::Marks::DeletedMark()).append(' ');
 	}
 	marked.append(full);
 	_authorEditedDate.setMarkedText(
@@ -697,6 +702,9 @@ BottomInfo::Data BottomInfoDataFromMessage(not_null<Message*> message) {
 	}
 	if (IsAnchoredEphemeral(item)) {
 		result.flags |= Flag::Updated;
+	}
+	if (Fork::Deleted::Is(item)) {
+		result.flags |= Flag::ForkDeleted;
 	}
 	if (const auto views = item->Get<HistoryMessageViews>()) {
 		if (views->views.count >= 0) {

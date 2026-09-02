@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/history_inner_widget.h"
 
+#include "fork/spy_ui.h"
+
 #include "api/api_polls.h"
 #include "chat_helpers/stickers_emoji_pack.h"
 #include "core/application.h"
@@ -3006,6 +3008,7 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 				}
 			}, &st::menuIconEdit);
 		}
+		Fork::SpyUi::AddHistoryAction(_menu.get(), item, controller);
 		if (session->factchecks().canEdit(item)) {
 			const auto text = item->factcheckText();
 			const auto phrase = text.empty()

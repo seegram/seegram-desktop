@@ -7,8 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/settings_ghost.h"
 
+#include "fork/fork_lang.h"
 #include "fork/ghost_mode.h"
-#include "settings/settings_builder.h"
 #include "settings/settings_common_session.h"
 #include "ui/rp_widget.h"
 #include "ui/ui_utility.h"
@@ -23,37 +23,18 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace Fork::Ghost {
 namespace {
 
-// Not in lang.strings: adding keys there means editing a file upstream
-// rewrites on every release, for four switches only this fork has.
-constexpr auto kSectionTitle = "SeeGram";
-constexpr auto kGhostMode = "Ghost mode";
-
-// Phrased as what is withheld rather than as what is sent, because that is
-// what turning a switch on does. The stored settings are named the same way.
-constexpr auto kReadReceipts = "Don't send read receipts";
-constexpr auto kTyping = "Don't send typing status";
-constexpr auto kOnlineStatus = "Don't send online status";
-constexpr auto kUploadProgress = "Don't send upload progress";
-
-constexpr auto kAbout =
-	"Each switch withholds one thing the client would otherwise tell the "
-	"server about you. Read receipts and typing status are invisible to the "
-	"other side; going without an online status is not - people who could "
-	"see when you were last online will see you stop appearing.\n\n"
-	"The switch at the bottom of the side menu turns all four on or off at "
-	"once, and reads as on only while all four are.";
-
-[[nodiscard]] rpl::producer<QString> Text(const char *value) {
-	return rpl::single(QString::fromUtf8(value));
-}
+// The strings are in fork/fork_lang.cpp, phrased as what is withheld rather
+// than as what is sent, because that is what turning a switch on does. The
+// stored settings are named the same way.
+using Lang::Key;
 
 void AddSwitch(
 		not_null<Ui::VerticalLayout*> container,
-		const char *text,
+		Key text,
 		bool Settings::*field) {
 	const auto button = container->add(object_ptr<Ui::SettingsButton>(
 		container,
-		Text(text),
+		Lang::Value(text),
 		st::settingsButtonNoIcon));
 
 	// Driven by the stored value rather than by the click, so that this
@@ -73,15 +54,24 @@ void AddSwitch(
 
 void BuildContent(not_null<Ui::VerticalLayout*> container) {
 	Ui::AddSkip(container);
-	Ui::AddSubsectionTitle(container, Text(kGhostMode));
+	Ui::AddSubsectionTitle(container, Lang::Value(Key::GhostMode));
 
-	AddSwitch(container, kReadReceipts, &Settings::blockReadReceipts);
-	AddSwitch(container, kTyping, &Settings::blockTyping);
-	AddSwitch(container, kOnlineStatus, &Settings::blockOnlineStatus);
-	AddSwitch(container, kUploadProgress, &Settings::blockUploadProgress);
+	AddSwitch(
+		container,
+		Key::DontSendReadReceipts,
+		&Settings::blockReadReceipts);
+	AddSwitch(container, Key::DontSendTyping, &Settings::blockTyping);
+	AddSwitch(
+		container,
+		Key::DontSendOnlineStatus,
+		&Settings::blockOnlineStatus);
+	AddSwitch(
+		container,
+		Key::DontSendUploadProgress,
+		&Settings::blockUploadProgress);
 
 	Ui::AddSkip(container);
-	Ui::AddDividerText(container, Text(kAbout));
+	Ui::AddDividerText(container, Lang::Value(Key::GhostAbout));
 }
 
 class GhostSection final : public ::Settings::Section<GhostSection> {
@@ -104,7 +94,7 @@ GhostSection::GhostSection(
 }
 
 rpl::producer<QString> GhostSection::title() {
-	return Text(kSectionTitle);
+	return Lang::Value(Key::GhostMode);
 }
 
 } // namespace
@@ -113,18 +103,10 @@ rpl::producer<QString> GhostSection::title() {
 	return GhostSection::Id();
 }
 
-void AddSettingsButton(::Settings::Builder::SectionBuilder &builder) {
-	builder.addSectionButton({
-		.title = Text(kSectionTitle),
-		.targetSection = SectionId(),
-		.icon = { &st::menuIconStealth },
-	});
-}
-
 void SetupMainMenuToggle(not_null<Ui::VerticalLayout*> container) {
 	const auto button = ::Settings::AddButtonWithIcon(
 		container,
-		Text(kGhostMode),
+		Lang::Value(Key::GhostMode),
 		st::mainMenuButton,
 		{ &st::menuIconStealth });
 

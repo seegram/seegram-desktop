@@ -27,7 +27,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/shortcuts.h"
 #include "core/sandbox.h"
 #include "core/local_url_handlers.h"
+#include "fork/fork_lang.h"
 #include "fork/ghost_mode.h"
+#include "fork/message_marks.h"
+#include "fork/spy_mode.h"
 #include "core/launcher.h"
 #include "core/proxy_rotation_manager.h"
 #include "core/ui_integration.h"
@@ -940,6 +943,9 @@ void Application::startLocalStorage() {
 	// After the working directory is settled and before any session exists,
 	// so the first read receipt a session would send already sees the answer.
 	Fork::Ghost::Start();
+	Fork::Spy::Start();
+	Fork::Marks::Start();
+	Fork::Lang::Start();
 	_saveSettingsTimer.emplace([=] { saveSettings(); });
 	settings().saveDelayedRequests() | rpl::on_next([=] {
 		saveSettingsDelayed();

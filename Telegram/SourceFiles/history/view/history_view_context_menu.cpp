@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_context_menu.h"
 
+#include "fork/spy_ui.h"
+
 #include "api/api_attached_stickers.h"
 #include "api/api_editing.h"
 #include "api/api_global_privacy.h"
@@ -1393,6 +1395,7 @@ void AddTopMessageActions(
 	AddGoToMessageAction(menu, request, list);
 	AddViewRepliesAction(menu, request, list);
 	AddEditMessageAction(menu, request, list);
+	Fork::SpyUi::AddHistoryAction(menu, request.item, list->controller());
 	AddFactcheckAction(menu, request, list);
 	AddPinMessageAction(menu, request, list);
 	AddViewStatisticsAction(menu, request, list);
