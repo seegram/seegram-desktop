@@ -607,10 +607,30 @@ PRIVATE
     core/utils.h
     core/version.h
     fork/build_counter.h
+    fork/deleted_messages.cpp
+    fork/deleted_messages.h
+    fork/edit_history.cpp
+    fork/edit_history.h
+    fork/fork_lang.cpp
+    fork/fork_lang.h
     fork/ghost_mode.cpp
     fork/ghost_mode.h
+    fork/message_marks.cpp
+    fork/message_marks.h
+    fork/message_store.cpp
+    fork/message_store.h
     fork/settings_ghost.cpp
     fork/settings_ghost.h
+    fork/settings_marks.cpp
+    fork/settings_marks.h
+    fork/settings_seegram.cpp
+    fork/settings_seegram.h
+    fork/settings_spy.cpp
+    fork/settings_spy.h
+    fork/spy_mode.cpp
+    fork/spy_mode.h
+    fork/spy_ui.cpp
+    fork/spy_ui.h
     countries/countries_manager.cpp
     countries/countries_manager.h
     data/business/data_business_chatbots.cpp

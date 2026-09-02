@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_service_message.h"
 
+#include "fork/deleted_messages.h"
+
 #include "history/view/media/history_view_media.h"
 #include "history/view/reactions/history_view_reactions.h"
 #include "history/view/history_view_cursor_state.h"
@@ -614,6 +616,8 @@ void Service::draw(Painter &p, const PaintContext &context) const {
 	if (const auto service = Get<ServicePreMessage>()) {
 		service->paint(p, context, g, delegate()->elementChatMode());
 	}
+
+	const auto forkFade = Fork::Deleted::FadeGuard(p, data());
 
 	if (isHidden()) {
 		return;
