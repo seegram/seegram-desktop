@@ -29,7 +29,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 // -DSEEGRAM_BUILD_COUNTER=N still overrides it for one-off builds.
 
 #ifndef SEEGRAM_BUILD_COUNTER
-#define SEEGRAM_BUILD_COUNTER 10
+#define SEEGRAM_BUILD_COUNTER 1
 #endif // SEEGRAM_BUILD_COUNTER
 
 namespace Fork {
