@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Automatycznie rozpoznawaj nadawcę",
   "SeeTgWhoIs": "Kto to?",
   "SeeTgWhoIsFailed": "Nie udało się rozpoznać tej osoby.",
-  "SeeTgHistoryButton": "Historia",
+  "SeeTgHistoryButton": "Przekazania prezentów",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Info",
   "SeeTgHistoryEmpty": "Historia jest pusta",
@@ -180,5 +180,17 @@
   "AboutHistory": "Historia jest zapisywana na tym urządzeniu: dostępne są tylko wiadomości i zmiany otrzymane przez tego klienta.",
   "Save": "Zapisz",
   "Close": "Zamknij",
-  "AboutReleases": "Wydania"
+  "AboutReleases": "Wydania",
+  "SeeTgTransfersZero": "{count} przekazań prezentów",
+  "SeeTgTransfersOne": "{count} przekazanie prezentów",
+  "SeeTgTransfersTwo": "{count} przekazań prezentów",
+  "SeeTgTransfersFew": "{count} przekazania prezentów",
+  "SeeTgTransfersMany": "{count} przekazań prezentów",
+  "SeeTgTransfersOther": "{count} przekazań prezentów",
+  "SeeTgCommentsZero": "{count} komentarzy",
+  "SeeTgCommentsOne": "{count} komentarz",
+  "SeeTgCommentsTwo": "{count} komentarzy",
+  "SeeTgCommentsFew": "{count} komentarze",
+  "SeeTgCommentsMany": "{count} komentarzy",
+  "SeeTgCommentsOther": "{count} komentarzy"
 }

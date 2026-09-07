@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/seetg/seetg_history.h"
 
 #include "fork/fork_lang.h"
+#include "fork/seetg/seetg_profile_counters.h"
 #include "fork/seetg/seetg_api.h"
 #include "fork/seetg/seetg_card.h"
 #include "fork/seetg/seetg_peers.h"
@@ -2129,7 +2130,7 @@ std::shared_ptr<Info::Memento> Make(not_null<PeerData*> peer) {
 		parent,
 		object_ptr<Ui::SettingsButton>(
 			parent,
-			Lang::Value(Key::SeeTgHistoryButton),
+			Counters::Label(peer, Counters::Kind::Transfers),
 			st::infoSharedMediaButton));
 	result->toggleOn(EnabledValue());
 	result->entity()->addClickHandler([=] {

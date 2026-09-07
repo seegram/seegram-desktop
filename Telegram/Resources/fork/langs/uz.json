@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Yuboruvchini avtomatik aniqlash",
   "SeeTgWhoIs": "Kimligini bilish",
   "SeeTgWhoIsFailed": "Bu kimligini aniqlab bo‘lmadi.",
-  "SeeTgHistoryButton": "Tarix",
+  "SeeTgHistoryButton": "Sovgʻa oʻtkazmalari",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Maʼlumot",
   "SeeTgHistoryEmpty": "Tarix boʻsh",
@@ -180,5 +180,17 @@
   "AboutHistory": "Tarix qurilmada saqlanadi: faqat ushbu mijoz olgan xabarlar va tahrirlar mavjud.",
   "Save": "Saqlash",
   "Close": "Yopish",
-  "AboutReleases": "Relizlar"
+  "AboutReleases": "Relizlar",
+  "SeeTgTransfersZero": "{count} ta sovgʻa oʻtkazmasi",
+  "SeeTgTransfersOne": "{count} ta sovgʻa oʻtkazmasi",
+  "SeeTgTransfersTwo": "{count} ta sovgʻa oʻtkazmasi",
+  "SeeTgTransfersFew": "{count} ta sovgʻa oʻtkazmasi",
+  "SeeTgTransfersMany": "{count} ta sovgʻa oʻtkazmasi",
+  "SeeTgTransfersOther": "{count} ta sovgʻa oʻtkazmasi",
+  "SeeTgCommentsZero": "{count} ta izoh",
+  "SeeTgCommentsOne": "{count} ta izoh",
+  "SeeTgCommentsTwo": "{count} ta izoh",
+  "SeeTgCommentsFew": "{count} ta izoh",
+  "SeeTgCommentsMany": "{count} ta izoh",
+  "SeeTgCommentsOther": "{count} ta izoh"
 }

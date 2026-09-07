@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Дізнаватися відправника автоматично",
   "SeeTgWhoIs": "Дізнатися хто",
   "SeeTgWhoIsFailed": "Не вдалося дізнатися, хто це.",
-  "SeeTgHistoryButton": "Історія",
+  "SeeTgHistoryButton": "Передавання подарунків",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Інфо",
   "SeeTgHistoryEmpty": "Історія порожня",
@@ -180,5 +180,17 @@
   "AboutHistory": "Історія зберігається на пристрої: доступні лише повідомлення й зміни, отримані цим клієнтом.",
   "Save": "Зберегти",
   "Close": "Закрити",
-  "AboutReleases": "Випуски"
+  "AboutReleases": "Випуски",
+  "SeeTgTransfersZero": "{count} передавань подарунків",
+  "SeeTgTransfersOne": "{count} передавання подарунків",
+  "SeeTgTransfersTwo": "{count} передавань подарунків",
+  "SeeTgTransfersFew": "{count} передавання подарунків",
+  "SeeTgTransfersMany": "{count} передавань подарунків",
+  "SeeTgTransfersOther": "{count} передавань подарунків",
+  "SeeTgCommentsZero": "{count} коментарів",
+  "SeeTgCommentsOne": "{count} коментар",
+  "SeeTgCommentsTwo": "{count} коментарів",
+  "SeeTgCommentsFew": "{count} коментарі",
+  "SeeTgCommentsMany": "{count} коментарів",
+  "SeeTgCommentsOther": "{count} коментарів"
 }

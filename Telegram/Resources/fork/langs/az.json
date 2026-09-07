@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Göndərəni avtomatik müəyyən et",
   "SeeTgWhoIs": "Bu kimdir?",
   "SeeTgWhoIsFailed": "Bu şəxsi müəyyən etmək olmadı.",
-  "SeeTgHistoryButton": "Tarixçə",
+  "SeeTgHistoryButton": "Hədiyyə köçürmələri",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Məlumat",
   "SeeTgHistoryEmpty": "Tarixçə boşdur",
@@ -180,5 +180,17 @@
   "AboutHistory": "Tarixçə cihazda saxlanılır: yalnız bu müştərinin aldığı mesajlar və düzəlişlər əlçatandır.",
   "Save": "Saxla",
   "Close": "Bağla",
-  "AboutReleases": "Buraxılışlar"
+  "AboutReleases": "Buraxılışlar",
+  "SeeTgTransfersZero": "{count} hədiyyə köçürməsi",
+  "SeeTgTransfersOne": "{count} hədiyyə köçürməsi",
+  "SeeTgTransfersTwo": "{count} hədiyyə köçürməsi",
+  "SeeTgTransfersFew": "{count} hədiyyə köçürməsi",
+  "SeeTgTransfersMany": "{count} hədiyyə köçürməsi",
+  "SeeTgTransfersOther": "{count} hədiyyə köçürməsi",
+  "SeeTgCommentsZero": "{count} şərh",
+  "SeeTgCommentsOne": "{count} şərh",
+  "SeeTgCommentsTwo": "{count} şərh",
+  "SeeTgCommentsFew": "{count} şərh",
+  "SeeTgCommentsMany": "{count} şərh",
+  "SeeTgCommentsOther": "{count} şərh"
 }

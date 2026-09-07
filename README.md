@@ -26,8 +26,8 @@ Its extra controls live in **Settings → SeeGram**.
 | Message history | Keep deleted messages and inspect previous message edits received by this client. |
 | Message labels | Customize the labels shown on deleted and edited messages. |
 | Recent stickers | Choose the number shown in Settings → SeeGram → Stickers: 50 by default, from 20 up to Telegram's available maximum, or the entire server list. |
-| [see.tg · @seetgbot](https://t.me/seetgbot/app) | Browse gifts with filters and sorting, view gift and profile history, resolve unknown gift senders, and show profile badges with descriptions alongside Telegram badges. |
-| Profile comments | Read and write see.tg comments, reply in threads, and manage your profile's comments. Author profiles open after confirmation; avatars load without resolving Telegram peers. |
+| [see.tg · @seetgbot](https://t.me/seetgbot/app) | Browse gifts with filters and sorting, view gift transfers with a profile counter and browse profile history, resolve unknown gift senders, and show profile badges with descriptions alongside Telegram badges. |
+| Profile comments | Read and write see.tg comments, reply in threads, and manage your profile's comments. The profile counter includes replies and refreshes after posting or deleting. Author profiles open after confirmation; avatars load without resolving Telegram peers. |
 | Languages | All 30 miniapp languages for SeeGram settings, comments and see.tg badge descriptions. |
 
 Message history is local: it cannot recover messages or edits the client never received.
