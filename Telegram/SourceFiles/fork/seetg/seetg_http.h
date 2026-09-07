@@ -29,6 +29,7 @@ struct Header {
 struct Response {
 	int status = 0; // 0 when the request never reached a server.
 	QByteArray body;
+	QByteArray etag;
 	QString error;
 };
 
@@ -45,5 +46,7 @@ void Get(
 	const QString &url,
 	crl::time timeout,
 	Callback done);
+
+void Get(const QString &url, const std::vector<Header> &headers, crl::time timeout, Callback done);
 
 } // namespace Fork::SeeTg::Http
