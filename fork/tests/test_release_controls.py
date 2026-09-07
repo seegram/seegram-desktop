@@ -2,6 +2,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import lzma
 import multiprocessing
 from pathlib import Path
 import struct
@@ -22,7 +23,20 @@ def feed(version):
     return {p: {'stable': {'released': str(version), 'link': '/packages/seegram-{version}-' + p + '.tdup'}} for p in TARGETS}
 
 
-def signed_package(platform, version, payload=b'compressed payload'):
+def windows_payload(base=7002005, prefix='', names=None):
+    names = names or [prefix + 'SeeGram.exe', prefix + 'Updater.exe', prefix + 'modules/x64/d3d/d3dcompiler_47.dll']
+    raw = struct.pack('>II', base, len(names))
+    for name in names:
+        encoded = name.encode('utf-16-be')
+        content = b'MZ' + name.encode()
+        raw += struct.pack('>I', len(encoded)) + encoded + struct.pack('>II', len(content), len(content)) + content
+    compressed = lzma.compress(raw, format=lzma.FORMAT_ALONE)
+    return compressed[:5] + struct.pack('<I', len(raw)) + compressed[13:]
+
+
+def signed_package(platform, version, payload=None):
+    if payload is None:
+        payload = windows_payload(version >> 32) if platform == 'win64' else b'compressed payload'
     root, key = Ed25519PrivateKey.generate(), Ed25519PrivateKey.generate()
     raw = key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
     manifest = json.dumps({'format': 1, 'manifest_version': 1, 'expires': int(time.time()) + 3600,
@@ -126,6 +140,30 @@ class FeedTests(unittest.TestCase):
         source.write_bytes(package[:-1] + bytes([package[-1] ^ 1]))
         with self.assertRaises(ValueError): verify_package(source, 'win64', self.version, public)
 
+    def test_nested_windows_payload_is_rejected_before_feed_changes(self):
+        source = self.root / 'win64.upload'
+        original = (self.root / 'current4').read_bytes()
+        package, public = signed_package('win64', self.version,
+            windows_payload(prefix='seegram-random-staging-directory/'))
+        source.write_bytes(package)
+        with self.assertRaisesRegex(ValueError, 'package root'):
+            publish(self.root, 'win64', self.version, source, public)
+        self.assertEqual((self.root / 'current4').read_bytes(), original)
+        self.assertTrue(source.exists())
+        self.assertFalse((self.root / 'packages' / f'seegram-{self.version}-win64.tdup').exists())
+
+    def test_invalid_windows_layouts_are_rejected(self):
+        source = self.root / 'win64.upload'
+        bad = [windows_payload(base=7001004), windows_payload(names=['SeeGram.exe', 'Updater.exe', '../escape']),
+            windows_payload(names=['SeeGram.exe', 'Updater.exe', 'SEEGRAM.exe']),
+            windows_payload(names=['SeeGram.exe', 'Updater.exe', 'tdata/data']), b'truncated']
+        for payload in bad:
+            with self.subTest(payload=payload[:12]):
+                package, public = signed_package('win64', self.version, payload)
+                source.write_bytes(package)
+                with self.assertRaises(ValueError):
+                    verify_package(source, 'win64', self.version, public)
+
     def test_concurrent_platforms_do_not_overwrite_each_other(self):
         processes = []
         context = multiprocessing.get_context('spawn')
@@ -148,7 +186,7 @@ class FeedTests(unittest.TestCase):
         source.write_bytes(package)
         publish(self.root, 'win64', self.version, source, public)
         old_feed = (self.root / 'current4').read_bytes()
-        replacement, replacement_public = signed_package('win64', self.version, b'changed payload')
+        replacement, replacement_public = signed_package('win64', self.version, windows_payload(names=['SeeGram.exe', 'Updater.exe']))
         source.write_bytes(replacement)
         with self.assertRaises(ValueError): publish(self.root, 'win64', self.version, source, replacement_public)
         self.assertEqual((self.root / 'current4').read_bytes(), old_feed)

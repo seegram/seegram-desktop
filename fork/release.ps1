@@ -86,7 +86,7 @@ if ($current -ne "$Counter") {
 # cmake, MSBuild and the toolchain only exist inside the Visual Studio
 # environment, which a plain PowerShell session does not have. Import it here
 # so a release does not depend on being started from a developer prompt.
-if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
+if (-not (Get-Command cmake -ErrorAction SilentlyContinue) -or -not (Get-Command cl.exe -ErrorAction SilentlyContinue)) {
     Write-Host "==> entering the Visual Studio environment"
     $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
     if (-not (Test-Path $vswhere)) { Fail "vswhere.exe not found - is Visual Studio installed?" }
@@ -125,16 +125,20 @@ if ($LASTEXITCODE -ne 0) {
 }
 Remove-Item $buildLog -ErrorAction SilentlyContinue
 
+Write-Host "==> testing executable replacement and restart"
+& "$root\fork\test-windows-updater.ps1" -Updater "$root\$buildDir\Updater.exe"
+
 # ---------------------------------------------------------------- pack, sign
 
 $stage = Join-Path ([System.IO.Path]::GetTempPath()) ("seegram-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $stage | Out-Null
 try {
-    # The packer takes a directory, so stage exactly what ships and nothing
-    # else. d3dcompiler is part of it: upstream's own build packs it, and a
-    # client that never receives it falls back to software rendering.
+    # Packer preserves the directory passed to -path. Start with the client
+    # file so every entry is relative to this staging directory, rather than
+    # nesting the entire update below its randomly generated directory name.
+    # The client and updater must both be at the package root.
     Copy-Item "$buildDir\SeeGram.exe" $stage
-    if (Test-Path "$buildDir\Updater.exe") { Copy-Item "$buildDir\Updater.exe" $stage }
+    Copy-Item "$buildDir\Updater.exe" $stage
     $d3d = Get-ChildItem -Path $buildDir -Filter "d3dcompiler_47.dll" -Recurse -ErrorAction SilentlyContinue |
         Select-Object -First 1
     if ($d3d) {
@@ -146,11 +150,13 @@ try {
 
     Write-Host "==> packing and signing"
     Push-Location $stage
+    $packPaths = @('-path', 'SeeGram.exe', '-path', 'Updater.exe')
+    if (Test-Path 'modules') { $packPaths += @('-path', 'modules') }
     # -target names the architecture the package is FOR. It is part of the
     # signed region, so a package built without it is stamped x86 and every
     # x64 client rejects it - the same trap as -arch on macOS.
     & "$root\$buildDir\Packer.exe" `
-        -path . `
+        @packPaths `
         -version $base `
         -counter $Counter `
         -target win64 `

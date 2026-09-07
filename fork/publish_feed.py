@@ -5,6 +5,7 @@ import base64
 import fcntl
 import hashlib
 import json
+import lzma
 import os
 from pathlib import Path
 import struct
@@ -12,6 +13,57 @@ import tempfile
 import time
 
 TARGETS = {'win64': (0, 1), 'mac': (1, 1), 'armac': (1, 2), 'linux': (2, 1)}
+
+
+def verify_windows_layout(payload, version):
+    if len(payload) < 9:
+        raise ValueError('Truncated Windows compression header')
+    size = struct.unpack_from('<I', payload, 5)[0]
+    if not 0 < size <= 1024 * 1024 * 1024:
+        raise ValueError('Invalid Windows uncompressed size')
+    decoder = lzma.LZMADecompressor(format=lzma.FORMAT_ALONE)
+    raw = decoder.decompress(payload[:5] + struct.pack('<Q', size) + payload[9:], max_length=size + 1)
+    if len(raw) != size or decoder.unused_data:
+        raise ValueError('Invalid Windows compressed payload')
+    offset = 0
+
+    def take(length):
+        nonlocal offset
+        if length < 0 or offset + length > len(raw):
+            raise ValueError('Truncated Windows file table')
+        result = memoryview(raw)[offset:offset + length]
+        offset += length
+        return result
+
+    def number():
+        return struct.unpack('>I', take(4))[0]
+
+    if number() != int(version) >> 32:
+        raise ValueError('Windows payload version differs from signed version')
+    count = number()
+    if not 2 <= count <= 10000:
+        raise ValueError('Invalid Windows file count')
+    names = set()
+    for _ in range(count):
+        name = bytes(take(number())).decode('utf-16-be')
+        parts = name.replace('\\', '/').split('/')
+        normalized = '/'.join(parts).casefold()
+        if any(part in ('', '.', '..') or ':' in part or '\0' in part for part in parts) or normalized in names:
+            raise ValueError('Unsafe or duplicate Windows package path')
+        names.add(normalized)
+        declared, length = number(), number()
+        if declared != length:
+            raise ValueError('Windows file size mismatch')
+        contents = take(length)
+        if normalized in ('seegram.exe', 'updater.exe') and contents[:2] != b'MZ':
+            raise ValueError('Invalid Windows executable')
+    if offset != len(raw):
+        raise ValueError('Trailing Windows file table bytes')
+    if not {'seegram.exe', 'updater.exe'} <= names:
+        raise ValueError('Windows update must contain SeeGram.exe and Updater.exe at the package root')
+    if any(name not in ('seegram.exe', 'updater.exe') and not name.startswith('modules/') for name in names):
+        raise ValueError('Unexpected file in Windows update')
+    return sorted(names)
 
 
 def verify_package(path, platform, version, root_public):
@@ -78,6 +130,8 @@ def verify_package(path, platform, version, root_public):
     groups = manifest['channels'].get('stable', [])
     if not groups or not all(valid.intersection(group) for group in groups):
         raise ValueError('Package signature is not authorized for stable updates')
+    if platform == 'win64':
+        verify_windows_layout(payload, actual_version)
     return {'platform': platform, 'version': str(version), 'bytes': len(data),
             'sha256': hashlib.sha256(data).hexdigest(), 'signature': 'valid'}
 
