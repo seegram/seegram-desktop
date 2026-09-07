@@ -163,7 +163,7 @@ for entry in $PLATFORMS; do
 		-channel stable \
 		-keys-loc "$ROOT/Telegram/Resources/update" \
 		-local-key "$KEYS_DIR/$KEY_FILE" \
-		-local-key-id "$KEY_ID" ) | tail -3
+		-local-key-id "$KEY_ID" )
 
 	PRODUCED="$(find "$STAGE" -maxdepth 1 -type f -name 'td-update-*' | head -1)"
 	if [ -z "$PRODUCED" ]; then

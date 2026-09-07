@@ -8,7 +8,7 @@ published feed. A new upstream base starts at the committed counter, normally
 
 Confirmation expires after ten minutes. Changes to main, another active run,
 an already published version or a rollback abort preparation. If needed, the
-bot commits only `fork/build_counter.h` through GitHub's Git API with a
+bot commits only `Telegram/SourceFiles/fork/build_counter.h` through GitHub's Git API with a
 non-forced ref update. It creates an immutable `release-build/<request-id>`
 tag and dispatches that ref. The unique request ID and commit identify the
 run, so another person's run cannot be mistaken for this one.
