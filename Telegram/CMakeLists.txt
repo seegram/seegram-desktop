@@ -626,12 +626,35 @@ PRIVATE
     fork/settings_marks.h
     fork/settings_seegram.cpp
     fork/settings_seegram.h
+    fork/settings_seetg.cpp
+    fork/settings_seetg.h
     fork/settings_spy.cpp
     fork/settings_spy.h
     fork/spy_mode.cpp
     fork/spy_mode.h
     fork/spy_ui.cpp
     fork/spy_ui.h
+    fork/seetg/seetg_api.cpp
+    fork/seetg/seetg_api.h
+    fork/seetg/seetg_auth.cpp
+    fork/seetg/seetg_auth.h
+    fork/seetg/seetg_gifts.cpp
+    fork/seetg/seetg_gifts.h
+    fork/seetg/seetg_card.cpp
+    fork/seetg/seetg_card.h
+    fork/seetg/seetg_history.cpp
+    fork/seetg/seetg_history.h
+    fork/seetg/seetg_http.h
+    fork/seetg/seetg_peers.cpp
+    fork/seetg/seetg_picker.cpp
+    fork/seetg/seetg_picker.h
+    fork/seetg/seetg_peers.h
+    fork/seetg/seetg_settings.cpp
+    fork/seetg/seetg_settings.h
+    fork/seetg/seetg_types.cpp
+    fork/seetg/seetg_types.h
+    fork/seetg/seetg_visuals.cpp
+    fork/seetg/seetg_visuals.h
     countries/countries_manager.cpp
     countries/countries_manager.h
     data/business/data_business_chatbots.cpp
@@ -2224,6 +2247,7 @@ if (APPLE)
     nice_target_sources(Telegram ${src_loc}
     PRIVATE
         tray_accounts_menu.cpp
+        fork/seetg/seetg_http_mac.mm
         media/view/media_view_metal_texture.mm
         media/streaming/media_streaming_native_frame_mac.mm
     )
@@ -2231,6 +2255,7 @@ else()
     nice_target_sources(Telegram ${src_loc}
     PRIVATE
         tray_accounts_menu_dummy.cpp
+        fork/seetg/seetg_http_qt.cpp
     )
 endif()
 

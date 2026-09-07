@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "boxes/gift_premium_box.h"
 
+#include "fork/seetg/seetg_peers.h"
+
 #include "api/api_premium.h"
 #include "api/api_premium_option.h"
 #include "apiwrap.h"
@@ -1641,10 +1643,16 @@ void AddStarGiftTable(
 				Ui::ShowStarGiftBox(window, user);
 			}
 		}) : nullptr;
+		auto unknown = Fork::SeeTg::Peers::MakeUnknownSenderValue(
+			table,
+			show,
+			peerId);
 		AddTableRow(
 			table,
 			tr::lng_credits_box_history_entry_peer_in(),
-			MakePeerTableValue(table, show, peerId, send, handler),
+			unknown
+				? std::move(unknown)
+				: MakePeerTableValue(table, show, peerId, send, handler),
 			st::giveawayGiftCodePeerMargin);
 	} else if (!entry.soldOutInfo && !giftToSelf) {
 		AddTableRow(

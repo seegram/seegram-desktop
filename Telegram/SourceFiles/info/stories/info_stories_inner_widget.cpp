@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/stories/info_stories_inner_widget.h"
 
+#include "fork/seetg/seetg_history.h"
+
 #include "apiwrap.h"
 #include "boxes/share_box.h"
 #include "data/data_peer.h"
@@ -497,6 +499,10 @@ void InnerWidget::addGiftsButton(Ui::MultiSlideTracker &tracker) {
 	object_ptr<Profile::FloatingIcon>(
 		gifts,
 		st::infoIconMediaGifts,
+		st::infoSharedMediaButtonIconPosition)->show();
+	object_ptr<Profile::FloatingIcon>(
+		Fork::SeeTg::History::AddButton(_top, _controller, _peer, tracker),
+		st::infoIconMediaStoriesRecent,
 		st::infoSharedMediaButtonIconPosition)->show();
 	tracker.track(giftsWrap);
 }
