@@ -7,8 +7,21 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #pragma once
 
+#include <memory>
+
 namespace Fork {
 
 inline constexpr char UpdateFeedPath[] = "/current4";
+inline constexpr char UpdateFeedPrefix[] = "https://desktop.see.tg";
+
+template <typename Checker>
+[[nodiscard]] std::unique_ptr<Checker> TelegramUpdateChecker(
+		bool canary,
+		std::unique_ptr<Checker> checker) {
+	if (!canary) {
+		return nullptr;
+	}
+	return checker;
+}
 
 } // namespace Fork
