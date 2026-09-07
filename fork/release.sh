@@ -256,22 +256,14 @@ if command -v gh >/dev/null 2>&1; then
 	echo "==> attaching builds to release $TAG in $GH_REPO_SLUG"
 	( cd "$BUILD_DIR" && zip -qry "$ARCHIVE" "$APP" )
 	if ! gh release view "$TAG" --repo "$GH_REPO_SLUG" >/dev/null 2>&1; then
+		NOTES="$STAGE/release-notes.md"
+		printf 'Telegram Desktop %s, SeeGram build %s.\n\n' "$VERSION_STR" "$COUNTER" > "$NOTES"
+		cat "$ROOT/fork/release-installation.md" >> "$NOTES"
 		gh release create "$TAG" --repo "$GH_REPO_SLUG" \
 			--target "$(git rev-parse HEAD)" \
 			--title "SeeGram $VERSION_STR build $COUNTER" \
-			--notes "Telegram Desktop $VERSION_STR, SeeGram build $COUNTER.
-
-Installed copies update themselves; these downloads are for a first install.
-
-**macOS:** the app is not signed with an Apple Developer ID, so the first
-open needs a right-click on SeeGram.app and then Open - double-clicking
-reports it as damaged. Once opened this way it starts normally afterwards.
-If that goes wrong, kramz - one of our subscribers - recorded a walkthrough
-of the macOS install prompts: https://youtu.be/zdlfTSg-kUQ
-
-**Windows:** SmartScreen shows an unknown-publisher prompt on the installer;
-More info, then Run anyway." \
-			>/dev/null
+			--notes-file "$NOTES" >/dev/null \
+			|| gh release view "$TAG" --repo "$GH_REPO_SLUG" >/dev/null
 	fi
 	# "file#label": GitHub shows the label on the release page and keeps the
 	# file name for the download, which is how upstream's page reads as
