@@ -65,7 +65,6 @@ using Info::PeerGifts::GiftButtonMode;
 using Info::PeerGifts::GiftTypeStars;
 
 constexpr auto kPerPage = 30;
-constexpr auto kNativePerPage = 100;
 
 // The mini app's three sub-tabs of «Подарки».
 enum class Kind {
@@ -113,160 +112,6 @@ bool LastModeSeeTg = false;
 	return Lang::Text(Key::SeeTgErrorOther);
 }
 
-// The profile's gifts as Telegram itself lists them - the same request the
-// Telegram tab makes. see.tg decides which gifts to show and in what order;
-// the card and the sheet for each come from here, so the two tabs look
-// alike and the see.tg tab keeps every action the Telegram one has. Only
-// the gifts Telegram hides from the viewer are missing: those get a card
-// drawn from the catalog, or from changes.tg for a collectible.
-//
-// Collectibles are matched by their id. A non-upgraded gift has no id
-// see.tg and Telegram share, so it is matched by collection and the second
-// it was given - both sides take that date from the same Telegram field.
-class NativeGifts final {
-public:
-	explicit NativeGifts(not_null<PeerData*> peer);
-
-	void loadUnique(Fn<void()> ready);
-	void loadSaved(Fn<void()> ready);
-	[[nodiscard]] const Data::SavedStarGift *findUnique(uint64 uniqueId) const;
-	[[nodiscard]] const Data::SavedStarGift *findSaved(
-		uint64 giftId,
-		TimeId date,
-		PeerId from) const;
-	[[nodiscard]] const Data::StarGift *findInfo(uint64 giftId) const;
-
-private:
-	struct Part {
-		std::vector<Fn<void()>> waiting;
-		QString offset;
-		bool loading = false;
-		bool loaded = false;
-	};
-
-	void load(Part &part, bool unique, Fn<void()> ready);
-	void loadPage(Part &part, bool unique);
-	void finish(Part &part);
-
-	const not_null<PeerData*> _peer;
-	MTP::Sender _api;
-	Part _unique;
-	Part _saved;
-	base::flat_map<uint64, Data::SavedStarGift> _byUniqueId;
-	std::vector<Data::SavedStarGift> _savedList;
-
-};
-
-NativeGifts::NativeGifts(not_null<PeerData*> peer)
-: _peer(peer)
-, _api(&peer->session().mtp()) {
-}
-
-void NativeGifts::loadUnique(Fn<void()> ready) {
-	load(_unique, true, std::move(ready));
-}
-
-void NativeGifts::loadSaved(Fn<void()> ready) {
-	load(_saved, false, std::move(ready));
-}
-
-void NativeGifts::load(Part &part, bool unique, Fn<void()> ready) {
-	if (part.loaded) {
-		ready();
-		return;
-	}
-	part.waiting.push_back(std::move(ready));
-	if (!part.loading) {
-		part.loading = true;
-		loadPage(part, unique);
-	}
-}
-
-void NativeGifts::loadPage(Part &part, bool unique) {
-	using Flag = MTPpayments_GetSavedStarGifts::Flag;
-	const auto flags = unique
-		? (Flag::f_exclude_unlimited
-			| Flag::f_exclude_upgradable
-			| Flag::f_exclude_unupgradable)
-		: Flag::f_exclude_unique;
-	_api.request(MTPpayments_GetSavedStarGifts(
-		MTP_flags(flags),
-		_peer->input(),
-		MTP_int(0),
-		MTP_string(part.offset),
-		MTP_int(kNativePerPage)
-	)).done([=, &part](const MTPpayments_SavedStarGifts &result) {
-		const auto &data = result.data();
-		const auto owner = &_peer->owner();
-		owner->processUsers(data.vusers());
-		owner->processChats(data.vchats());
-		for (const auto &gift : data.vgifts().v) {
-			if (auto parsed = ::Api::FromTL(_peer, gift)) {
-				if (const auto unique = parsed->info.unique.get()) {
-					_byUniqueId.emplace_or_assign(
-						unique->id,
-						std::move(*parsed));
-				} else {
-					_savedList.push_back(std::move(*parsed));
-				}
-			}
-		}
-		if (const auto next = data.vnext_offset()) {
-			part.offset = qs(*next);
-			loadPage(part, unique);
-		} else {
-			finish(part);
-		}
-	}).fail([=, &part] {
-		finish(part);
-	}).send();
-}
-
-void NativeGifts::finish(Part &part) {
-	part.loaded = true;
-	part.loading = false;
-	for (const auto &ready : base::take(part.waiting)) {
-		ready();
-	}
-}
-
-const Data::SavedStarGift *NativeGifts::findUnique(uint64 uniqueId) const {
-	const auto i = _byUniqueId.find(uniqueId);
-	return (i != end(_byUniqueId)) ? &i->second : nullptr;
-}
-
-const Data::SavedStarGift *NativeGifts::findSaved(
-		uint64 giftId,
-		TimeId date,
-		PeerId from) const {
-	auto fallback = (const Data::SavedStarGift*)nullptr;
-	for (const auto &gift : _savedList) {
-		if (gift.info.id != giftId || gift.date != date) {
-			continue;
-		} else if (!from || !gift.fromId || gift.fromId == from) {
-			return &gift;
-		} else if (!fallback) {
-			fallback = &gift;
-		}
-	}
-	return fallback;
-}
-
-const Data::StarGift *NativeGifts::findInfo(uint64 giftId) const {
-	for (const auto &gift : _savedList) {
-		if (gift.info.id == giftId) {
-			return &gift.info;
-		}
-	}
-	for (const auto &[id, gift] : _byUniqueId) {
-		if (gift.info.id == giftId) {
-			return &gift.info;
-		}
-	}
-	return nullptr;
-}
-
-
 class GiftsList final : public Ui::BoxContentDivider {
 public:
 	GiftsList(
@@ -284,7 +129,6 @@ protected:
 private:
 	struct Item {
 		std::variant<Nft, Saved> data;
-		std::optional<Data::SavedStarGift> native;
 		std::unique_ptr<Ui::AbstractButton> button;
 	};
 
@@ -298,11 +142,10 @@ private:
 	void appendItems(std::vector<Item> items);
 	void createButton(int index);
 	void refreshStatus();
-	void openItem(int index);
+	void openItem(int index, bool catalogReady = false);
 	void showFilters();
 	void ensureCatalog(Fn<void()> done);
 	[[nodiscard]] const Data::StarGift *catalogGift(uint64 id) const;
-	[[nodiscard]] GiftTypeStars descriptorFor(const Item &item) const;
 	[[nodiscard]] QJsonObject variables() const;
 	[[nodiscard]] int layoutButtons(int top);
 
@@ -310,7 +153,6 @@ private:
 	const not_null<PeerData*> _peer;
 	Info::PeerGifts::Delegate _delegate;
 	const std::unique_ptr<::Api::PremiumGiftCodeOptions> _catalog;
-	NativeGifts _native;
 
 	std::unique_ptr<Ui::SubTabs> _kinds;
 	Ui::FlatLabel *_status = nullptr;
@@ -346,7 +188,7 @@ GiftsList::GiftsList(
 , _delegate(&controller->session(), GiftButtonMode::Minimal)
 , _catalog(std::make_unique<::Api::PremiumGiftCodeOptions>(
 	controller->session().user()))
-, _native(peer) {
+ {
 	_singleMin = _delegate.buttonSize();
 	setupControls();
 	reload();
@@ -536,7 +378,6 @@ void GiftsList::loadMore() {
 		if (serial != _serial) {
 			return;
 		}
-		_loading = false;
 		if (kind == Kind::Upgraded) {
 			// The owner may have closed their non-upgraded gifts to
 			// everyone but themselves (see.tg Premium): then the two tabs
@@ -560,61 +401,27 @@ void GiftsList::loadMore() {
 }
 
 void GiftsList::applyNfts(const Page<Nft> &page) {
+	_hasNext = page.hasNext && !page.items.empty()
+		&& !page.endCursor.isEmpty() && page.endCursor != _endCursor;
 	_endCursor = page.endCursor;
-	_hasNext = page.hasNext;
-	if (page.total) {
-		_total = page.total;
-	}
-	const auto serial = _serial;
-	const auto items = page.items;
-	_native.loadUnique(crl::guard(this, [=] {
-		if (serial != _serial) {
-			return;
-		}
-		auto list = std::vector<Item>();
-		for (const auto &nft : items) {
-			auto item = Item{ .data = nft };
-			if (const auto native = _native.findUnique(nft.uniqueId)) {
-				item.native = *native;
-			}
-			list.push_back(std::move(item));
-		}
-		appendItems(std::move(list));
-	}));
+	if (page.total) _total = page.total;
+	auto list = std::vector<Item>();
+	for (const auto &nft : page.items) list.push_back(Item{ .data = nft });
+	appendItems(std::move(list));
 }
 
 void GiftsList::applySaved(const Page<Saved> &page) {
+	_hasNext = page.hasNext && !page.items.empty()
+		&& !page.endCursor.isEmpty() && page.endCursor != _endCursor;
 	_endCursor = page.endCursor;
-	_hasNext = page.hasNext;
-	if (page.total) {
-		_total = page.total;
-	}
-	const auto serial = _serial;
-	const auto items = page.items;
-	const auto build = crl::guard(this, [=] {
-		if (serial != _serial) {
-			return;
-		}
-		auto list = std::vector<Item>();
-		for (const auto &saved : items) {
-			auto item = Item{ .data = saved };
-			const auto native = _native.findSaved(
-				saved.giftId,
-				saved.issuedAt,
-				saved.nameHidden ? PeerId() : saved.from.peerId);
-			if (native) {
-				item.native = *native;
-			}
-			list.push_back(std::move(item));
-		}
-		appendItems(std::move(list));
-	});
-	ensureCatalog(crl::guard(this, [=] {
-		_native.loadSaved(build);
-	}));
+	if (page.total) _total = page.total;
+	auto list = std::vector<Item>();
+	for (const auto &saved : page.items) list.push_back(Item{ .data = saved });
+	appendItems(std::move(list));
 }
 
 void GiftsList::appendItems(std::vector<Item> items) {
+	_loading = false;
 	const auto from = int(_items.size());
 	for (auto &item : items) {
 		_items.push_back(std::move(item));
@@ -645,52 +452,14 @@ const Data::StarGift *GiftsList::catalogGift(uint64 id) const {
 	if (i != end(gifts)) {
 		return &*i;
 	}
-	// A collection the shop no longer sells is missing from the catalog,
-	// but any gift of it Telegram lists for this profile carries the same
-	// sticker, which is all the card needs.
-	return _native.findInfo(id);
-}
-
-GiftTypeStars GiftsList::descriptorFor(const Item &item) const {
-	const auto owner = &_controller->session().data();
-	if (const auto &native = item.native) {
-		// Word for word what the Telegram tab does for its own cards.
-		const auto sender = (native->anonymous || !native->fromId)
-			? nullptr
-			: owner->peerLoaded(native->fromId);
-		// Marked as one's own regardless of whose profile it is: that is
-		// what makes the ribbon carry the gift's number rather than its
-		// place in the edition, and the ribbon is all the flag changes here.
-		const auto unique = (native->info.unique != nullptr);
-		return {
-			.info = native->info,
-			.from = (sender && !sender->isServiceUser()) ? sender : nullptr,
-			.date = native->date,
-			.userpic = unique ? (sender != nullptr) : true,
-			.pinned = native->pinned,
-			.hidden = native->hidden,
-			.mine = true,
-		};
-	}
-	const auto &saved = v::get<Saved>(item.data);
-	const auto from = (!saved.nameHidden && saved.from.known())
-		? owner->peerLoaded(saved.from.peerId)
-		: nullptr;
-	return {
-		.info = *catalogGift(saved.giftId),
-		.from = from,
-		.date = saved.issuedAt,
-		.userpic = true,
-		.hidden = !saved.visible,
-		.mine = _peer->isSelf(),
-	};
+	return nullptr;
 }
 
 void GiftsList::createButton(int index) {
 	auto &item = _items[index];
 	const auto nft = std::get_if<Nft>(&item.data);
 	const auto saved = std::get_if<Saved>(&item.data);
-	if (nft && !item.native) {
+	if (nft) {
 		item.button = std::make_unique<Card>(this, CardData{
 			.giftId = nft->giftId,
 			.title = nft->title,
@@ -699,14 +468,10 @@ void GiftsList::createButton(int index) {
 			.pattern = nft->pattern,
 			.num = nft->num,
 		});
-	} else if (saved && !item.native && !catalogGift(saved->giftId)) {
+	} else {
 		item.button = std::make_unique<Card>(this, CardData{
 			.giftId = saved->giftId,
 		});
-	} else {
-		auto button = std::make_unique<GiftButton>(this, &_delegate);
-		button->setDescriptor(descriptorFor(item), GiftButtonMode::Minimal);
-		item.button = std::move(button);
 	}
 	item.button->setClickedCallback([=] { openItem(index); });
 	item.button->show();
@@ -726,21 +491,26 @@ void GiftsList::refreshStatus() {
 	resizeToWidth(width());
 }
 
-void GiftsList::openItem(int index) {
+void GiftsList::openItem(int index, bool catalogReady) {
 	if (index < 0 || index >= int(_items.size())) {
 		return;
 	}
 	const auto &item = _items[index];
-	if (const auto &native = item.native) {
-		::Settings::ShowSavedStarGiftBox(_controller, _peer, *native);
-		return;
-	} else if (const auto nft = std::get_if<Nft>(&item.data)) {
+	if (const auto nft = std::get_if<Nft>(&item.data)) {
 		Core::ResolveAndShowUniqueGift(_controller->uiShow(), nft->nftSlug());
 		return;
 	}
 	const auto &saved = v::get<Saved>(item.data);
 	const auto gift = catalogGift(saved.giftId);
 	if (!gift) {
+		if (!catalogReady) {
+			const auto serial = _serial;
+			ensureCatalog(crl::guard(this, [=] {
+				if (serial == _serial) openItem(index, true);
+			}));
+		} else {
+			_controller->showToast(Lang::Text(Key::SeeTgErrorOther));
+		}
 		return;
 	}
 	// The client's sheet wants its own saved-gift record. see.tg has no
