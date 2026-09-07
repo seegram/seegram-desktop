@@ -7,5 +7,7 @@ seetgVerificationDescriptionIcon: 18px;
 seetgVerificationDescriptionSkip: 7px;
 seetgVerificationPadding: margins(22px, 8px, 22px, 8px);
 seetgVerificationDescription: FlatLabel(defaultFlatLabel) {
+	minWidth: 1px;
+	align: align(topleft);
 	textFg: windowSubTextFg;
 }

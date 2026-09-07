@@ -1,0 +1,34 @@
+<RCC>
+  <qresource prefix="/seegram/langs">
+    <file alias="en.json">../../fork/langs/en.json</file>
+    <file alias="ru.json">../../fork/langs/ru.json</file>
+    <file alias="uk.json">../../fork/langs/uk.json</file>
+    <file alias="uz.json">../../fork/langs/uz.json</file>
+    <file alias="kk.json">../../fork/langs/kk.json</file>
+    <file alias="az.json">../../fork/langs/az.json</file>
+    <file alias="es.json">../../fork/langs/es.json</file>
+    <file alias="pt.json">../../fork/langs/pt.json</file>
+    <file alias="fr.json">../../fork/langs/fr.json</file>
+    <file alias="de.json">../../fork/langs/de.json</file>
+    <file alias="it.json">../../fork/langs/it.json</file>
+    <file alias="pl.json">../../fork/langs/pl.json</file>
+    <file alias="nl.json">../../fork/langs/nl.json</file>
+    <file alias="ro.json">../../fork/langs/ro.json</file>
+    <file alias="cs.json">../../fork/langs/cs.json</file>
+    <file alias="el.json">../../fork/langs/el.json</file>
+    <file alias="tr.json">../../fork/langs/tr.json</file>
+    <file alias="ar.json">../../fork/langs/ar.json</file>
+    <file alias="fa.json">../../fork/langs/fa.json</file>
+    <file alias="he.json">../../fork/langs/he.json</file>
+    <file alias="hi.json">../../fork/langs/hi.json</file>
+    <file alias="bn.json">../../fork/langs/bn.json</file>
+    <file alias="ur.json">../../fork/langs/ur.json</file>
+    <file alias="id.json">../../fork/langs/id.json</file>
+    <file alias="ms.json">../../fork/langs/ms.json</file>
+    <file alias="vi.json">../../fork/langs/vi.json</file>
+    <file alias="th.json">../../fork/langs/th.json</file>
+    <file alias="zh.json">../../fork/langs/zh.json</file>
+    <file alias="ja.json">../../fork/langs/ja.json</file>
+    <file alias="ko.json">../../fork/langs/ko.json</file>
+  </qresource>
+</RCC>
