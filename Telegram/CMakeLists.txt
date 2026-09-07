@@ -2292,6 +2292,7 @@ PRIVATE
     qrc/telegram/export_rich.qrc
     qrc/telegram/picker.qrc
     qrc/telegram/seegram_verifications.qrc
+    qrc/telegram/seegram_langs.qrc
     qrc/telegram/telegram.qrc
     qrc/telegram/sounds.qrc
     winrc/Telegram.rc

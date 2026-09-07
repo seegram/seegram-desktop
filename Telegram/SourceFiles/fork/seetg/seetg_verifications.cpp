@@ -40,7 +40,7 @@ namespace {
 constexpr auto kQuery =
 	"query ProfileVerifications($seeId: String!) { owner(seeId: $seeId) { "
 	"seeId telegramId username title name address "
-	"verifications { type slot description warning } } }";
+	"verifications { type slot description descriptionTranslations warning } } }";
 
 [[nodiscard]] QString Substitute(QString text, const QJsonObject &owner) {
 	const auto username = owner.value(u"username"_q).toString();
@@ -137,6 +137,11 @@ public:
 	}
 
 protected:
+	int resizeGetHeight(int width) override {
+		return std::max(VerticalLayout::resizeGetHeight(width),
+			st::seetgVerificationDescriptionIcon);
+	}
+
 	void paintEvent(QPaintEvent *event) override {
 		auto p = Painter(this);
 		const auto size = st::seetgVerificationDescriptionIcon;
@@ -171,7 +176,14 @@ Entries Parse(const QJsonObject &owner) {
 		if (type.isEmpty()) {
 			continue;
 		}
-		auto html = object.value(u"description"_q).toString();
+		const auto translations = object.value(u"descriptionTranslations"_q).toObject();
+		auto html = translations.value(Lang::ResolvedId()).toString();
+		if (html.isEmpty()) {
+			html = translations.value(u"en"_q).toString();
+		}
+		if (html.isEmpty()) {
+			html = object.value(u"description"_q).toString();
+		}
 		if (html.isEmpty() && type == u"premium"_q) {
 			html = Lang::Text(Lang::Key::SeeTgPremiumVerificationDescription);
 		}
