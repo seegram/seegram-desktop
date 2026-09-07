@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "boxes/about_box.h"
+#include "fork/about_seegram.h"
 
 #include "base/platform/base_platform_info.h"
 #include "core/application.h"
@@ -65,6 +66,7 @@ rpl::producer<TextWithEntities> Text3() {
 } // namespace
 
 void AboutBox(not_null<Ui::GenericBox*> box) {
+	return Fork::About::Fill(box);
 	box->setTitle(AppName.utf16());
 
 	auto layout = box->verticalLayout();
@@ -331,4 +333,3 @@ void ArchiveHintBox(
 		box->addButton(std::move(button));
 	}
 }
-

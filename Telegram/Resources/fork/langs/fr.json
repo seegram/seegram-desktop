@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Ouvrir le profil",
   "SeeTgResolveAdvanced": "Pour les utilisateurs avancés. Si vous ne savez pas à quoi sert la résolution des pairs, conservez les réglages par défaut.",
   "SeeTgCommentsCancel": "Annuler",
-  "SeeTgCommentsRefresh": "Actualiser"
+  "SeeTgCommentsRefresh": "Actualiser",
+  "StickersTitle": "Autocollants",
+  "StickersRecent": "Autocollants récents",
+  "StickersServer": "Selon le serveur",
+  "StickersRange": "De {min} à {max} autocollants. Par défaut : {default}. Le mode serveur affiche toute la liste reçue.",
+  "AboutTitle": "À propos",
+  "AboutSummary": "Un dérivé indépendant de Telegram Desktop avec mode fantôme, historique des messages et intégration see.tg.",
+  "AboutSeeTg": "Cadeaux, historique des profils, badges et commentaires de la mini-app see.tg directement dans le client.",
+  "AboutHistory": "L’historique est conservé sur cet appareil : seuls les messages et modifications reçus par ce client sont disponibles.",
+  "Save": "Enregistrer",
+  "Close": "Fermer",
+  "AboutReleases": "Versions"
 }

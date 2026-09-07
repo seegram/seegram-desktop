@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "پروفائل کھولیں",
   "SeeTgResolveAdvanced": "تجربہ کار صارفین کے لیے۔ اگر آپ نہیں جانتے کہ پیئر کی شناخت کیا کرتی ہے تو پہلے سے طے شدہ ترتیبات برقرار رکھیں۔",
   "SeeTgCommentsCancel": "منسوخ",
-  "SeeTgCommentsRefresh": "ریفریش کریں"
+  "SeeTgCommentsRefresh": "ریفریش کریں",
+  "StickersTitle": "اسٹیکرز",
+  "StickersRecent": "حالیہ اسٹیکرز",
+  "StickersServer": "جیسا سرور فراہم کرے",
+  "StickersRange": "{min} سے {max} اسٹیکرز۔ طے شدہ: {default}۔ سرور موڈ موصول ہونے والی پوری فہرست دکھاتا ہے۔",
+  "AboutTitle": "ایپ کے بارے میں",
+  "AboutSummary": "گھوسٹ موڈ، پیغامات کی تاریخ اور see.tg انضمام کے ساتھ Telegram Desktop کی ایک آزاد شاخ۔",
+  "AboutSeeTg": "see.tg منی ایپ کے تحائف، پروفائل کی تاریخ، بیجز اور تبصرے براہ راست کلائنٹ میں۔",
+  "AboutHistory": "تاریخ اس آلے پر محفوظ ہوتی ہے: صرف اس کلائنٹ کو موصول ہونے والے پیغامات اور ترامیم دستیاب ہیں۔",
+  "Save": "محفوظ کریں",
+  "Close": "بند کریں",
+  "AboutReleases": "ریلیز"
 }

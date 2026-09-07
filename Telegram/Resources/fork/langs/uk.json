@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Відкрити профіль",
   "SeeTgResolveAdvanced": "Для досвідчених користувачів. Якщо не знаєте, що таке резолв пірів, залиште типові налаштування.",
   "SeeTgCommentsCancel": "Скасувати",
-  "SeeTgCommentsRefresh": "Оновити"
+  "SeeTgCommentsRefresh": "Оновити",
+  "StickersTitle": "Стікери",
+  "StickersRecent": "Нещодавні стікери",
+  "StickersServer": "Як надсилає сервер",
+  "StickersRange": "Від {min} до {max} стікерів. Типово — {default}. Серверний режим показує весь отриманий список.",
+  "AboutTitle": "Про програму",
+  "AboutSummary": "Незалежний форк Telegram Desktop із режимом привида, історією повідомлень та інтеграцією see.tg.",
+  "AboutSeeTg": "Подарунки, історія профілів, значки та коментарі з мініаппа see.tg прямо в клієнті.",
+  "AboutHistory": "Історія зберігається на пристрої: доступні лише повідомлення й зміни, отримані цим клієнтом.",
+  "Save": "Зберегти",
+  "Close": "Закрити",
+  "AboutReleases": "Випуски"
 }

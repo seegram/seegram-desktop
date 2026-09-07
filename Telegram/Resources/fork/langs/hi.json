@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "प्रोफ़ाइल खोलें",
   "SeeTgResolveAdvanced": "अनुभवी उपयोगकर्ताओं के लिए। यदि आप नहीं जानते कि पीयर रिज़ॉल्यूशन क्या करता है, तो डिफ़ॉल्ट सेटिंग्स बनाए रखें।",
   "SeeTgCommentsCancel": "रद्द करें",
-  "SeeTgCommentsRefresh": "रिफ़्रेश करें"
+  "SeeTgCommentsRefresh": "रिफ़्रेश करें",
+  "StickersTitle": "स्टिकर",
+  "StickersRecent": "हाल के स्टिकर",
+  "StickersServer": "जैसा सर्वर देता है",
+  "StickersRange": "{min} से {max} स्टिकर। डिफ़ॉल्ट: {default}। सर्वर मोड में मिली हुई पूरी सूची दिखाई जाती है।",
+  "AboutTitle": "ऐप के बारे में",
+  "AboutSummary": "घोस्ट मोड, संदेश इतिहास और see.tg एकीकरण वाला Telegram Desktop का स्वतंत्र फ़ोर्क।",
+  "AboutSeeTg": "see.tg मिनी ऐप के उपहार, प्रोफ़ाइल इतिहास, बैज और टिप्पणियाँ सीधे क्लाइंट में।",
+  "AboutHistory": "इतिहास इस डिवाइस पर सहेजा जाता है: केवल इस क्लाइंट को मिले संदेश और संपादन उपलब्ध हैं।",
+  "Save": "सहेजें",
+  "Close": "बंद करें",
+  "AboutReleases": "रिलीज़"
 }

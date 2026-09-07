@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "فتح الملف الشخصي",
   "SeeTgResolveAdvanced": "للمستخدمين المتقدمين. إذا لم تكن تعرف وظيفة التعرّف على الأطراف، فاترك الإعدادات الافتراضية.",
   "SeeTgCommentsCancel": "إلغاء",
-  "SeeTgCommentsRefresh": "تحديث"
+  "SeeTgCommentsRefresh": "تحديث",
+  "StickersTitle": "الملصقات",
+  "StickersRecent": "الملصقات الأخيرة",
+  "StickersServer": "كما يرسلها الخادم",
+  "StickersRange": "من {min} إلى {max} ملصقًا. الافتراضي: {default}. يعرض وضع الخادم القائمة المستلمة كاملة.",
+  "AboutTitle": "حول التطبيق",
+  "AboutSummary": "نسخة مستقلة مشتقة من Telegram Desktop مع وضع الشبح وسجل الرسائل وتكامل see.tg.",
+  "AboutSeeTg": "الهدايا وسجل الملفات الشخصية والشارات والتعليقات من تطبيق see.tg المصغر داخل العميل مباشرة.",
+  "AboutHistory": "يُحفظ السجل على هذا الجهاز: تتوفر فقط الرسائل والتعديلات التي استلمها هذا العميل.",
+  "Save": "حفظ",
+  "Close": "إغلاق",
+  "AboutReleases": "الإصدارات"
 }

@@ -25,7 +25,7 @@ Its extra controls live in **Settings → SeeGram**.
 | Ghost mode | Separate switches for read receipts, typing, online status and upload progress, plus a quick toggle in the side menu. |
 | Message history | Keep deleted messages and inspect previous message edits received by this client. |
 | Message labels | Customize the labels shown on deleted and edited messages. |
-| Recent stickers | Show the full list supplied by Telegram instead of the Desktop default of 20. |
+| Recent stickers | Choose the number shown in Settings → SeeGram → Stickers: 50 by default, from 20 up to Telegram's available maximum, or the entire server list. |
 | [see.tg · @seetgbot](https://t.me/seetgbot/app) | Browse gifts with filters and sorting, view gift and profile history, resolve unknown gift senders, and show profile badges with descriptions alongside Telegram badges. |
 | Profile comments | Read and write see.tg comments, reply in threads, and manage your profile's comments. Author profiles open after confirmation; avatars load without resolving Telegram peers. |
 | Languages | All 30 miniapp languages for SeeGram settings, comments and see.tg badge descriptions. |
