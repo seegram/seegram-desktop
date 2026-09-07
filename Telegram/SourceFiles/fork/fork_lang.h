@@ -179,6 +179,8 @@ enum class Key {
 	SeeTgHistoryMore,
 	SeeTgHistoryBuy,
 
+	SeeTgPremiumVerificationDescription,
+
 	Count,
 };
 

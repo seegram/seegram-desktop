@@ -16,6 +16,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/rp_widget.h"
 #include "ui/userpic_view.h"
 
+namespace Fork::SeeTg::Verification {
+class Badges;
+} // namespace Fork::SeeTg::Verification
+
 namespace Data {
 class ForumTopic;
 class DocumentMedia;
@@ -262,6 +266,8 @@ private:
 	const Fn<bool()> _gifPausedChecker;
 	const std::unique_ptr<Badge> _badge;
 	const std::unique_ptr<Badge> _verified;
+	const std::unique_ptr<Fork::SeeTg::Verification::Badges> _seeLeft;
+	const std::unique_ptr<Fork::SeeTg::Verification::Badges> _seeRight;
 
 	const bool _hasActions;
 	const int _minForProgress;

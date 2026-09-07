@@ -64,6 +64,18 @@ build without publishing; usage is documented at the top of each script.
 Signing and deployment use the separate `SEEGRAM_*` settings named in the
 workflow. Private signing keys remain on the runners.
 
+## Profile badges
+
+The see.tg integration reads profile verifications from the same backend as
+@seetgbot. Badge artwork follows the miniapp; `slot` controls which side of
+the name displays each badge. Descriptions appear as icon-and-text rows below
+profile information, with inline formatting and links. Telegram verification,
+Premium and bot verification remain independent.
+
+The implementation lives in `Telegram/SourceFiles/fork/seetg/seetg_verifications.*`;
+SVG resources live in `Telegram/Resources/fork/verifications/`. Requests use
+the existing account-scoped see.tg cache and follow the integration toggle.
+
 ## Upstream updates
 
 The fork is maintained as commits on top of Telegram Desktop. Keep changes
