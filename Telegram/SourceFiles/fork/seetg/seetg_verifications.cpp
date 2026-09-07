@@ -122,35 +122,34 @@ public:
 		auto label = object_ptr<Ui::FlatLabel>(this,
 			rpl::single(_entry.description), st::seetgVerificationDescription);
 		label->setSelectable(true);
+		label->setMinimumHeight(st::seetgVerificationDescriptionIcon);
 		add(std::move(label), style::margins(
 			st::seetgVerificationDescriptionIcon + st::seetgVerificationDescriptionSkip,
 			0, 0, 0), style::al_justify);
 		if (_entry.type == u"telegram"_q) {
 			if (const auto details = peer->botVerifyDetails()) {
-				_emoji = peer->owner().customEmojiManager().create(
-					details->iconId, [=] { update(); },
-					Data::CustomEmojiSizeTag::Normal,
-					st::seetgVerificationDescriptionIcon);
+				_emoji = MakeWrappedEmoji<Ui::Text::FirstFrameEmoji>(
+					peer->owner().customEmojiManager().create(
+						details->iconId, [=] { update(); },
+						Data::CustomEmojiSizeTag::Normal));
 			}
 		}
 		style::PaletteChanged() | rpl::on_next([=] { update(); }, lifetime());
 	}
 
 protected:
-	int resizeGetHeight(int width) override {
-		return std::max(VerticalLayout::resizeGetHeight(width),
-			st::seetgVerificationDescriptionIcon);
-	}
-
 	void paintEvent(QPaintEvent *event) override {
 		auto p = Painter(this);
 		const auto size = st::seetgVerificationDescriptionIcon;
 		const auto rect = style::rtlrect(0, 0, size, size, width());
 		if (_emoji) {
+			const auto scale = size / float64(BadgeSize());
+			auto hq = PainterHighQualityEnabler(p);
+			p.translate(rect.topLeft());
+			p.scale(scale, scale);
 			_emoji->paint(p, {
 				.textColor = st::windowSubTextFg->c,
 				.now = crl::now(),
-				.position = rect.topLeft(),
 			});
 		} else if (_entry.type != u"telegram"_q) {
 			PaintIcon(p, _entry, rect, true, st::windowSubTextFg->c);
