@@ -648,6 +648,10 @@ PRIVATE
     fork/seetg/seetg_card.h
     fork/seetg/seetg_history.cpp
     fork/seetg/seetg_history.h
+    fork/seetg/seetg_comments.cpp
+    fork/seetg/seetg_comments.h
+    fork/seetg/seetg_comments_data.cpp
+    fork/seetg/seetg_comments_data.h
     fork/seetg/seetg_http.h
     fork/seetg/seetg_peers.cpp
     fork/seetg/seetg_picker.cpp

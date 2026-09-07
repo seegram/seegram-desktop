@@ -280,7 +280,8 @@ QString PatternUrl(const QString &title, const QString &pattern) {
 }
 
 QString UserpicUrl(const QString &username) {
-	return QString::fromLatin1(kUserpicUrl).arg(username);
+	return QString::fromLatin1(kUserpicUrl).arg(
+		QString::fromLatin1(QUrl::toPercentEncoding(username)));
 }
 
 void Image(const QString &url, Fn<void(QImage)> done) {

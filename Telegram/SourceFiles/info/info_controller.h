@@ -182,6 +182,7 @@ public:
 		ChannelEarn,
 		BotEarn,
 		SeeTgHistory, // fork/seetg/seetg_history.h
+		SeeTgComments, // fork/seetg/seetg_comments.h
 	};
 	using SettingsType = ::Settings::Type;
 	using MediaType = Storage::SharedMediaType;
