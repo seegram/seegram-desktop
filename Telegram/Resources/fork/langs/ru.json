@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Узнавать отправителя автоматически",
   "SeeTgWhoIs": "Узнать кто",
   "SeeTgWhoIsFailed": "Не удалось узнать, кто это.",
-  "SeeTgHistoryButton": "История",
+  "SeeTgHistoryButton": "Передачи подарков",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Инфо",
   "SeeTgHistoryEmpty": "История пуста",
@@ -180,5 +180,17 @@
   "AboutHistory": "История хранится на устройстве: доступны только сообщения и правки, полученные этим клиентом.",
   "Save": "Сохранить",
   "Close": "Закрыть",
-  "AboutReleases": "Релизы"
+  "AboutReleases": "Релизы",
+  "SeeTgTransfersZero": "{count} передач подарков",
+  "SeeTgTransfersOne": "{count} передача подарков",
+  "SeeTgTransfersTwo": "{count} передач подарков",
+  "SeeTgTransfersFew": "{count} передачи подарков",
+  "SeeTgTransfersMany": "{count} передач подарков",
+  "SeeTgTransfersOther": "{count} передач подарков",
+  "SeeTgCommentsZero": "{count} комментариев",
+  "SeeTgCommentsOne": "{count} комментарий",
+  "SeeTgCommentsTwo": "{count} комментариев",
+  "SeeTgCommentsFew": "{count} комментария",
+  "SeeTgCommentsMany": "{count} комментариев",
+  "SeeTgCommentsOther": "{count} комментариев"
 }

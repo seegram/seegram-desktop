@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "تحديد المرسل تلقائيًا",
   "SeeTgWhoIs": "من هذا؟",
   "SeeTgWhoIsFailed": "تعذر تحديد هذا الشخص.",
-  "SeeTgHistoryButton": "السجلّ",
+  "SeeTgHistoryButton": "تحويلات الهدايا",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "معلومات",
   "SeeTgHistoryEmpty": "السجل فارغ",
@@ -180,5 +180,17 @@
   "AboutHistory": "يُحفظ السجل على هذا الجهاز: تتوفر فقط الرسائل والتعديلات التي استلمها هذا العميل.",
   "Save": "حفظ",
   "Close": "إغلاق",
-  "AboutReleases": "الإصدارات"
+  "AboutReleases": "الإصدارات",
+  "SeeTgTransfersZero": "{count} تحويل هدايا",
+  "SeeTgTransfersOne": "{count} تحويل هدايا",
+  "SeeTgTransfersTwo": "{count} تحويلا هدايا",
+  "SeeTgTransfersFew": "{count} تحويلات هدايا",
+  "SeeTgTransfersMany": "{count} تحويل هدايا",
+  "SeeTgTransfersOther": "{count} تحويل هدايا",
+  "SeeTgCommentsZero": "{count} تعليق",
+  "SeeTgCommentsOne": "{count} تعليق",
+  "SeeTgCommentsTwo": "{count} تعليقان",
+  "SeeTgCommentsFew": "{count} تعليقات",
+  "SeeTgCommentsMany": "{count} تعليق",
+  "SeeTgCommentsOther": "{count} تعليق"
 }

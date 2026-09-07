@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "بھیجنے والے کو خودکار پہچانیں",
   "SeeTgWhoIs": "یہ کون ہے؟",
   "SeeTgWhoIsFailed": "اس شخص کی شناخت نہیں ہو سکی۔",
-  "SeeTgHistoryButton": "تاریخ",
+  "SeeTgHistoryButton": "تحائف کی منتقلی",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "معلومات",
   "SeeTgHistoryEmpty": "ابھی کوئی سرگزشت نہیں",
@@ -180,5 +180,17 @@
   "AboutHistory": "تاریخ اس آلے پر محفوظ ہوتی ہے: صرف اس کلائنٹ کو موصول ہونے والے پیغامات اور ترامیم دستیاب ہیں۔",
   "Save": "محفوظ کریں",
   "Close": "بند کریں",
-  "AboutReleases": "ریلیز"
+  "AboutReleases": "ریلیز",
+  "SeeTgTransfersZero": "{count} تحائف کی منتقلی",
+  "SeeTgTransfersOne": "{count} تحفے کی منتقلی",
+  "SeeTgTransfersTwo": "{count} تحائف کی منتقلی",
+  "SeeTgTransfersFew": "{count} تحائف کی منتقلی",
+  "SeeTgTransfersMany": "{count} تحائف کی منتقلی",
+  "SeeTgTransfersOther": "{count} تحائف کی منتقلی",
+  "SeeTgCommentsZero": "{count} تبصرے",
+  "SeeTgCommentsOne": "{count} تبصرہ",
+  "SeeTgCommentsTwo": "{count} تبصرے",
+  "SeeTgCommentsFew": "{count} تبصرے",
+  "SeeTgCommentsMany": "{count} تبصرے",
+  "SeeTgCommentsOther": "{count} تبصرے"
 }

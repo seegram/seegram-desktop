@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Жіберушіні автоматты анықтау",
   "SeeTgWhoIs": "Бұл кім?",
   "SeeTgWhoIsFailed": "Бұл адамды анықтау мүмкін болмады.",
-  "SeeTgHistoryButton": "Тарих",
+  "SeeTgHistoryButton": "Сыйлық аударымдары",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Ақпарат",
   "SeeTgHistoryEmpty": "Тарих бос",
@@ -180,5 +180,17 @@
   "AboutHistory": "Тарих осы құрылғыда сақталады: тек осы клиент алған хабарлар мен өңдеулер қолжетімді.",
   "Save": "Сақтау",
   "Close": "Жабу",
-  "AboutReleases": "Шығарылымдар"
+  "AboutReleases": "Шығарылымдар",
+  "SeeTgTransfersZero": "{count} сыйлық аударымы",
+  "SeeTgTransfersOne": "{count} сыйлық аударымы",
+  "SeeTgTransfersTwo": "{count} сыйлық аударымы",
+  "SeeTgTransfersFew": "{count} сыйлық аударымы",
+  "SeeTgTransfersMany": "{count} сыйлық аударымы",
+  "SeeTgTransfersOther": "{count} сыйлық аударымы",
+  "SeeTgCommentsZero": "{count} пікір",
+  "SeeTgCommentsOne": "{count} пікір",
+  "SeeTgCommentsTwo": "{count} пікір",
+  "SeeTgCommentsFew": "{count} пікір",
+  "SeeTgCommentsMany": "{count} пікір",
+  "SeeTgCommentsOther": "{count} пікір"
 }

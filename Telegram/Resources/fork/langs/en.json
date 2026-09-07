@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Find out the sender automatically",
   "SeeTgWhoIs": "Who is it",
   "SeeTgWhoIsFailed": "Could not find out who that is.",
-  "SeeTgHistoryButton": "History",
+  "SeeTgHistoryButton": "Gift transfers",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Info",
   "SeeTgHistoryEmpty": "No history yet",
@@ -180,5 +180,17 @@
   "AboutHistory": "History is stored on this device: only messages and edits received by this client are available.",
   "Save": "Save",
   "Close": "Close",
-  "AboutReleases": "Releases"
+  "AboutReleases": "Releases",
+  "SeeTgTransfersZero": "{count} gift transfers",
+  "SeeTgTransfersOne": "{count} gift transfer",
+  "SeeTgTransfersTwo": "{count} gift transfers",
+  "SeeTgTransfersFew": "{count} gift transfers",
+  "SeeTgTransfersMany": "{count} gift transfers",
+  "SeeTgTransfersOther": "{count} gift transfers",
+  "SeeTgCommentsZero": "{count} comments",
+  "SeeTgCommentsOne": "{count} comment",
+  "SeeTgCommentsTwo": "{count} comments",
+  "SeeTgCommentsFew": "{count} comments",
+  "SeeTgCommentsMany": "{count} comments",
+  "SeeTgCommentsOther": "{count} comments"
 }

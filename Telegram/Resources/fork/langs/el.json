@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Αυτόματη αναγνώριση αποστολέα",
   "SeeTgWhoIs": "Ποιος είναι;",
   "SeeTgWhoIsFailed": "Δεν ήταν δυνατή η αναγνώριση αυτού του ατόμου.",
-  "SeeTgHistoryButton": "Ιστορικό",
+  "SeeTgHistoryButton": "Μεταφορές δώρων",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Στοιχεία",
   "SeeTgHistoryEmpty": "Το ιστορικό είναι κενό",
@@ -180,5 +180,17 @@
   "AboutHistory": "Το ιστορικό αποθηκεύεται στη συσκευή: διατίθενται μόνο μηνύματα και αλλαγές που έλαβε αυτός ο πελάτης.",
   "Save": "Αποθήκευση",
   "Close": "Κλείσιμο",
-  "AboutReleases": "Εκδόσεις"
+  "AboutReleases": "Εκδόσεις",
+  "SeeTgTransfersZero": "{count} μεταφορές δώρων",
+  "SeeTgTransfersOne": "{count} μεταφορά δώρων",
+  "SeeTgTransfersTwo": "{count} μεταφορές δώρων",
+  "SeeTgTransfersFew": "{count} μεταφορές δώρων",
+  "SeeTgTransfersMany": "{count} μεταφορές δώρων",
+  "SeeTgTransfersOther": "{count} μεταφορές δώρων",
+  "SeeTgCommentsZero": "{count} σχόλια",
+  "SeeTgCommentsOne": "{count} σχόλιο",
+  "SeeTgCommentsTwo": "{count} σχόλια",
+  "SeeTgCommentsFew": "{count} σχόλια",
+  "SeeTgCommentsMany": "{count} σχόλια",
+  "SeeTgCommentsOther": "{count} σχόλια"
 }

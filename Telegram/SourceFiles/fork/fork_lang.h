@@ -247,6 +247,18 @@ enum class Key {
 	Save,
 	Close,
 	AboutReleases,
+	SeeTgTransfersZero,
+	SeeTgTransfersOne,
+	SeeTgTransfersTwo,
+	SeeTgTransfersFew,
+	SeeTgTransfersMany,
+	SeeTgTransfersOther,
+	SeeTgCommentsZero,
+	SeeTgCommentsOne,
+	SeeTgCommentsTwo,
+	SeeTgCommentsFew,
+	SeeTgCommentsMany,
+	SeeTgCommentsOther,
 
 	Count,
 };

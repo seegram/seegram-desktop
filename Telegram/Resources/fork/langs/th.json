@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "ระบุผู้ส่งอัตโนมัติ",
   "SeeTgWhoIs": "นี่คือใคร?",
   "SeeTgWhoIsFailed": "ไม่สามารถระบุบุคคลนี้ได้",
-  "SeeTgHistoryButton": "ประวัติ",
+  "SeeTgHistoryButton": "การโอนของขวัญ",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "ข้อมูล",
   "SeeTgHistoryEmpty": "ยังไม่มีประวัติ",
@@ -180,5 +180,17 @@
   "AboutHistory": "ประวัติถูกเก็บไว้บนอุปกรณ์นี้ โดยมีเฉพาะข้อความและการแก้ไขที่ไคลเอนต์นี้ได้รับเท่านั้น",
   "Save": "บันทึก",
   "Close": "ปิด",
-  "AboutReleases": "รุ่นที่เผยแพร่"
+  "AboutReleases": "รุ่นที่เผยแพร่",
+  "SeeTgTransfersZero": "การโอนของขวัญ {count} ครั้ง",
+  "SeeTgTransfersOne": "การโอนของขวัญ {count} ครั้ง",
+  "SeeTgTransfersTwo": "การโอนของขวัญ {count} ครั้ง",
+  "SeeTgTransfersFew": "การโอนของขวัญ {count} ครั้ง",
+  "SeeTgTransfersMany": "การโอนของขวัญ {count} ครั้ง",
+  "SeeTgTransfersOther": "การโอนของขวัญ {count} ครั้ง",
+  "SeeTgCommentsZero": "{count} ความคิดเห็น",
+  "SeeTgCommentsOne": "{count} ความคิดเห็น",
+  "SeeTgCommentsTwo": "{count} ความคิดเห็น",
+  "SeeTgCommentsFew": "{count} ความคิดเห็น",
+  "SeeTgCommentsMany": "{count} ความคิดเห็น",
+  "SeeTgCommentsOther": "{count} ความคิดเห็น"
 }

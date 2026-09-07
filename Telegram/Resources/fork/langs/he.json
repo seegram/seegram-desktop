@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "זיהוי השולח אוטומטית",
   "SeeTgWhoIs": "מי זה?",
   "SeeTgWhoIsFailed": "לא ניתן היה לזהות את האדם הזה.",
-  "SeeTgHistoryButton": "היסטוריה",
+  "SeeTgHistoryButton": "העברות מתנות",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "מידע",
   "SeeTgHistoryEmpty": "אין היסטוריה עדיין",
@@ -180,5 +180,17 @@
   "AboutHistory": "ההיסטוריה נשמרת במכשיר הזה: רק הודעות ועריכות שהתקבלו בלקוח הזה זמינות.",
   "Save": "שמירה",
   "Close": "סגירה",
-  "AboutReleases": "גרסאות"
+  "AboutReleases": "גרסאות",
+  "SeeTgTransfersZero": "{count} העברות מתנות",
+  "SeeTgTransfersOne": "{count} העברת מתנות",
+  "SeeTgTransfersTwo": "{count} העברות מתנות",
+  "SeeTgTransfersFew": "{count} העברות מתנות",
+  "SeeTgTransfersMany": "{count} העברות מתנות",
+  "SeeTgTransfersOther": "{count} העברות מתנות",
+  "SeeTgCommentsZero": "{count} תגובות",
+  "SeeTgCommentsOne": "{count} תגובה",
+  "SeeTgCommentsTwo": "{count} תגובות",
+  "SeeTgCommentsFew": "{count} תגובות",
+  "SeeTgCommentsMany": "{count} תגובות",
+  "SeeTgCommentsOther": "{count} תגובות"
 }
