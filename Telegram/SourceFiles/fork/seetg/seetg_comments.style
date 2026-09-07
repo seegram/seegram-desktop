@@ -22,16 +22,20 @@ seetgCommentReply: LinkButton(defaultLinkButton) {
 	overFont: font(12px);
 }
 seetgCommentInput: InputField(defaultInputField) {
+	style: defaultTextStyle;
 	textBg: boxDividerBg;
 	textBgActive: boxDividerBg;
-	textMargins: margins(10px, 9px, 10px, 9px);
-	placeholderMargins: margins(10px, 9px, 10px, 9px);
-	placeholderFont: font(13px);
-	placeholderScale: 1.0;
+	textMargins: margins(12px, 8px, 12px, 6px);
+	placeholderMargins: margins(0px, 0px, 0px, 0px);
+	placeholderFont: normalFont;
+	placeholderFgActive: windowSubTextFg;
+	placeholderScale: 0.;
 	placeholderShift: 0px;
 	border: 0px;
 	borderActive: 0px;
-	borderRadius: 10px;
+	borderFg: transparent;
+	borderFgActive: transparent;
+	borderRadius: 18px;
 	heightMin: 36px;
 	heightMax: 96px;
 }
