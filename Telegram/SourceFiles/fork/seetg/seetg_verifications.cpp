@@ -13,6 +13,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/seetg/seetg_types.h"
 #include "core/click_handler_types.h"
 #include "data/data_peer.h"
+#include "data/data_session.h"
+#include "data/stickers/data_custom_emoji.h"
+#include "ui/unread_badge.h"
 #include "info/profile/info_profile_section_stack.h"
 #include "main/main_session.h"
 #include "ui/painter.h"
@@ -69,7 +72,7 @@ constexpr auto kQuery =
 	return result + text.mid(offset);
 }
 
-[[nodiscard]] QByteArray IconSvg(const Entry &entry, bool mono) {
+[[nodiscard]] QByteArray IconSvg(const Entry &entry, bool mono, QColor sealOverride = {}, QColor glyphOverride = {}) {
 	auto type = (mono && entry.warning) ? u"warning"_q : entry.type;
 	if (mono && type == u"zv"_q) {
 		type = u"zv-mono"_q;
@@ -89,54 +92,62 @@ constexpr auto kQuery =
 	const auto warning = type == u"warning"_q;
 	const auto seal = warning ? st::attentionButtonFg->c
 		: mono ? st::windowSubTextFg->c
-		: st::profileVerifiedCheckBg->c;
+		: sealOverride.isValid() ? sealOverride : st::profileVerifiedCheckBg->c;
 	const auto glyph = mono && !warning
 		? st::boxDividerBg->c
-		: st::profileVerifiedCheckFg->c;
+		: glyphOverride.isValid() ? glyphOverride : st::profileVerifiedCheckFg->c;
 	return file.readAll()
 		.replace("$SEAL", seal.name().toUtf8())
 		.replace("$GLYPH", glyph.name().toUtf8());
 }
 
 void PaintIcon(QPainter &p, const Entry &entry, QRect rect, bool mono) {
-	if (entry.type == u"telegram"_q) {
-		st::infoVerifiedStar.paintInCenter(p, rect, st::windowSubTextFg->c);
-		st::infoVerifiedCheck.paintInCenter(p, rect, st::boxDividerBg->c);
-		return;
-	}
 	auto renderer = QSvgRenderer(IconSvg(entry, mono));
-	renderer.render(&p, QRectF(rect));
+	const auto inset = st::seetgVerificationBadgeInset;
+	renderer.render(&p, QRectF(rect).adjusted(inset, inset, -inset, -inset));
 }
 
-class DescriptionRow final : public Ui::RpWidget {
+class DescriptionRow final : public Ui::VerticalLayout {
 public:
-	DescriptionRow(QWidget *parent, Entry entry)
-	: RpWidget(parent)
-	, _entry(std::move(entry))
-	, _label(this, rpl::single(_entry.description), st::seetgVerificationDescription) {
-		_label->setSelectable(true);
-		setToolTip(_entry.type == u"telegram"_q ? u"Telegram"_q : u"see.tg"_q);
+	DescriptionRow(QWidget *parent, Entry entry, not_null<PeerData*> peer)
+	: VerticalLayout(parent)
+	, _entry(std::move(entry)) {
+		auto label = object_ptr<Ui::FlatLabel>(this,
+			rpl::single(_entry.description), st::seetgVerificationDescription);
+		label->setSelectable(true);
+		add(std::move(label), style::margins(
+			st::seetgVerificationDescriptionIcon + st::seetgVerificationDescriptionSkip,
+			0, 0, 0));
+		if (_entry.type == u"telegram"_q) {
+			if (const auto details = peer->botVerifyDetails()) {
+				_emoji = peer->owner().customEmojiManager().create(
+					details->iconId, [=] { update(); },
+					Data::CustomEmojiSizeTag::Normal,
+					st::seetgVerificationDescriptionIcon);
+			}
+		}
 		style::PaletteChanged() | rpl::on_next([=] { update(); }, lifetime());
 	}
 
 protected:
-	int resizeGetHeight(int width) override {
-		const auto left = st::seetgVerificationDescriptionIcon
-			+ st::seetgVerificationDescriptionSkip;
-		_label->resizeToWidth(std::max(1, width - left));
-		_label->moveToLeft(left, 0);
-		return std::max(_label->height(), st::seetgVerificationDescriptionIcon);
-	}
-
 	void paintEvent(QPaintEvent *event) override {
 		auto p = Painter(this);
 		const auto size = st::seetgVerificationDescriptionIcon;
-		PaintIcon(p, _entry, style::rtlrect(0, 0, size, size, width()), true);
+		const auto rect = style::rtlrect(0, 0, size, size, width());
+		if (_emoji) {
+			_emoji->paint(p, {
+				.textColor = st::windowSubTextFg->c,
+				.now = crl::now(),
+				.position = rect.topLeft(),
+			});
+		} else if (_entry.type != u"telegram"_q) {
+			PaintIcon(p, _entry, rect, true);
+		}
 	}
 
 private:
 	Entry _entry;
-	object_ptr<Ui::FlatLabel> _label;
+	std::unique_ptr<Ui::Text::CustomEmoji> _emoji;
 
 };
 
@@ -246,6 +257,12 @@ Badges::Badges(
 	style::PaletteChanged() | rpl::on_next([=] { update(); }, lifetime());
 }
 
+void Badges::setColors(QColor seal, QColor glyph) {
+	_seal = seal;
+	_glyph = glyph;
+	update();
+}
+
 void Badges::fitToWidth(int available) {
 	_available = std::max(0, available);
 	updateSize();
@@ -280,7 +297,9 @@ void Badges::paintEvent(QPaintEvent *event) {
 			p.drawText(rect, Qt::AlignCenter,
 				'+' + QString::number(int(_entries.size()) - i));
 		} else {
-			PaintIcon(p, _entries[i], rect, false);
+			auto renderer = QSvgRenderer(IconSvg(_entries[i], false, _seal, _glyph));
+			const auto inset = st::seetgVerificationBadgeInset;
+			renderer.render(&p, QRectF(rect).adjusted(inset, inset, -inset, -inset));
 		}
 	}
 }
@@ -323,7 +342,7 @@ void AddDescriptions(
 			}
 		}
 		for (const auto &entry : descriptions) {
-			rows->add(object_ptr<DescriptionRow>(rows, entry),
+			rows->add(object_ptr<DescriptionRow>(rows, entry, peer),
 				st::seetgVerificationPadding);
 		}
 		*shown = !descriptions.empty();
