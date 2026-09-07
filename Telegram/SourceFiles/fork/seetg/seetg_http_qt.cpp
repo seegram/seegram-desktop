@@ -25,6 +25,7 @@ void Finish(not_null<QNetworkReply*> reply, const Callback &done) {
 	result.status = reply->attribute(
 		QNetworkRequest::HttpStatusCodeAttribute).toInt();
 	result.body = reply->readAll();
+	result.etag = reply->rawHeader("ETag");
 	if (reply->error() != QNetworkReply::NoError && !result.status) {
 		result.error = reply->errorString();
 	}
@@ -51,8 +52,15 @@ void Post(
 }
 
 void Get(const QString &url, crl::time timeout, Callback done) {
+	Get(url, {}, timeout, std::move(done));
+}
+
+void Get(const QString &url, const std::vector<Header> &headers, crl::time timeout, Callback done) {
 	auto request = QNetworkRequest(QUrl(url));
 	request.setTransferTimeout(timeout);
+	for (const auto &header : headers) {
+		request.setRawHeader(header.name, header.value);
+	}
 	const auto reply = Manager().get(request);
 	QObject::connect(reply, &QNetworkReply::finished, [=] {
 		Finish(reply, done);
