@@ -64,6 +64,9 @@ build without publishing; usage is documented at the top of each script.
 The [release bot](bot/README.md) previews the version, prepares the committed
 counter and runs a pinned commit. Prefer `/release` for automatic numbering.
 Windows releases target x64 only; x86 and ARM64 are not served.
+The Windows packer receives explicit root files, never `-path .`; the publisher
+verifies the signed file table contains `SeeGram.exe` and `Updater.exe` at its
+root before updating the feed.
 
 Every release includes the shared [installation guide](release-installation.md).
 Both macOS and Windows release creators read this file, so the instructions
