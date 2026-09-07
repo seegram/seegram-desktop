@@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/seetg/seetg_http.h"
 #include "base/weak_ptr.h"
 #include "core/version.h"
+#include "fork/build_counter.h"
 #include "main/main_session.h"
 
 #include <QtCore/QJsonArray>
@@ -142,7 +143,16 @@ void SendSigned(
 
 	const auto headers = std::vector<Http::Header>{
 		{ "Content-Type", "application/json" },
-		{ "Authorization", ("tma " + initData).toUtf8() },
+		{ "X-SeeGram-Version", (QString::fromLatin1(AppVersionStr)
+			+ u"-build."_q + QString::number(Fork::BuildCounter)).toUtf8() },
+#ifdef Q_OS_MAC
+		{ "X-SeeGram-Platform", "macos" },
+#elif defined(Q_OS_WIN)
+		{ "X-SeeGram-Platform", "windows" },
+#else
+		{ "X-SeeGram-Platform", "linux" },
+#endif
+		{ "Authorization", ("sg " + initData).toUtf8() },
 		{
 			"User-Agent",
 			("SeeGram Desktop/" + QString::fromLatin1(AppVersionStr)).toUtf8(),
