@@ -85,7 +85,7 @@ constexpr auto kQuery =
 		type = u"zv-mono"_q;
 	}
 	const auto allowed = QStringList{
-		u"main"_q, u"premium"_q, u"deleted"_q, u"market"_q,
+		u"main"_q, u"premium"_q, u"beta"_q, u"deleted"_q, u"market"_q,
 		u"casino"_q, u"poop"_q, u"zv"_q, u"zv-mono"_q,
 		u"giftchanges"_q, u"warning"_q,
 	};
