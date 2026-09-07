@@ -651,6 +651,7 @@ PRIVATE
     fork/seetg/seetg_gifts.h
     fork/seetg/seetg_card.cpp
     fork/seetg/seetg_card.h
+    fork/seetg/seetg_history_layout.h
     fork/seetg/seetg_history.cpp
     fork/seetg/seetg_history.h
     fork/fork_plural.h
