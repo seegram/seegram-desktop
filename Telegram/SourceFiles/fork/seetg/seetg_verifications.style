@@ -1,7 +1,6 @@
 using "info/info.style";
 
-seetgVerificationBadgeSize: 18px;
-seetgVerificationBadgeInset: 2px;
+seetgVerificationBadgeInset: 1px;
 seetgVerificationBadgeSkip: 4px;
 seetgVerificationMinTitleWidth: 64px;
 seetgVerificationDescriptionIcon: 18px;
