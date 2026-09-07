@@ -68,8 +68,9 @@ workflow. Private signing keys remain on the runners.
 
 The see.tg integration reads profile verifications from the same backend as
 @seetgbot. Badge artwork follows the miniapp; `slot` controls which side of
-the name displays each badge. Descriptions appear as icon-and-text rows below
-profile information, with inline formatting and links. Telegram verification,
+the name displays each badge. Badges use the native verification size and theme colors. Descriptions appear
+as icon-and-text rows in the lower verification block, alongside Telegram
+descriptions, with inline formatting and links. Telegram verification,
 Premium and bot verification remain independent.
 
 The implementation lives in `Telegram/SourceFiles/fork/seetg/seetg_verifications.*`;
