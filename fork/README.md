@@ -77,6 +77,16 @@ The implementation lives in `Telegram/SourceFiles/fork/seetg/seetg_verifications
 SVG resources live in `Telegram/Resources/fork/verifications/`. Requests use
 the existing account-scoped see.tg cache and follow the integration toggle.
 
+Descriptions use `descriptionTranslations` from the backend, choosing the
+client’s SeeGram language, then English, then the original `description`.
+The miniapp selects its own UI language independently. Telegram-issued
+verification descriptions remain the text provided by Telegram.
+
+All 30 SeeGram dictionaries live in `Telegram/Resources/fork/langs/`.
+`fork_lang.cpp` lists the language metadata and stable string keys. Run
+`python3 fork/check_locales.py` after editing dictionaries; it checks every
+key, language resource and interpolation token.
+
 ## Upstream updates
 
 The fork is maintained as commits on top of Telegram Desktop. Keep changes
