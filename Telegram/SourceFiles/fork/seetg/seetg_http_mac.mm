@@ -20,6 +20,11 @@ void Send(NSMutableURLRequest *request, Callback done) {
 		auto result = Response();
 		if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
 			result.status = int(((NSHTTPURLResponse*)response).statusCode);
+			for (NSString *key in ((NSHTTPURLResponse*)response).allHeaderFields) {
+				if ([key caseInsensitiveCompare:@"ETag"] == NSOrderedSame) {
+					result.etag = QString::fromNSString([((NSHTTPURLResponse*)response).allHeaderFields[key] description]).toUtf8();
+				}
+			}
 		}
 		if (data) {
 			result.body = QByteArray(
@@ -70,9 +75,17 @@ void Post(
 }
 
 void Get(const QString &url, crl::time timeout, Callback done) {
+	Get(url, {}, timeout, std::move(done));
+}
+
+void Get(const QString &url, const std::vector<Header> &headers, crl::time timeout, Callback done) {
 	@autoreleasepool {
 		NSMutableURLRequest *request = Make(url, timeout);
 		request.HTTPMethod = @"GET";
+		for (const auto &header : headers) {
+			[request setValue:[NSString stringWithUTF8String:header.value.constData()]
+				forHTTPHeaderField:[NSString stringWithUTF8String:header.name.constData()]];
+		}
 		Send(request, std::move(done));
 	}
 }

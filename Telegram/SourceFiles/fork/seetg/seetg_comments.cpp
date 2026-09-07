@@ -15,6 +15,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/seetg/seetg_settings.h"
 #include "fork/seetg/seetg_types.h"
 #include "fork/seetg/seetg_verifications.h"
+#include "fork/seetg/seetg_badge_icons.h"
 #include "fork/seetg/seetg_visuals.h"
 #include "base/weak_ptr.h"
 #include "data/data_peer.h"
@@ -407,6 +408,7 @@ public:
 			x += textWidth + st::lineWidth * 3;
 			badges(u"right"_q);
 		});
+		BadgeIcons::Changes() | rpl::on_next([=] { _name->update(); }, lifetime());
 		_name->setAccessibleName(name);
 		_name->setToolTip(name);
 		_name->addClickHandler([=] { openAuthor(_item.author); });

@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/seetg/seetg_verifications.h"
+#include "fork/seetg/seetg_badge_icons.h"
 #include "fork/seetg/seetg_verification_icon.h"
 
 #include "fork/fork_lang.h"
@@ -84,6 +85,9 @@ constexpr auto kQuery =
 	if (description && type == u"zv"_q) {
 		type = u"zv-mono"_q;
 	}
+	if (const auto remote = BadgeIcons::Cached(type); !remote.isEmpty()) {
+		return remote;
+	}
 	const auto allowed = QStringList{
 		u"main"_q, u"premium"_q, u"beta"_q, u"deleted"_q, u"market"_q,
 		u"casino"_q, u"poop"_q, u"zv"_q, u"zv-mono"_q,
@@ -134,6 +138,7 @@ public:
 						Data::CustomEmojiSizeTag::Normal));
 			}
 		}
+		BadgeIcons::Changes() | rpl::on_next([=] { update(); }, lifetime());
 		style::PaletteChanged() | rpl::on_next([=] { update(); }, lifetime());
 	}
 
@@ -179,6 +184,9 @@ Entries Parse(const QJsonObject &owner) {
 		if (type.isEmpty()) {
 			continue;
 		}
+		BadgeIcons::Request(type);
+		if (type == u"zv"_q) BadgeIcons::Request(u"zv-mono"_q);
+		if (object.value(u"warning"_q).toBool()) BadgeIcons::Request(u"warning"_q);
 		const auto translations = object.value(u"descriptionTranslations"_q).toObject();
 		auto html = translations.value(Lang::ResolvedId()).toString();
 		if (html.isEmpty()) {
@@ -252,6 +260,7 @@ Badges::Badges(
 		QString slot,
 		bool enabled)
 : AbstractButton(parent) {
+	BadgeIcons::Changes() | rpl::on_next([=] { update(); }, lifetime());
 	setAccessibleName(u"see.tg"_q);
 	resize(0, BadgeSize());
 	if (!enabled) {
