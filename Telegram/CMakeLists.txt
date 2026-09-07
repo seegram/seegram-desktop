@@ -635,6 +635,8 @@ PRIVATE
     fork/spy_ui.cpp
     fork/spy_ui.h
     fork/update_feed.h
+    fork/seetg/seetg_verifications.cpp
+    fork/seetg/seetg_verifications.h
     fork/seetg/seetg_api.cpp
     fork/seetg/seetg_api.h
     fork/seetg/seetg_auth.cpp
@@ -2288,6 +2290,7 @@ PRIVATE
     qrc/telegram/export.qrc
     qrc/telegram/export_rich.qrc
     qrc/telegram/picker.qrc
+    qrc/telegram/seegram_verifications.qrc
     qrc/telegram/telegram.qrc
     qrc/telegram/sounds.qrc
     winrc/Telegram.rc

@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/info_profile_actions.h"
 
+#include "fork/seetg/seetg_verifications.h"
+
 #include "api/api_blocked_peers.h"
 #include "api/api_chat_participants.h"
 #include "api/api_credits.h"
@@ -2730,6 +2732,9 @@ void DetailsFiller::buildSections() {
 		_stack->addPlainSeparator();
 	}
 	_stack->add(makeInfo());
+	if (!_topic && !_sublist) {
+		Fork::SeeTg::Verification::AddDescriptions(_stack, _peer);
+	}
 	if (const auto user = _peer->asUser()) {
 		_stack->add(makeAddAsContact(user));
 		addBotVerify();
