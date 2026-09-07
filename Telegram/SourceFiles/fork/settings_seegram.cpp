@@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/fork_lang.h"
 #include "fork/settings_ghost.h"
 #include "fork/settings_marks.h"
+#include "fork/settings_seetg.h"
 #include "fork/settings_spy.h"
 #include "core/click_handler_types.h"
 #include "core/version.h"
@@ -182,6 +183,12 @@ void BuildContent(
 		Key::Messages,
 		st::menuIconChatBubble,
 		Marks::SectionId(),
+		showOther);
+	AddCategory(
+		container,
+		Key::SeeTgTitle,
+		st::menuIconLinks,
+		SeeTg::SectionId(),
 		showOther);
 	AddLanguage(container, controller);
 	Ui::AddSkip(container);

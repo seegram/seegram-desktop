@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/info_profile_shared_media_classic.h"
 
+#include "fork/seetg/seetg_history.h"
+
 #include "core/ui_integration.h"
 #include "data/components/recent_shared_media_gifts.h"
 #include "data/data_channel.h"
@@ -343,6 +345,10 @@ object_ptr<Ui::SlideWrap<Ui::RpWidget>> SetupSharedMediaClassic(
 	if (!topic) {
 		addStoriesButton(peer, st::infoIconMediaStories);
 		addPeerGiftsButton(peer, st::infoIconMediaGifts);
+		object_ptr<FloatingIcon>(
+			Fork::SeeTg::History::AddButton(content, controller, peer, tracker),
+			st::infoIconMediaStoriesRecent,
+			st::infoSharedMediaButtonIconPosition);
 		addSavedSublistButton(peer, st::infoIconMediaSaved);
 	}
 	addMediaButton(MediaType::Photo, st::infoIconMediaPhoto);

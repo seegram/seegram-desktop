@@ -299,6 +299,643 @@ constexpr Entry Table[] = {
 		"Очистити збережені видалені повідомлення цього чату?",
 		"Bu chatda saqlangan o‘chirilgan xabarlar tozalansinmi?",
 	},
+
+	{ // SeeTgTitle
+		"see.tg integration",
+		"Интеграция see.tg",
+		"Інтеграція see.tg",
+		"see.tg integratsiyasi",
+	},
+	{ // SeeTgEnabled
+		"Enable see.tg",
+		"Включить see.tg",
+		"Увімкнути see.tg",
+		"see.tg ni yoqish",
+	},
+	{ // SeeTgAbout
+		"Adds a see.tg view to the gifts tab of a profile: NFT and regular "
+		"gifts, hidden ones included, with filters and sorting. Signs in "
+		"through @seetgbot on its own.",
+		"Добавляет во вкладку подарков профиля режим see.tg: NFT и обычные "
+		"подарки, включая скрытые, с фильтрами и сортировкой. Входит через "
+		"@seetgbot сам.",
+		"Додає у вкладку подарунків профілю режим see.tg: NFT і звичайні "
+		"подарунки, зокрема приховані, з фільтрами та сортуванням. Входить "
+		"через @seetgbot сам.",
+		"Profil sovg‘alar bo‘limiga see.tg rejimini qo‘shadi: NFT va oddiy "
+		"sovg‘alar, yashirinlari bilan, filtrlar va saralash. @seetgbot "
+		"orqali o‘zi kiradi.",
+	},
+	{ // SeeTgSignInAgain
+		"Sign in again",
+		"Войти заново",
+		"Увійти заново",
+		"Qayta kirish",
+	},
+	{ // SeeTgSignedOut
+		"Signed out of see.tg, the next request signs in again.",
+		"Сессия see.tg сброшена, следующий запрос войдёт заново.",
+		"Сесію see.tg скинуто, наступний запит увійде заново.",
+		"see.tg sessiyasi tozalandi, keyingi so‘rov qayta kiradi.",
+	},
+	{ // SeeTgTabTelegram
+		"Telegram",
+		"Telegram",
+		"Telegram",
+		"Telegram",
+	},
+	{ // SeeTgTabSeeTg
+		"see.tg",
+		"see.tg",
+		"see.tg",
+		"see.tg",
+	},
+	{ // SeeTgKindUpgraded
+		"Upgraded",
+		"Улучшенные",
+		"Покращені",
+		"Yaxshilangan",
+	},
+	{ // SeeTgKindLimited
+		"Non-upgraded",
+		"Не улучшенные",
+		"Не покращені",
+		"Yaxshilanmagan",
+	},
+	{ // SeeTgKindRegular
+		"Regular",
+		"Обычные",
+		"Звичайні",
+		"Oddiy",
+	},
+	{ // SeeTgHiddenToggle
+		"Hidden",
+		"Скрытые",
+		"Приховані",
+		"Yashirin",
+	},
+	{ // SeeTgFilters
+		"Filters",
+		"Фильтры",
+		"Фільтри",
+		"Filtrlar",
+	},
+	{ // SeeTgSort
+		"Sort",
+		"Сортировка",
+		"Сортування",
+		"Saralash",
+	},
+	{ // SeeTgSortNumberAsc
+		"By number, ascending",
+		"По номеру, по возрастанию",
+		"За номером, за зростанням",
+		"Raqam bo‘yicha, o‘sish",
+	},
+	{ // SeeTgSortNumberDesc
+		"By number, descending",
+		"По номеру, по убыванию",
+		"За номером, за спаданням",
+		"Raqam bo‘yicha, kamayish",
+	},
+	{ // SeeTgSortName
+		"By name",
+		"По названию",
+		"За назвою",
+		"Nomi bo‘yicha",
+	},
+	{ // SeeTgSortEstimate
+		"By estimate",
+		"По оценке",
+		"За оцінкою",
+		"Baho bo‘yicha",
+	},
+	{ // SeeTgSortPrice
+		"By price",
+		"По цене",
+		"За ціною",
+		"Narx bo‘yicha",
+	},
+	{ // SeeTgFilterCollection
+		"Collection",
+		"Коллекция",
+		"Колекція",
+		"Kolleksiya",
+	},
+	{ // SeeTgFilterModel
+		"Model",
+		"Модель",
+		"Модель",
+		"Model",
+	},
+	{ // SeeTgFilterBackdrop
+		"Backdrop",
+		"Фон",
+		"Тло",
+		"Fon",
+	},
+	{ // SeeTgFilterPattern
+		"Pattern",
+		"Узор",
+		"Візерунок",
+		"Naqsh",
+	},
+	{ // SeeTgFilterNumber
+		"Number, e.g. 1-100",
+		"Номер, например 1-100",
+		"Номер, наприклад 1-100",
+		"Raqam, masalan 1-100",
+	},
+	{ // SeeTgFilterOnSale
+		"Only on sale",
+		"Только продающиеся",
+		"Лише у продажу",
+		"Faqat sotuvdagilar",
+	},
+	{ // SeeTgFilterHint
+		"Names as on see.tg, several separated by commas.",
+		"Названия как на see.tg, несколько через запятую.",
+		"Назви як на see.tg, кілька через кому.",
+		"Nomlar see.tg dagidek, bir nechtasi vergul bilan.",
+	},
+	{ // SeeTgApply
+		"Apply",
+		"Применить",
+		"Застосувати",
+		"Qo‘llash",
+	},
+	{ // SeeTgLoading
+		"Loading…",
+		"Загрузка…",
+		"Завантаження…",
+		"Yuklanmoqda…",
+	},
+	{ // SeeTgEmpty
+		"Nothing here.",
+		"Здесь пусто.",
+		"Тут порожньо.",
+		"Bu yerda hech narsa yo‘q.",
+	},
+	{ // SeeTgErrorAuth
+		"Could not sign in to see.tg.",
+		"Не удалось войти в see.tg.",
+		"Не вдалося увійти до see.tg.",
+		"see.tg ga kirib bo‘lmadi.",
+	},
+	{ // SeeTgErrorRate
+		"Too many requests, try again in a minute.",
+		"Слишком много запросов, попробуйте через минуту.",
+		"Забагато запитів, спробуйте за хвилину.",
+		"So‘rovlar ko‘p, bir daqiqadan so‘ng urinib ko‘ring.",
+	},
+	{ // SeeTgErrorPremium
+		"This view needs see.tg or Telegram Premium.",
+		"Этот раздел доступен с see.tg или Telegram Premium.",
+		"Цей розділ доступний із see.tg або Telegram Premium.",
+		"Bu bo‘lim see.tg yoki Telegram Premium bilan ochiladi.",
+	},
+	{ // SeeTgErrorNetwork
+		"see.tg is unreachable.",
+		"see.tg недоступен.",
+		"see.tg недоступний.",
+		"see.tg ga ulanib bo‘lmadi.",
+	},
+	{ // SeeTgErrorOther
+		"see.tg returned an error.",
+		"see.tg вернул ошибку.",
+		"see.tg повернув помилку.",
+		"see.tg xato qaytardi.",
+	},
+	{ // SeeTgResolveTitle
+		"Peer lookup",
+		"Поиск пользователей",
+		"Пошук користувачів",
+		"Foydalanuvchilarni qidirish",
+	},
+	{ // SeeTgResolveByGift
+		"By gift, no limits",
+		"По подарку, без лимитов",
+		"За подарунком, без лімітів",
+		"Sovg‘a bo‘yicha, cheklovsiz",
+	},
+	{ // SeeTgResolveByUsername
+		"By username, up to 200 a day",
+		"По username, до 200 в сутки",
+		"За username, до 200 на добу",
+		"Username bo‘yicha, kuniga 200 tagacha",
+	},
+	{ // SeeTgResolveFallback
+		"Fall back to username",
+		"Запасной путь через username",
+		"Запасний шлях через username",
+		"Username orqali zaxira yo‘l",
+	},
+	{ // SeeTgResolveAbout
+		"see.tg knows a person's id but not the key Telegram needs to show "
+		"them. By gift asks Telegram for any collectible the person holds and "
+		"gets the key with it; by username spends the account's daily ration "
+		"of lookups.",
+		"see.tg знает id человека, но не ключ, без которого Telegram его не "
+		"покажет. По подарку клиент запрашивает у Telegram любой NFT этого "
+		"человека и получает ключ вместе с ним; по username расходуется "
+		"дневной лимит запросов аккаунта.",
+		"see.tg знає id людини, але не ключ, без якого Telegram її не покаже. "
+		"За подарунком клієнт запитує в Telegram будь-який NFT цієї людини й "
+		"отримує ключ разом із ним; за username витрачається добовий ліміт "
+		"запитів облікового запису.",
+		"see.tg odamning id sini biladi, ammo Telegram uni ko‘rsatishi uchun "
+		"kerak kalitni emas. Sovg‘a bo‘yicha mijoz Telegramdan bu odamning "
+		"istalgan NFT sini so‘raydi va kalitni u bilan oladi; username "
+		"bo‘yicha akkauntning kunlik so‘rovlar limiti sarflanadi.",
+	},
+	{ // SeeTgResolveAuto
+		"Find out the sender automatically",
+		"Узнавать отправителя автоматически",
+		"Дізнаватися відправника автоматично",
+		"Yuboruvchini avtomatik aniqlash",
+	},
+	{ // SeeTgWhoIs
+		"Who is it",
+		"Узнать кто",
+		"Дізнатися хто",
+		"Kimligini bilish",
+	},
+	{ // SeeTgWhoIsFailed
+		"Could not find out who that is.",
+		"Не удалось узнать, кто это.",
+		"Не вдалося дізнатися, хто це.",
+		"Bu kimligini aniqlab bo‘lmadi.",
+	},
+	{ // SeeTgHistoryButton
+		"History",
+		"История",
+		"Історія",
+		"Tarix",
+	},
+	{ // SeeTgHistoryTabNft
+		"NFT",
+		"NFT",
+		"NFT",
+		"NFT",
+	},
+	{ // SeeTgHistoryTabInfo
+		"Info",
+		"Инфо",
+		"Інфо",
+		"Maʼlumot",
+	},
+	{ // SeeTgHistoryEmpty
+		"No history yet",
+		"История пуста",
+		"Історія порожня",
+		"Tarix boʻsh",
+	},
+	{ // SeeTgHistoryError
+		"Couldn't load the history",
+		"Не удалось загрузить историю",
+		"Не вдалося завантажити історію",
+		"Tarixni yuklab boʻlmadi",
+	},
+	{ // SeeTgHistoryLimitDay
+		"Free requests are over for today. With see.tg Premium there is no "
+		"limit.",
+		"Бесплатные запросы на сегодня закончились. С see.tg Premium лимита "
+		"нет.",
+		"Безкоштовні запити на сьогодні закінчилися. З see.tg Premium ліміту "
+		"немає.",
+		"Bugungi bepul so‘rovlar tugadi. see.tg Premium bilan limit yo‘q.",
+	},
+	{ // SeeTgHistoryLimitProfile
+		"You have opened this profile's history too many times today. With "
+		"see.tg Premium there is no limit.",
+		"Историю этого профиля вы сегодня открывали слишком часто. С see.tg "
+		"Premium лимита нет.",
+		"Історію цього профілю ви сьогодні відкривали надто часто. З see.tg "
+		"Premium ліміту немає.",
+		"Bu profil tarixini bugun juda ko‘p ochdingiz. see.tg Premium bilan "
+		"cheklov yo‘q.",
+	},
+	{ // SeeTgHistoryHiddenTitle
+		"History is hidden",
+		"История скрыта",
+		"Історію приховано",
+		"Tarix yashirilgan",
+	},
+	{ // SeeTgHistoryHiddenText
+		"The owner hides their history with see.tg Premium.",
+		"Владелец скрыл историю передач с помощью see.tg Premium.",
+		"Власник приховав історію передач за допомогою see.tg Premium.",
+		"Egasi tarixini see.tg Premium yordamida yashirgan.",
+	},
+	{ // SeeTgHistoryTransfersHiddenTitle
+		"Transfers are hidden",
+		"Передачи скрыты",
+		"Передачі приховано",
+		"Oʻtkazmalar yashirilgan",
+	},
+	{ // SeeTgHistoryTransfersHiddenText
+		"The owner hides their transfers from this profile's history.",
+		"Владелец скрыл свои передачи из истории профиля.",
+		"Власник приховав свої передачі з історії профілю.",
+		"Egasi oʻz oʻtkazmalarini profil tarixidan yashirgan.",
+	},
+	{ // SeeTgHistoryPremiumSub
+		"hides the whole history",
+		"скрывает историю целиком",
+		"приховує історію повністю",
+		"butun tarixni yashiradi",
+	},
+	{ // SeeTgHistoryHoldTitle
+		"Hold {m}",
+		"Холд {m}",
+		"Холд {m}",
+		"Hold {m}",
+	},
+	{ // SeeTgHistoryHoldSub
+		"hides transfers from the profile",
+		"скрывает передачи из профиля",
+		"приховує передачі з профілю",
+		"profildan oʻtkazmalarni yashiradi",
+	},
+	{ // SeeTgHistoryHoldSubBase
+		"basic hiding, transfers only",
+		"базовое скрытие, только передачи",
+		"базове приховування, лише передачі",
+		"oddiy yashirish, faqat oʻtkazmalar",
+	},
+	{ // SeeTgHistoryOpenApp
+		"Open in see.tg",
+		"Открыть в see.tg",
+		"Відкрити в see.tg",
+		"see.tg da ochish",
+	},
+	{ // SeeTgHistoryHiddenEvent
+		"Hidden event",
+		"Событие скрыто",
+		"Подію приховано",
+		"Voqea yashirilgan",
+	},
+	{ // SeeTgHistoryHiddenEventText
+		"A participant hides their history with see.tg Premium.",
+		"Участник события скрыл свою историю с помощью see.tg Premium.",
+		"Учасник події приховав свою історію за допомогою see.tg Premium.",
+		"Ishtirokchi oʻz tarixini see.tg Premium yordamida yashirgan.",
+	},
+	{ // SeeTgHistoryGiftSent
+		"Gift sent",
+		"Подарок отправлен",
+		"Подарунок надіслано",
+		"Sovgʻa yuborildi",
+	},
+	{ // SeeTgHistoryGiftReceived
+		"Gift received",
+		"Подарок получен",
+		"Подарунок отримано",
+		"Sovgʻa olindi",
+	},
+	{ // SeeTgHistoryGiftMoved
+		"Gift moved",
+		"Подарок перемещён",
+		"Подарунок переміщено",
+		"Sovgʻa koʻchirildi",
+	},
+	{ // SeeTgHistoryGiftHidden
+		"Gift hidden",
+		"Подарок скрыт",
+		"Подарунок приховано",
+		"Sovgʻa yashirildi",
+	},
+	{ // SeeTgHistoryGiftOpened
+		"Gift opened",
+		"Подарок открыт",
+		"Подарунок відкрито",
+		"Sovgʻa ochildi",
+	},
+	{ // SeeTgHistoryGiftUpgraded
+		"Gift upgraded",
+		"Подарок улучшен",
+		"Подарунок покращено",
+		"Sovgʻa yaxshilandi",
+	},
+	{ // SeeTgHistorySavedGone
+		"Gift left the profile",
+		"Подарок пропал с профиля",
+		"Подарунок зник з профілю",
+		"Sovgʻa profildan yoʻqoldi",
+	},
+	{ // SeeTgHistorySavedBack
+		"Gift is back on the profile",
+		"Подарок вернулся на профиль",
+		"Подарунок повернувся на профіль",
+		"Sovgʻa profilga qaytdi",
+	},
+	{ // SeeTgHistorySavedGoneHint
+		"Hidden, upgraded or converted to stars. Telegram does not say which.",
+		"Скрыт, улучшен или обменян на звёзды. Telegram не сообщает, что "
+		"именно.",
+		"Прихований, покращений або обміняний на зірки. Telegram не "
+		"повідомляє, що саме.",
+		"Yashirilgan, yaxshilangan yoki yulduzlarga almashtirilgan. Telegram "
+		"qaysi biri ekanini aytmaydi.",
+	},
+	{ // SeeTgHistorySavedGoneHidden
+		"Hidden by the owner",
+		"Скрыт владельцем",
+		"Прихований власником",
+		"Egasi yashirgan",
+	},
+	{ // SeeTgHistorySavedGoneUpgraded
+		"Hidden or upgraded",
+		"Скрыт или улучшен",
+		"Прихований або покращений",
+		"Yashirilgan yoki yaxshilangan",
+	},
+	{ // SeeTgHistorySavedGoneConverted
+		"Hidden or converted to stars",
+		"Скрыт или обменян на звёзды",
+		"Прихований або обміняний на зірки",
+		"Yashirilgan yoki yulduzlarga almashtirilgan",
+	},
+	{ // SeeTgHistorySavedGift
+		"Regular gift",
+		"Обычный подарок",
+		"Звичайний подарунок",
+		"Oddiy sovgʻa",
+	},
+	{ // SeeTgHistoryFrom
+		"from",
+		"от",
+		"від",
+		"kimdan",
+	},
+	{ // SeeTgHistoryTo
+		"to",
+		"кому",
+		"кому",
+		"kimga",
+	},
+	{ // SeeTgHistoryUnknownOwner
+		"User",
+		"Пользователь",
+		"Користувач",
+		"Foydalanuvchi",
+	},
+	{ // SeeTgHistoryEmptyValue
+		"empty",
+		"пусто",
+		"порожньо",
+		"boʻsh",
+	},
+	{ // SeeTgHistoryFieldFirstName
+		"First name",
+		"Имя",
+		"Імʼя",
+		"Ism",
+	},
+	{ // SeeTgHistoryFieldLastName
+		"Last name",
+		"Фамилия",
+		"Прізвище",
+		"Familiya",
+	},
+	{ // SeeTgHistoryFieldPremium
+		"Premium",
+		"Premium",
+		"Premium",
+		"Premium",
+	},
+	{ // SeeTgHistoryFieldUsername
+		"Username",
+		"Username",
+		"Username",
+		"Username",
+	},
+	{ // SeeTgHistoryFieldUsernames
+		"Usernames",
+		"Usernames",
+		"Usernames",
+		"Usernames",
+	},
+	{ // SeeTgHistoryFieldTitle
+		"Title",
+		"Название",
+		"Назва",
+		"Nomi",
+	},
+	{ // SeeTgHistoryFieldVerified
+		"Verified",
+		"Верификация",
+		"Верифікація",
+		"Verifikatsiya",
+	},
+	{ // SeeTgHistoryFieldDeleted
+		"Deleted",
+		"Удалён",
+		"Видалений",
+		"Oʻchirilgan",
+	},
+	{ // SeeTgHistoryFieldScam
+		"Scam",
+		"Scam",
+		"Scam",
+		"Scam",
+	},
+	{ // SeeTgHistoryFieldFake
+		"Fake",
+		"Fake",
+		"Fake",
+		"Fake",
+	},
+	{ // SeeTgHistoryFromLabel
+		"From",
+		"От",
+		"Від",
+		"Kimdan",
+	},
+	{ // SeeTgHistoryToLabel
+		"To",
+		"Кому",
+		"Кому",
+		"Kimga",
+	},
+	{ // SeeTgHistoryDateLabel
+		"Date",
+		"Дата",
+		"Дата",
+		"Sana",
+	},
+	{ // SeeTgHistoryGiftLabel
+		"Gift",
+		"Подарок",
+		"Подарунок",
+		"Sovgʻa",
+	},
+	{ // SeeTgHistoryOpenGift
+		"Open gift",
+		"Открыть подарок",
+		"Відкрити подарунок",
+		"Sovgʻani ochish",
+	},
+	{ // SeeTgHistoryNewestFirst
+		"Newest first",
+		"Сначала новые",
+		"Спочатку нові",
+		"Avval yangilari",
+	},
+	{ // SeeTgHistoryOldestFirst
+		"Oldest first",
+		"Сначала старые",
+		"Спочатку старі",
+		"Avval eskilari",
+	},
+	{ // SeeTgHistorySent
+		"Sent",
+		"Отправленные",
+		"Надіслані",
+		"Yuborilgan",
+	},
+	{ // SeeTgHistoryReceived
+		"Received",
+		"Полученные",
+		"Отримані",
+		"Olingan",
+	},
+	{ // SeeTgHistoryGone
+		"Departures",
+		"Пропажи",
+		"Зникнення",
+		"Yoʻqolishlar",
+	},
+	{ // SeeTgHistoryProfileFields
+		"Profile",
+		"Профиль",
+		"Профіль",
+		"Profil",
+	},
+	{ // SeeTgFilterAny
+		"Any",
+		"Любые",
+		"Будь-які",
+		"Istalgan",
+	},
+	{ // SeeTgPickCollectionFirst
+		"Pick a collection first",
+		"Сначала выберите коллекцию",
+		"Спочатку виберіть колекцію",
+		"Avval kolleksiyani tanlang",
+	},
+	{ // SeeTgHistoryMore
+		"Details",
+		"Подробнее",
+		"Докладніше",
+		"Batafsil",
+	},
+	{ // SeeTgHistoryBuy
+		"Buy",
+		"Купить",
+		"Купити",
+		"Sotib olish",
+	},
 };
 
 static_assert(std::size(Table) == int(Key::Count));
