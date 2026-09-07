@@ -99,18 +99,18 @@ constexpr auto kQuery =
 void PaintIcon(
 		QPainter &p,
 		const Entry &entry,
-		QRect rect,
+		QRectF rect,
 		bool description,
 		QColor color) {
 	const auto svg = IconSvg(entry, description);
 	if (svg.contains("$SEAL")) {
 		const auto ratio = p.device()->devicePixelRatioF();
-		const auto image = TintIcon(svg, rect.size() * ratio,
+		const auto image = TintIcon(svg, (rect.size() * ratio).toSize(),
 			(description && entry.warning) ? st::attentionButtonFg->c : color);
 		p.drawImage(rect, image);
 	} else {
 		auto renderer = QSvgRenderer(svg);
-		renderer.render(&p, QRectF(rect));
+		renderer.render(&p, rect);
 	}
 }
 
@@ -314,9 +314,9 @@ void Badges::paintEvent(QPaintEvent *event) {
 			p.drawText(rect, Qt::AlignCenter,
 				'+' + QString::number(int(_entries.size()) - i));
 		} else {
-			const auto inset = st::seetgVerificationBadgeInset;
+			const auto inset = size * (1. - st::seetgVerificationBadgeScale) / 2.;
 			PaintIcon(p, _entries[i],
-				rect.adjusted(inset, inset, -inset, -inset), false,
+				QRectF(rect).adjusted(inset, inset, -inset, -inset), false,
 				_color.isValid() ? _color : st::profileVerifiedCheckBg->c);
 		}
 	}
