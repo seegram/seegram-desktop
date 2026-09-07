@@ -14,7 +14,7 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][int]$Counter,
+    [Parameter(Mandatory = $true)][long]$Counter,
     [switch]$NoPublish
 )
 
@@ -47,11 +47,8 @@ $buildDir    = "out\Release"
 
 # ------------------------------------------------------------------ preflight
 
-if ($Counter -lt 1) { Fail "the counter must be 1 or greater" }
-# The counter file is the one thing a release is allowed to have changed:
-# this script writes it itself, so re-running must not trip over that.
-$dirty = @(git status --porcelain --untracked-files=no |
-    Where-Object { $_ -notmatch 'fork/build_counter\.h$' })
+if ($Counter -lt 1 -or $Counter -gt 4294967295) { Fail "the counter must be between 1 and 4294967295" }
+$dirty = @(git status --porcelain --untracked-files=no)
 if ($dirty) {
     Write-Host ($dirty -join "`n")
     Fail "working tree is dirty - a release must be reproducible."
@@ -83,11 +80,7 @@ Write-Host "    platform         : $platformKey"
 $counterFile = "Telegram\SourceFiles\fork\build_counter.h"
 $current = (Select-String -Path $counterFile -Pattern '^#define SEEGRAM_BUILD_COUNTER (\d+)').Matches[0].Groups[1].Value
 if ($current -ne "$Counter") {
-    Write-Host "==> setting the build counter to $Counter"
-    (Get-Content $counterFile) `
-        -replace '^#define SEEGRAM_BUILD_COUNTER .*', "#define SEEGRAM_BUILD_COUNTER $Counter" `
-        | Set-Content $counterFile -Encoding UTF8
-    Write-Host "    remember to commit $counterFile"
+    Fail "counter differs from $counterFile; commit the intended counter before releasing."
 }
 
 # cmake, MSBuild and the toolchain only exist inside the Visual Studio
@@ -305,7 +298,7 @@ print('feed updated for ' + platform)
         if ($LASTEXITCODE -ne 0) {
             $notes = "Telegram Desktop $versionStr, SeeGram build $Counter.`n`n" +
                 "Installed copies update themselves; this archive is for a first install."
-            gh release create $tag --repo $slug --title "SeeGram $versionStr build $Counter" --notes $notes | Out-Null
+            gh release create $tag --repo $slug --target (git rev-parse HEAD) --title "SeeGram $versionStr build $Counter" --notes $notes | Out-Null
         }
         # "file#label": GitHub shows the label on the release page and keeps
         # the file name for the download, which is how upstream's page reads

@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
     inputs:
       counter:
-        description: "Fork build counter within the current upstream version"
+        description: "Committed counter from Telegram/SourceFiles/fork/build_counter.h"
         required: true
         type: string
       publish:

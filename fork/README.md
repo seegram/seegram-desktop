@@ -36,6 +36,20 @@ env -u QT cmake -S . -B out
 cmake --build out --config Release --target Telegram
 ```
 
+## Version numbers
+
+`Telegram/build/version` and `core/version.h` follow the upstream version.
+`Telegram/SourceFiles/fork/build_counter.h` holds the SeeGram release counter.
+For example, `7.2.5 (build 1)` is the first SeeGram release based on Telegram
+Desktop 7.2.5. Increment the counter for a new SeeGram release on the same
+base; reset it to 1 when moving to a new upstream version. Local rebuilds do
+not increment it.
+
+Commit a counter change before releasing. Release scripts require a clean
+tracked tree and an input counter matching the header; they never rewrite it.
+The client and update packages compare `(upstream_version << 32) | counter`,
+so a newer upstream version sorts after all builds of the previous version.
+
 ## Releases
 
 The manually triggered [SeeGram Release workflow](../.github/workflows/seegram-release.yml)
