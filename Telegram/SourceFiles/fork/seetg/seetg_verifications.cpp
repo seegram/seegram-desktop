@@ -19,6 +19,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/text/text_html_tags.h"
 #include "ui/widgets/labels.h"
 #include "ui/wrap/vertical_layout.h"
+#include "ui/vertical_list.h"
 #include "styles/style_info.h"
 #include "styles/style_seetg_verifications.h"
 
@@ -88,18 +89,21 @@ constexpr auto kQuery =
 	const auto warning = type == u"warning"_q;
 	const auto seal = warning ? st::attentionButtonFg->c
 		: mono ? st::windowSubTextFg->c
-		: type == u"premium"_q ? st::windowActiveTextFg->c
-		: type == u"poop"_q ? QColor::fromRgb(0xa56b3f)
-		: QColor::fromRgb(0x0088ff);
-	const auto glyph = (mono || type == u"premium"_q) && !warning
-		? st::windowBg->c
-		: QColor(Qt::white);
+		: st::profileVerifiedCheckBg->c;
+	const auto glyph = mono && !warning
+		? st::boxDividerBg->c
+		: st::profileVerifiedCheckFg->c;
 	return file.readAll()
 		.replace("$SEAL", seal.name().toUtf8())
 		.replace("$GLYPH", glyph.name().toUtf8());
 }
 
 void PaintIcon(QPainter &p, const Entry &entry, QRect rect, bool mono) {
+	if (entry.type == u"telegram"_q) {
+		st::infoVerifiedStar.paintInCenter(p, rect, st::windowSubTextFg->c);
+		st::infoVerifiedCheck.paintInCenter(p, rect, st::boxDividerBg->c);
+		return;
+	}
 	auto renderer = QSvgRenderer(IconSvg(entry, mono));
 	renderer.render(&p, QRectF(rect));
 }
@@ -111,7 +115,7 @@ public:
 	, _entry(std::move(entry))
 	, _label(this, rpl::single(_entry.description), st::seetgVerificationDescription) {
 		_label->setSelectable(true);
-		setToolTip(u"see.tg"_q);
+		setToolTip(_entry.type == u"telegram"_q ? u"Telegram"_q : u"see.tg"_q);
 		style::PaletteChanged() | rpl::on_next([=] { update(); }, lifetime());
 	}
 
@@ -283,24 +287,46 @@ void Badges::paintEvent(QPaintEvent *event) {
 
 void AddDescriptions(
 		not_null<Info::Profile::SectionStack*> stack,
-		not_null<PeerData*> peer) {
+		not_null<PeerData*> peer,
+		rpl::producer<TextWithEntities> telegramDescription,
+		rpl::producer<bool> telegramShown) {
 	auto content = object_ptr<Ui::VerticalLayout>(stack->layout());
 	const auto raw = content.data();
 	const auto shown = raw->lifetime().make_state<rpl::variable<bool>>(false);
-	Value(peer) | rpl::on_next([=](const Entries &entries) {
-		raw->clear();
-		const auto hasDescriptions = ranges::any_of(entries, [](const Entry &entry) {
-			return !entry.description.empty();
-		});
-		if (hasDescriptions) {
-			for (const auto &entry : entries) {
-				if (!entry.description.empty()) {
-					raw->add(object_ptr<DescriptionRow>(raw, entry),
-						st::seetgVerificationPadding);
-				}
+	Ui::AddSkip(raw, st::infoProfileSkip);
+	auto rows = raw->add(object_ptr<Ui::VerticalLayout>(raw));
+	Ui::AddSkip(raw, st::infoProfileSkip);
+	rows->paintRequest() | rpl::on_next([=] {
+		auto p = Painter(rows);
+		p.fillRect(rows->rect(), st::boxDividerBg);
+	}, rows->lifetime());
+	style::PaletteChanged() | rpl::on_next([=] { rows->update(); }, rows->lifetime());
+	rpl::combine(
+		Value(peer),
+		std::move(telegramDescription),
+		std::move(telegramShown)
+	) | rpl::on_next([=](
+			const Entries &entries,
+			const TextWithEntities &telegram,
+			bool showTelegram) {
+		rows->clear();
+		auto descriptions = Entries();
+		if (showTelegram && !telegram.empty()) {
+			descriptions.push_back({
+				.type = u"telegram"_q,
+				.description = telegram,
+			});
+		}
+		for (const auto &entry : entries) {
+			if (!entry.description.empty()) {
+				descriptions.push_back(entry);
 			}
 		}
-		*shown = hasDescriptions;
+		for (const auto &entry : descriptions) {
+			rows->add(object_ptr<DescriptionRow>(rows, entry),
+				st::seetgVerificationPadding);
+		}
+		*shown = !descriptions.empty();
 	}, raw->lifetime());
 	stack->add({ .widget = std::move(content), .shown = shown->value() });
 }

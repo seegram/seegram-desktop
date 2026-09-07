@@ -56,6 +56,8 @@ private:
 
 void AddDescriptions(
 	not_null<Info::Profile::SectionStack*> stack,
-	not_null<PeerData*> peer);
+	not_null<PeerData*> peer,
+	rpl::producer<TextWithEntities> telegramDescription,
+	rpl::producer<bool> telegramShown);
 
 } // namespace Fork::SeeTg::Verification
