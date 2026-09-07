@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} टिप्पणियाँ",
   "SeeTgCommentsFew": "{count} टिप्पणियाँ",
   "SeeTgCommentsMany": "{count} टिप्पणियाँ",
-  "SeeTgCommentsOther": "{count} टिप्पणियाँ"
+  "SeeTgCommentsOther": "{count} टिप्पणियाँ",
+  "SeeTgHistoryGiftMovedShort": "स्थानांतरित"
 }

@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "댓글 {count}개",
   "SeeTgCommentsFew": "댓글 {count}개",
   "SeeTgCommentsMany": "댓글 {count}개",
-  "SeeTgCommentsOther": "댓글 {count}개"
+  "SeeTgCommentsOther": "댓글 {count}개",
+  "SeeTgHistoryGiftMovedShort": "이동됨"
 }

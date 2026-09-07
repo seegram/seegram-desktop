@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} komentar",
   "SeeTgCommentsFew": "{count} komentar",
   "SeeTgCommentsMany": "{count} komentar",
-  "SeeTgCommentsOther": "{count} komentar"
+  "SeeTgCommentsOther": "{count} komentar",
+  "SeeTgHistoryGiftMovedShort": "Dipindahkan"
 }

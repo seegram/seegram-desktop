@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} şərh",
   "SeeTgCommentsFew": "{count} şərh",
   "SeeTgCommentsMany": "{count} şərh",
-  "SeeTgCommentsOther": "{count} şərh"
+  "SeeTgCommentsOther": "{count} şərh",
+  "SeeTgHistoryGiftMovedShort": "Köçürüldü"
 }
