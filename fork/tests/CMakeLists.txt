@@ -20,3 +20,8 @@ add_test(NAME comments_data COMMAND comments_data_tests)
 add_executable(plural_tests plural_tests.cpp)
 target_include_directories(plural_tests PRIVATE "${telegram}/SourceFiles")
 add_test(NAME profile_counter_plurals COMMAND plural_tests)
+
+add_executable(history_layout_tests history_layout_tests.cpp)
+target_include_directories(history_layout_tests PRIVATE "${telegram}/SourceFiles")
+target_link_libraries(history_layout_tests PRIVATE Qt6::Core)
+add_test(NAME history_scaled_layout COMMAND history_layout_tests)
