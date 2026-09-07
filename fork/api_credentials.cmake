@@ -1,17 +1,15 @@
-# The credentials the client identifies itself with to Telegram.
-#
-# Kept in the repository so that every build uses the same pair without a
-# runner or a working copy having to carry a copy of it: local builds, the
-# macOS runner and the Windows runner all read this one file.
-#
-# These are Telegram Desktop's own. Telegram issues them to its own client and
-# expects other clients to register their own at my.telegram.org, so a fork
-# using them is outside the API terms and accounts have been banned for it.
-#
-# Forced cache entries, and included before cmake/telegram_options.cmake:
-# that file aborts the configuration when the credentials are empty, and its
-# own set(... CACHE ...) would drop a plain variable of the same name. FORCE
-# so that a value left behind in an old CMakeCache.txt cannot win either.
+# Real credentials are supplied locally or through CI secrets.
+# Upstream test builds keep using TDESKTOP_API_TEST.
+if (TDESKTOP_API_TEST)
+    return()
+endif()
 
-set(TDESKTOP_API_ID 2040 CACHE STRING "" FORCE)
-set(TDESKTOP_API_HASH b18441a1ff607e10a989891a5462e627 CACHE STRING "" FORCE)
+if (NOT "$ENV{TDESKTOP_API_ID}" STREQUAL "" OR NOT "$ENV{TDESKTOP_API_HASH}" STREQUAL "")
+    if ("$ENV{TDESKTOP_API_ID}" STREQUAL "" OR "$ENV{TDESKTOP_API_HASH}" STREQUAL "")
+        message(FATAL_ERROR "Set both TDESKTOP_API_ID and TDESKTOP_API_HASH environment variables.")
+    endif()
+    set(TDESKTOP_API_ID "$ENV{TDESKTOP_API_ID}" CACHE STRING "Telegram API ID" FORCE)
+    set(TDESKTOP_API_HASH "$ENV{TDESKTOP_API_HASH}" CACHE STRING "Telegram API hash" FORCE)
+else()
+    include("${CMAKE_CURRENT_LIST_DIR}/private/api_credentials.cmake" OPTIONAL)
+endif()

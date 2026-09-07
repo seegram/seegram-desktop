@@ -106,6 +106,8 @@ fi
 echo "==> building in $IMAGE"
 BUILD_LOG="$(mktemp)"
 if ! docker run --rm \
+		-e TDESKTOP_API_ID \
+		-e TDESKTOP_API_HASH \
 		--cpus "$CPUS" \
 		-u "$(id -u):$(id -g)" \
 		-v "$PWD:/usr/src/tdesktop" \

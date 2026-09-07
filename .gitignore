@@ -75,3 +75,8 @@ settings.local.json
 # Generated changelog page (built by CI, deployed to GitHub Pages)
 /docs/changelog/
 fork/PROJECT.md
+
+# Private API credentials and generated development builds
+/fork/private/
+/out-dev/
+/*.tdup

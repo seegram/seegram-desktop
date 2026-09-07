@@ -7,8 +7,8 @@
 # over.
 #
 # The signing key lives on the runner's filesystem and never in GitHub; where
-# it lives is a secret too, so this file names no paths. The API credentials
-# are not secret and live in fork/api_credentials.cmake.
+# it lives is a secret too, so this file names no paths. API credentials
+# are supplied through repository secrets, never committed to the tree.
 #
 # The build deliberately does NOT happen in the runner's own workspace. The
 # project resolves its dependencies as "../Libraries" relative to the
@@ -90,6 +90,8 @@ jobs:
         env:
           # gh cannot reach the keychain from the runner service; the run's
           # own token is enough to create and upload a release.
+          TDESKTOP_API_ID: ${{ secrets.TDESKTOP_API_ID }}
+          TDESKTOP_API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
           GH_TOKEN: ${{ github.token }}
           SEEGRAM_KEYS_DIR: ${{ secrets.SEEGRAM_KEYS_DIR }}
           SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
@@ -102,6 +104,8 @@ jobs:
         run: |
           set -eu
           cd "$HOME/TBuild/seegram-desktop"
+          : "${TDESKTOP_API_ID:?Set the TDESKTOP_API_ID repository secret}"
+          : "${TDESKTOP_API_HASH:?Set the TDESKTOP_API_HASH repository secret}"
           if [ "${{ inputs.publish }}" = "true" ]; then
             fork/release.sh "${{ inputs.counter }}"
           else
@@ -159,6 +163,8 @@ jobs:
 
       - name: Build, sign and publish
         env:
+          TDESKTOP_API_ID: ${{ secrets.TDESKTOP_API_ID }}
+          TDESKTOP_API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
           GH_TOKEN: ${{ github.token }}
           SEEGRAM_KEYS_DIR: ${{ secrets.SEEGRAM_KEYS_DIR }}
           SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
@@ -168,6 +174,8 @@ jobs:
         run: |
           set -eu
           cd "$HOME/TBuild/seegram-desktop"
+          : "${TDESKTOP_API_ID:?Set the TDESKTOP_API_ID repository secret}"
+          : "${TDESKTOP_API_HASH:?Set the TDESKTOP_API_HASH repository secret}"
           if [ "${{ inputs.publish }}" = "true" ]; then
             fork/release-linux.sh "${{ inputs.counter }}"
           else
@@ -224,6 +232,8 @@ jobs:
       - name: Build, sign and publish
         shell: pwsh
         env:
+          TDESKTOP_API_ID: ${{ secrets.TDESKTOP_API_ID }}
+          TDESKTOP_API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
           GH_TOKEN: ${{ github.token }}
           SEEGRAM_KEYS_DIR: ${{ secrets.SEEGRAM_KEYS_DIR }}
           SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
@@ -233,6 +243,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           Set-Location $env:SEEGRAM_TREE
+          if (-not $env:TDESKTOP_API_ID -or -not $env:TDESKTOP_API_HASH) {
+            throw "Set the TDESKTOP_API_ID and TDESKTOP_API_HASH repository secrets"
+          }
           if ("${{ inputs.publish }}" -eq "true") {
             .\fork\release.ps1 -Counter ${{ inputs.counter }}
           } else {
