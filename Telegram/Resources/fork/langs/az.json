@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} şərh",
   "SeeTgCommentsMany": "{count} şərh",
   "SeeTgCommentsOther": "{count} şərh",
-  "SeeTgHistoryGiftMovedShort": "Köçürüldü"
+  "SeeTgHistoryGiftMovedShort": "Köçürüldü",
+  "UpdatesTitle": "Yeniləmələr",
+  "UpdatesOnStartup": "Açılışda yeniləmələri yoxla",
+  "UpdatesStartupAbout": "Avtomatik yeniləmələr aktivdirsə, SeeGram açılan kimi yoxlayır."
 }

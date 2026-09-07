@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "settings/sections/settings_advanced.h"
 
+#include "fork/settings_updates.h"
+
 #include "settings/settings_common_session.h"
 
 #include "api/api_global_privacy.h"
@@ -1184,7 +1186,8 @@ void BuildUpdateSection(SectionBuilder &builder, bool atTop) {
 	auto install = (Ui::SettingsButton*)nullptr;
 	auto check = (Ui::SettingsButton*)nullptr;
 	builder.scope([&] {
-		install = (cAlphaVersion()
+		install = (!Fork::Updates::kShowBetaOptions
+			|| cAlphaVersion()
 			|| Core::BuildIsCanary
 			|| KSandbox::isInside())
 			? nullptr
@@ -1362,7 +1365,7 @@ const auto kMeta = BuildHelper({
 }, [](SectionBuilder &builder) {
 	const auto autoUpdate = cAutoUpdate();
 
-	if (!autoUpdate) {
+	if (Fork::Updates::kShowInAdvancedSettings && !autoUpdate) {
 		BuildUpdateSection(builder, true);
 	}
 	BuildDataStorageSection(builder);
@@ -1375,7 +1378,7 @@ const auto kMeta = BuildHelper({
 	BuildPerformanceSection(builder);
 	BuildSpellcheckerSection(builder);
 	BuildScreenReaderSection(builder);
-	if (autoUpdate) {
+	if (Fork::Updates::kShowInAdvancedSettings && autoUpdate) {
 		BuildUpdateSection(builder, false);
 	}
 	BuildExportSection(builder);
@@ -1465,7 +1468,8 @@ void SetupUpdate(not_null<Ui::VerticalLayout*> container) {
 			container,
 			object_ptr<Ui::VerticalLayout>(container)));
 	const auto inner = options->entity();
-	const auto install = (cAlphaVersion()
+	const auto install = (!Fork::Updates::kShowBetaOptions
+		|| cAlphaVersion()
 		|| Core::BuildIsCanary
 		|| KSandbox::isInside())
 		? nullptr

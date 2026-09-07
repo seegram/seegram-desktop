@@ -15,6 +15,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/settings_seetg.h"
 #include "fork/settings_spy.h"
 #include "fork/settings_stickers.h"
+#include "fork/settings_updates.h"
 #include "core/click_handler_types.h"
 #include "core/version.h"
 #include "data/data_chat_participant_status.h"
@@ -189,6 +190,7 @@ void BuildContent(
 		st::menuIconLinks,
 		SeeTg::SectionId(),
 		showOther);
+	AddCategory(container, Key::UpdatesTitle, st::menuIconDownload, Updates::SectionId(), showOther);
 	AddLanguage(container, controller);
 	AddCategory(container, Key::StickersTitle, st::menuIconStickers, Stickers::SectionId(), showOther);
 	Ui::AddSkip(container);

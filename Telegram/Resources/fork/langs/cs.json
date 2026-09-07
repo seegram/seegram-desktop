@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} komentáře",
   "SeeTgCommentsMany": "{count} komentářů",
   "SeeTgCommentsOther": "{count} komentářů",
-  "SeeTgHistoryGiftMovedShort": "Přesunuto"
+  "SeeTgHistoryGiftMovedShort": "Přesunuto",
+  "UpdatesTitle": "Aktualizace",
+  "UpdatesOnStartup": "Kontrolovat aktualizace při spuštění",
+  "UpdatesStartupAbout": "Kontroluje při spuštění SeeGram, pokud jsou automatické aktualizace zapnuté."
 }

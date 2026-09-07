@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} σχόλια",
   "SeeTgCommentsMany": "{count} σχόλια",
   "SeeTgCommentsOther": "{count} σχόλια",
-  "SeeTgHistoryGiftMovedShort": "Μετακινήθηκε"
+  "SeeTgHistoryGiftMovedShort": "Μετακινήθηκε",
+  "UpdatesTitle": "Ενημερώσεις",
+  "UpdatesOnStartup": "Έλεγχος ενημερώσεων κατά την εκκίνηση",
+  "UpdatesStartupAbout": "Ελέγχει κατά την εκκίνηση του SeeGram, εφόσον είναι ενεργές οι αυτόματες ενημερώσεις."
 }

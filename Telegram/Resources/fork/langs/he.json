@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} תגובות",
   "SeeTgCommentsMany": "{count} תגובות",
   "SeeTgCommentsOther": "{count} תגובות",
-  "SeeTgHistoryGiftMovedShort": "הועבר"
+  "SeeTgHistoryGiftMovedShort": "הועבר",
+  "UpdatesTitle": "עדכונים",
+  "UpdatesOnStartup": "בדיקת עדכונים בהפעלה",
+  "UpdatesStartupAbout": "בודק בעת הפעלת SeeGram כאשר עדכונים אוטומטיים מופעלים."
 }

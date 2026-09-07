@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "intro/intro_widget.h"
 
+#include "fork/settings_updates.h"
+
 #include "intro/intro_start.h"
 #include "intro/intro_phone.h"
 #include "intro/intro_qr.h"
@@ -167,6 +169,7 @@ Widget::Widget(
 	cSetPasswordRecovered(false);
 
 	if (!Core::UpdaterDisabled()) {
+		Fork::Updates::PrepareStartupCheck();
 		Core::UpdateChecker checker;
 		checker.start();
 		rpl::merge(

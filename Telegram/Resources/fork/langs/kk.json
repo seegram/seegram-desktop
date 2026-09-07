@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} пікір",
   "SeeTgCommentsMany": "{count} пікір",
   "SeeTgCommentsOther": "{count} пікір",
-  "SeeTgHistoryGiftMovedShort": "Жылжытылды"
+  "SeeTgHistoryGiftMovedShort": "Жылжытылды",
+  "UpdatesTitle": "Жаңартулар",
+  "UpdatesOnStartup": "Іске қосылғанда жаңартуларды тексеру",
+  "UpdatesStartupAbout": "Автоматты жаңартулар қосылса, SeeGram іске қосылғанда бірден тексереді."
 }
