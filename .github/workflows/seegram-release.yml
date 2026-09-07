@@ -19,10 +19,15 @@
 # there, which keeps an incremental release down to seconds.
 
 name: SeeGram Release
+run-name: "SeeGram build ${{ inputs.counter }} · ${{ inputs.request_id || github.sha }}"
 
 on:
   workflow_dispatch:
     inputs:
+      request_id:
+        description: "Release bot request ID (leave empty for manual runs)"
+        required: false
+        type: string
       counter:
         description: "Committed counter from Telegram/SourceFiles/fork/build_counter.h"
         required: true
@@ -47,7 +52,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate:
+    name: Validate release version
+    runs-on: [self-hosted, Linux, X64, seegram]
+    timeout-minutes: 5
+    steps:
+      - name: Verify the committed counter before starting builds
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_COUNTER: ${{ inputs.counter }}
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, re, urllib.request
+          counter = os.environ['RELEASE_COUNTER']
+          if not counter.isascii() or not counter.isdecimal() or not 1 <= int(counter) <= 4294967295:
+              raise SystemExit('::error::Counter must be an integer from 1 to 4294967295')
+          url = 'https://api.github.com/repos/' + os.environ['RELEASE_REPO'] + '/contents/Telegram/SourceFiles/fork/build_counter.h?ref=' + os.environ['RELEASE_SHA']
+          request = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+          with urllib.request.urlopen(request, timeout=30) as response:
+              source = base64.b64decode(json.load(response)['content']).decode()
+          committed = re.search(r'^#define SEEGRAM_BUILD_COUNTER (\d+)$', source, re.M)
+          if not committed or committed[1] != counter:
+              actual = committed[1] if committed else 'missing'
+              raise SystemExit(f'::error::Requested build {counter}, committed build {actual}. Use the release bot to prepare and commit the correct version first.')
+          print('Validated build ' + counter + ' at ' + os.environ['RELEASE_SHA'])
+          PY
+
   macos:
+    needs: validate
     name: macOS (arm64)
     runs-on: [self-hosted, macOS, ARM64, seegram]
     timeout-minutes: 90
@@ -121,6 +155,7 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
   linux:
+    needs: validate
     name: Linux (x64)
     runs-on: [self-hosted, Linux, X64, seegram]
     timeout-minutes: 180
@@ -191,6 +226,7 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
   windows:
+    needs: validate
     name: Windows (x64)
     runs-on: [self-hosted, Windows, X64, seegram]
     timeout-minutes: 180
