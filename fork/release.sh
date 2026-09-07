@@ -191,35 +191,17 @@ for entry in $PLATFORMS; do
 KEY="${entry%%:*}"
 REMOTE_NAME="seegram-$VERSION-$KEY.tdup"
 echo "==> uploading $REMOTE_NAME"
-scp -q -i "$SERVER_SSH_KEY" "$STAGE/$KEY.tdup" "$SERVER:$SERVER_ROOT/packages/$REMOTE_NAME"
+scp -q -i "$SERVER_SSH_KEY" "$STAGE/$KEY.tdup" "$SERVER:$SERVER_ROOT/packages/$REMOTE_NAME.upload"
 
 # The feed is edited one platform at a time on purpose: rewriting the whole
 # file risks taking every other platform down with a single bad line. The
 # version has to be a JSON string - the client parses a numeric one through a
 # double, and a 64 bit version is past the point where a double is exact.
 echo "==> updating the feed entry for $KEY"
+PUBLISH_SCRIPT="$(python3 -c 'import base64; print(base64.b64encode(open("fork/publish_feed.py", "rb").read()).decode())')"
+ROOT_PUBLIC="$(python3 -c 'import base64; print(base64.b64encode(open("Telegram/Resources/update/root-public.pem", "rb").read()).decode())')"
 ssh -i "$SERVER_SSH_KEY" "$SERVER" \
-	"SEEGRAM_PLATFORM='$KEY' SEEGRAM_VERSION='$VERSION' python3 - <<'PY'
-import json, os, shutil
-root = '$SERVER_ROOT'
-path = root + '/current4'
-platform = os.environ['SEEGRAM_PLATFORM']
-with open(path) as f:
-    feed = json.load(f)
-entry = feed.setdefault(platform, {}).setdefault('stable', {})
-entry['released'] = os.environ['SEEGRAM_VERSION']
-entry.setdefault(
-    'link', '/packages/seegram-{version}-' + platform + '.tdup')
-tmp = path + '.new'
-with open(tmp, 'w') as f:
-    json.dump(feed, f, indent=2)
-    f.write('\n')
-os.replace(tmp, path)
-shutil.copyfile(path, root + '/current')
-for p in (path, root + '/current'):
-    shutil.chown(p, 'www-data', 'www-data')
-print('feed updated for ' + platform)
-PY"
+    "printf '%s' '$PUBLISH_SCRIPT' | base64 -d | SEEGRAM_ROOT='$SERVER_ROOT' SEEGRAM_PLATFORM='$KEY' SEEGRAM_VERSION='$VERSION' SEEGRAM_ROOT_PUBLIC='$ROOT_PUBLIC' python3 -"
 
 echo "==> verifying what clients will actually see for $KEY"
 FEED_VERSION="$(curl -fsS https://desktop.see.tg/current4 | python3 -c \

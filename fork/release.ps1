@@ -120,7 +120,7 @@ $buildLog = [System.IO.Path]::GetTempFileName()
 cmake --build out --config Release --target Telegram Packer *> $buildLog
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] build failed:" -ForegroundColor Red
-    Select-String -Path $buildLog -Pattern 'error' | Select-Object -First 20 | ForEach-Object { $_.Line }
+    Select-String -Path $buildLog -Pattern 'error|warning C\d+|предупреждение C\d+' | Select-Object -First 40 | ForEach-Object { $_.Line }
     Fail "full log: $buildLog"
 }
 Remove-Item $buildLog -ErrorAction SilentlyContinue
@@ -177,7 +177,7 @@ try {
 
     $remoteName = "seegram-$version-$platformKey.tdup"
     Write-Host "==> uploading $remoteName"
-    & scp -q -i $sshKey $package.FullName "${server}:$serverRoot/packages/$remoteName"
+    & scp -q -i $sshKey $package.FullName "${server}:$serverRoot/packages/$remoteName.upload"
     if ($LASTEXITCODE -ne 0) { Fail "upload failed" }
 
     # The feed is edited one platform at a time on purpose: rewriting the whole
@@ -189,33 +189,14 @@ try {
     # CRLF line endings, which leave the closing delimiter unmatched and spill
     # the script into the shell. Encoding sidesteps line endings and quoting
     # both.
-    $py = @'
-import json, os, shutil
-root = os.environ['SEEGRAM_ROOT']
-path = root + '/current4'
-platform = os.environ['SEEGRAM_PLATFORM']
-with open(path) as f:
-    feed = json.load(f)
-entry = feed.setdefault(platform, {}).setdefault('stable', {})
-entry['released'] = os.environ['SEEGRAM_VERSION']
-entry.setdefault(
-    'link', '/packages/seegram-{version}-' + platform + '.tdup')
-tmp = path + '.new'
-with open(tmp, 'w') as f:
-    json.dump(feed, f, indent=2)
-    f.write('\n')
-os.replace(tmp, path)
-shutil.copyfile(path, root + '/current')
-for p in (path, root + '/current'):
-    shutil.chown(p, 'www-data', 'www-data')
-print('feed updated for ' + platform)
-'@
-    $py = $py -replace "`r", ""
+    $py = Get-Content -Raw -Encoding UTF8 "fork/publish_feed.py"
     $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($py))
+    $rootPublic = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $root "Telegram/Resources/update/root-public.pem")))
     $remote = "echo $b64 | base64 -d | " +
         "SEEGRAM_ROOT='$serverRoot' " +
         "SEEGRAM_PLATFORM='$platformKey' " +
-        "SEEGRAM_VERSION='$version' python3 -"
+        "SEEGRAM_VERSION='$version' " +
+        "SEEGRAM_ROOT_PUBLIC='$rootPublic' python3 -"
     & ssh -i $sshKey $server $remote
     if ($LASTEXITCODE -ne 0) { Fail "feed update failed" }
 

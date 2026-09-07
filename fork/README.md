@@ -61,6 +61,10 @@ them to the build, including the Linux container.
 The platform entry points are `fork/release.sh`, `fork/release.ps1` and
 `fork/release-linux.sh`. Each accepts a fork build counter and an option to
 build without publishing; usage is documented at the top of each script.
+The [release bot](bot/README.md) previews the version, prepares the committed
+counter and runs a pinned commit. Prefer `/release` for automatic numbering.
+Windows releases target x64 only; x86 and ARM64 are not served.
+
 Signing and deployment use the separate `SEEGRAM_*` settings named in the
 workflow. Private signing keys remain on the runners.
 
@@ -102,3 +106,14 @@ upstream code, submodules and platform documentation where possible.
 - `fork/update-upstream.sh [upstream-ref]` rebases them onto an upstream revision.
 - [RULES.md](RULES.md) describes the maintenance conventions.
 - [AGENTS.md](../AGENTS.md) contains repository instructions for coding agents.
+
+## Update source
+
+Stable SeeGram builds use `https://desktop.see.tg/current4` exclusively.
+Telegram's `autoupdate_url_prefix` config and a migrated `tdata/prefix` cannot
+redirect them to Telegram's update service. Stable builds do not consult
+Telegram's MTP update channel: an unavailable SeeGram feed must be shown as
+an error, not as "latest" based on Telegram's unrelated version list.
+
+Older builds that accepted Telegram's update prefix may need one manual
+installation of a fixed SeeGram release. Their data folder should be preserved.
