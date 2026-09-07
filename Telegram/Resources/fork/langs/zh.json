@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} 条评论",
   "SeeTgCommentsFew": "{count} 条评论",
   "SeeTgCommentsMany": "{count} 条评论",
-  "SeeTgCommentsOther": "{count} 条评论"
+  "SeeTgCommentsOther": "{count} 条评论",
+  "SeeTgHistoryGiftMovedShort": "已移动"
 }

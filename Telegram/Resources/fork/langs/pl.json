@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} komentarzy",
   "SeeTgCommentsFew": "{count} komentarze",
   "SeeTgCommentsMany": "{count} komentarzy",
-  "SeeTgCommentsOther": "{count} komentarzy"
+  "SeeTgCommentsOther": "{count} komentarzy",
+  "SeeTgHistoryGiftMovedShort": "Przeniesiono"
 }

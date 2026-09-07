@@ -450,6 +450,7 @@ void EnsureNames(not_null<Main::Session*> session, Fn<void()> done) {
 
 struct RowText {
 	QString title;
+	QString shortTitle;
 	QStringList meta;
 };
 
@@ -473,6 +474,11 @@ struct RowText {
 			: e.sent
 			? Lang::Text(Key::SeeTgHistoryGiftSent)
 			: Lang::Text(Key::SeeTgHistoryGiftReceived);
+		if (e.action == u"moved"_q
+			&& e.visibilityChange != u"hidden"_q
+			&& e.visibilityChange != u"opened"_q) {
+			result.shortTitle = Lang::Text(Key::SeeTgHistoryGiftMovedShort);
+		}
 		break;
 	}
 	case Event::Type::SavedGift:
@@ -648,6 +654,7 @@ private:
 	Event _event;
 	Card *_card = nullptr;
 	QString _title;
+	QString _shortTitle;
 	QStringList _meta;
 	// Each line is reached from an HTTP callback by address, so the lines
 	// must never move: a growing vector of values did exactly that.
@@ -661,6 +668,7 @@ Row::Row(QWidget *parent, Event event)
 , _event(std::move(event)) {
 	const auto text = TextFor(_event);
 	_title = text.title;
+	_shortTitle = text.shortTitle;
 	_meta = text.meta;
 	const auto withPeers = (_event.type == Event::Type::Gift
 		&& _event.action != u"new"_q)
@@ -793,7 +801,10 @@ void Row::paintEvent(QPaintEvent *e) {
 				textLeft,
 				rounded,
 				width(),
-				TitleFont()->elided(_title, available));
+				TitleFont()->elided(
+					(!_shortTitle.isEmpty() && TitleFont()->width(_title) > available)
+						? _shortTitle : _title,
+					std::max(0, available)));
 			y += titleHeight + gap;
 			continue;
 		}

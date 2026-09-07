@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} bình luận",
   "SeeTgCommentsFew": "{count} bình luận",
   "SeeTgCommentsMany": "{count} bình luận",
-  "SeeTgCommentsOther": "{count} bình luận"
+  "SeeTgCommentsOther": "{count} bình luận",
+  "SeeTgHistoryGiftMovedShort": "Đã chuyển"
 }

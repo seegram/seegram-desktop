@@ -160,6 +160,7 @@ constexpr auto Keys = std::array{
 	"SeeTgHistoryGiftSent",
 	"SeeTgHistoryGiftReceived",
 	"SeeTgHistoryGiftMoved",
+	"SeeTgHistoryGiftMovedShort",
 	"SeeTgHistoryGiftHidden",
 	"SeeTgHistoryGiftOpened",
 	"SeeTgHistoryGiftUpgraded",

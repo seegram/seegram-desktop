@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "コメント {count} 件",
   "SeeTgCommentsFew": "コメント {count} 件",
   "SeeTgCommentsMany": "コメント {count} 件",
-  "SeeTgCommentsOther": "コメント {count} 件"
+  "SeeTgCommentsOther": "コメント {count} 件",
+  "SeeTgHistoryGiftMovedShort": "移動済み"
 }

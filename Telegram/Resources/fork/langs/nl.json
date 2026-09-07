@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} reacties",
   "SeeTgCommentsFew": "{count} reacties",
   "SeeTgCommentsMany": "{count} reacties",
-  "SeeTgCommentsOther": "{count} reacties"
+  "SeeTgCommentsOther": "{count} reacties",
+  "SeeTgHistoryGiftMovedShort": "Verplaatst"
 }
