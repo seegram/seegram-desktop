@@ -2002,9 +2002,9 @@ void Updater::start(bool forceWait) {
 		}
 		startImplementation(
 			&_mtpImplementation,
-			std::make_unique<MtpChecker>(
+			Fork::TelegramUpdateChecker(BuildIsCanary, std::make_unique<MtpChecker>(
 				LookupCanaryPrivateSession(_session),
-				_testing));
+				_testing)));
 
 		_checking.fire({});
 	} else {

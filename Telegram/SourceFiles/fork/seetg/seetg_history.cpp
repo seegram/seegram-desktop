@@ -775,7 +775,7 @@ void Row::paintEvent(QPaintEvent *e) {
 		lines.push_back(line);
 	}
 	const auto ownersFrom = lines.size();
-	for (const auto &owner : _owners) {
+	for (auto i = 0; i != int(_owners.size()); ++i) {
 		lines.push_back(QString());
 	}
 	const auto ownersTill = lines.size();
