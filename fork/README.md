@@ -65,6 +65,11 @@ The [release bot](bot/README.md) previews the version, prepares the committed
 counter and runs a pinned commit. Prefer `/release` for automatic numbering.
 Windows releases target x64 only; x86 and ARM64 are not served.
 
+Every release includes the shared [installation guide](release-installation.md).
+Both macOS and Windows release creators read this file, so the instructions
+and the credited community video are present regardless of which job finishes
+first. Keep this guide in release descriptions when editing them manually.
+
 Signing and deployment use the separate `SEEGRAM_*` settings named in the
 workflow. Private signing keys remain on the runners.
 
