@@ -624,6 +624,10 @@ PRIVATE
     fork/settings_marks.cpp
     fork/settings_marks.h
     fork/settings_seegram.cpp
+    fork/settings_stickers.cpp
+    fork/settings_stickers.h
+    fork/about_seegram.cpp
+    fork/about_seegram.h
     fork/settings_seegram.h
     fork/settings_seetg.cpp
     fork/settings_seetg.h
@@ -2280,6 +2284,7 @@ PRIVATE
     qrc/telegram/picker.qrc
     qrc/telegram/seegram_verifications.qrc
     qrc/telegram/seegram_langs.qrc
+    qrc/telegram/seegram_about.qrc
     qrc/telegram/telegram.qrc
     qrc/telegram/sounds.qrc
     winrc/Telegram.rc

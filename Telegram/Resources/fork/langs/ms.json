@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Buka profil",
   "SeeTgResolveAdvanced": "Untuk pengguna berpengalaman. Jika anda tidak tahu fungsi resolusi peer, kekalkan tetapan lalai.",
   "SeeTgCommentsCancel": "Batal",
-  "SeeTgCommentsRefresh": "Muat semula"
+  "SeeTgCommentsRefresh": "Muat semula",
+  "StickersTitle": "Pelekat",
+  "StickersRecent": "Pelekat terkini",
+  "StickersServer": "Seperti yang diberikan pelayan",
+  "StickersRange": "Daripada {min} hingga {max} pelekat. Lalai: {default}. Mod pelayan memaparkan seluruh senarai yang diterima.",
+  "AboutTitle": "Perihal",
+  "AboutSummary": "Fork bebas Telegram Desktop dengan mod hantu, sejarah mesej dan integrasi see.tg.",
+  "AboutSeeTg": "Hadiah, sejarah profil, lencana dan komen daripada aplikasi mini see.tg terus dalam klien.",
+  "AboutHistory": "Sejarah disimpan pada peranti ini: hanya mesej dan suntingan yang diterima oleh klien ini tersedia.",
+  "Save": "Simpan",
+  "Close": "Tutup",
+  "AboutReleases": "Keluaran"
 }

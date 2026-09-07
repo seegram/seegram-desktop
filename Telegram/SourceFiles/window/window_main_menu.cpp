@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/window_main_menu.h"
 
 #include "core/version.h"
+#include "fork/about_seegram.h"
 #include "apiwrap.h"
 #include "base/event_filter.h"
 #include "base/qt_signal_producer.h"
@@ -411,6 +412,7 @@ MainMenu::MainMenu(
 		std::make_shared<LambdaClickHandler>([=] {
 			controller->show(Box(AboutBox));
 		}));
+	Fork::About::SetupFooter(_telegram, _version, controller);
 
 	rpl::combine(
 		_toggleAccounts->rightSkipValue(),
