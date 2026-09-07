@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} comentarios",
   "SeeTgCommentsFew": "{count} comentarios",
   "SeeTgCommentsMany": "{count} comentarios",
-  "SeeTgCommentsOther": "{count} comentarios"
+  "SeeTgCommentsOther": "{count} comentarios",
+  "SeeTgHistoryGiftMovedShort": "Movido"
 }

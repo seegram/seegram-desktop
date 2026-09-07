@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} تعليقان",
   "SeeTgCommentsFew": "{count} تعليقات",
   "SeeTgCommentsMany": "{count} تعليق",
-  "SeeTgCommentsOther": "{count} تعليق"
+  "SeeTgCommentsOther": "{count} تعليق",
+  "SeeTgHistoryGiftMovedShort": "تم النقل"
 }

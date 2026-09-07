@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} תגובות",
   "SeeTgCommentsFew": "{count} תגובות",
   "SeeTgCommentsMany": "{count} תגובות",
-  "SeeTgCommentsOther": "{count} תגובות"
+  "SeeTgCommentsOther": "{count} תגובות",
+  "SeeTgHistoryGiftMovedShort": "הועבר"
 }

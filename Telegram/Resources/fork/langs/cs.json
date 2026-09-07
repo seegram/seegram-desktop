@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} komentářů",
   "SeeTgCommentsFew": "{count} komentáře",
   "SeeTgCommentsMany": "{count} komentářů",
-  "SeeTgCommentsOther": "{count} komentářů"
+  "SeeTgCommentsOther": "{count} komentářů",
+  "SeeTgHistoryGiftMovedShort": "Přesunuto"
 }

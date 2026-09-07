@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} ta izoh",
   "SeeTgCommentsFew": "{count} ta izoh",
   "SeeTgCommentsMany": "{count} ta izoh",
-  "SeeTgCommentsOther": "{count} ta izoh"
+  "SeeTgCommentsOther": "{count} ta izoh",
+  "SeeTgHistoryGiftMovedShort": "Koʻchirildi"
 }

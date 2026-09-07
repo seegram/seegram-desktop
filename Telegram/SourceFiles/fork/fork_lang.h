@@ -165,6 +165,7 @@ enum class Key {
 	SeeTgHistoryGiftSent,
 	SeeTgHistoryGiftReceived,
 	SeeTgHistoryGiftMoved,
+	SeeTgHistoryGiftMovedShort,
 	SeeTgHistoryGiftHidden,
 	SeeTgHistoryGiftOpened,
 	SeeTgHistoryGiftUpgraded,
