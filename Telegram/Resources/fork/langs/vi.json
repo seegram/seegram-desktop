@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} bình luận",
   "SeeTgCommentsMany": "{count} bình luận",
   "SeeTgCommentsOther": "{count} bình luận",
-  "SeeTgHistoryGiftMovedShort": "Đã chuyển"
+  "SeeTgHistoryGiftMovedShort": "Đã chuyển",
+  "UpdatesTitle": "Cập nhật",
+  "UpdatesOnStartup": "Kiểm tra cập nhật khi khởi động",
+  "UpdatesStartupAbout": "Kiểm tra ngay khi mở SeeGram nếu đã bật cập nhật tự động."
 }

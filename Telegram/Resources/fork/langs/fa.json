@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} نظر",
   "SeeTgCommentsMany": "{count} نظر",
   "SeeTgCommentsOther": "{count} نظر",
-  "SeeTgHistoryGiftMovedShort": "منتقل شد"
+  "SeeTgHistoryGiftMovedShort": "منتقل شد",
+  "UpdatesTitle": "به‌روزرسانی‌ها",
+  "UpdatesOnStartup": "بررسی به‌روزرسانی هنگام راه‌اندازی",
+  "UpdatesStartupAbout": "اگر به‌روزرسانی خودکار فعال باشد، هنگام راه‌اندازی SeeGram بررسی می‌کند."
 }

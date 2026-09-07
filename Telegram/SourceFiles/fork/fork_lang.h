@@ -261,6 +261,10 @@ enum class Key {
 	SeeTgCommentsMany,
 	SeeTgCommentsOther,
 
+	UpdatesTitle,
+	UpdatesOnStartup,
+	UpdatesStartupAbout,
+
 	Count,
 };
 

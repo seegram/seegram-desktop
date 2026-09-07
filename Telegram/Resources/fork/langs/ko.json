@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "댓글 {count}개",
   "SeeTgCommentsMany": "댓글 {count}개",
   "SeeTgCommentsOther": "댓글 {count}개",
-  "SeeTgHistoryGiftMovedShort": "이동됨"
+  "SeeTgHistoryGiftMovedShort": "이동됨",
+  "UpdatesTitle": "업데이트",
+  "UpdatesOnStartup": "시작 시 업데이트 확인",
+  "UpdatesStartupAbout": "자동 업데이트가 켜져 있으면 SeeGram 시작 시 바로 확인합니다."
 }

@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "コメント {count} 件",
   "SeeTgCommentsMany": "コメント {count} 件",
   "SeeTgCommentsOther": "コメント {count} 件",
-  "SeeTgHistoryGiftMovedShort": "移動済み"
+  "SeeTgHistoryGiftMovedShort": "移動済み",
+  "UpdatesTitle": "アップデート",
+  "UpdatesOnStartup": "起動時にアップデートを確認",
+  "UpdatesStartupAbout": "自動更新が有効な場合、SeeGram の起動時にすぐ確認します。"
 }

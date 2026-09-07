@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} komen",
   "SeeTgCommentsMany": "{count} komen",
   "SeeTgCommentsOther": "{count} komen",
-  "SeeTgHistoryGiftMovedShort": "Dipindahkan"
+  "SeeTgHistoryGiftMovedShort": "Dipindahkan",
+  "UpdatesTitle": "Kemas kini",
+  "UpdatesOnStartup": "Semak kemas kini semasa bermula",
+  "UpdatesStartupAbout": "Menyemak semasa SeeGram bermula jika kemas kini automatik diaktifkan."
 }
