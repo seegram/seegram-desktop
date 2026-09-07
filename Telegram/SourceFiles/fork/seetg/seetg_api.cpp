@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "fork/seetg/seetg_auth.h"
 #include "fork/seetg/seetg_http.h"
+#include "base/weak_ptr.h"
 #include "core/version.h"
 #include "main/main_session.h"
 
@@ -37,6 +38,31 @@ struct Cached {
 // an answer and two accounts never share a session.
 base::flat_map<QString, Cached> Cache;
 base::flat_map<QString, std::vector<Waiter>> InFlight;
+base::flat_set<not_null<Main::Session*>> Watched;
+
+void Watch(not_null<Main::Session*> session) {
+	if (!Watched.emplace(session).second) {
+		return;
+	}
+	const auto prefix = QString::number(session->uniqueId()) + '\n';
+	session->lifetime().add([=] {
+		Watched.remove(session);
+		for (auto i = begin(InFlight); i != end(InFlight);) {
+			if (i->first.startsWith(prefix)) {
+				i = InFlight.erase(i);
+			} else {
+				++i;
+			}
+		}
+		for (auto i = begin(Cache); i != end(Cache);) {
+			if (i->first.startsWith(prefix)) {
+				i = Cache.erase(i);
+			} else {
+				++i;
+			}
+		}
+	});
+}
 
 [[nodiscard]] QString CacheKey(
 		not_null<Main::Session*> session,
@@ -98,7 +124,8 @@ void Send(
 		const QString &key,
 		const QString &document,
 		const QJsonObject &variables,
-		bool retried);
+		bool retried,
+		bool cacheResponse);
 
 void SendSigned(
 		not_null<Main::Session*> session,
@@ -106,7 +133,9 @@ void SendSigned(
 		const QString &document,
 		const QJsonObject &variables,
 		const QString &initData,
-		bool retried) {
+		bool retried,
+		bool cacheResponse) {
+	const auto weak = base::make_weak(session);
 	auto body = QJsonObject();
 	body.insert(u"query"_q, document);
 	body.insert(u"variables"_q, variables);
@@ -125,10 +154,15 @@ void SendSigned(
 		QJsonDocument(body).toJson(QJsonDocument::Compact),
 		kTimeout,
 		[=](Http::Response response) {
+			if (!weak) {
+				const auto error = Error{ Error::Kind::Auth, u"session closed"_q };
+				Resolve(key, nullptr, &error);
+				return;
+			}
 			const auto status = response.status;
 			if (status == 401 && !retried) {
 				Auth::Invalidate(session);
-				Send(session, key, document, variables, true);
+				Send(session, key, document, variables, true, cacheResponse);
 				return;
 			} else if (!status) {
 				const auto error = Error{
@@ -164,8 +198,10 @@ void SendSigned(
 				Resolve(key, nullptr, &error);
 			} else {
 				const auto data = json.value(u"data"_q).toObject();
-				Cache[key] = { data, crl::now() };
-				Trim();
+				if (cacheResponse) {
+					Cache[key] = { data, crl::now() };
+					Trim();
+				}
 				Resolve(key, &data, nullptr);
 			}
 		});
@@ -176,9 +212,16 @@ void Send(
 		const QString &key,
 		const QString &document,
 		const QJsonObject &variables,
-		bool retried) {
+		bool retried,
+		bool cacheResponse) {
+	const auto weak = base::make_weak(session);
 	Auth::Request(session, [=](QString initData) {
-		SendSigned(session, key, document, variables, initData, retried);
+		if (weak) {
+			SendSigned(weak.get(), key, document, variables, initData, retried, cacheResponse);
+		} else {
+			const auto error = Error{ Error::Kind::Auth, u"session closed"_q };
+			Resolve(key, nullptr, &error);
+		}
 	}, [=](QString reason) {
 		const auto error = Error{ Error::Kind::Auth, reason };
 		Resolve(key, nullptr, &error);
@@ -193,6 +236,7 @@ void Query(
 		const QJsonObject &variables,
 		Done done,
 		Fail fail) {
+	Watch(session);
 	const auto key = CacheKey(session, document, variables);
 	if (const auto i = Cache.find(key); i != end(Cache)) {
 		if (crl::now() - i->second.at < kCacheTtl) {
@@ -204,8 +248,31 @@ void Query(
 	const auto pending = InFlight.contains(key);
 	InFlight[key].push_back({ std::move(done), std::move(fail) });
 	if (!pending) {
-		Send(session, key, document, variables, false);
+		Send(session, key, document, variables, false, true);
 	}
+}
+
+void FreshQuery(
+		not_null<Main::Session*> session,
+		const QString &document,
+		const QJsonObject &variables,
+		Done done,
+		Fail fail) {
+	Watch(session);
+	static auto nextRequest = uint64(0);
+	const auto key = QString::number(session->uniqueId())
+		+ u"\nfresh:"_q + QString::number(++nextRequest);
+	InFlight[key].push_back({ std::move(done), std::move(fail) });
+	Send(session, key, document, variables, false, false);
+}
+
+void Mutation(
+		not_null<Main::Session*> session,
+		const QString &document,
+		const QJsonObject &variables,
+		Done done,
+		Fail fail) {
+	FreshQuery(session, document, variables, std::move(done), std::move(fail));
 }
 
 void ClearCache(not_null<Main::Session*> session) {

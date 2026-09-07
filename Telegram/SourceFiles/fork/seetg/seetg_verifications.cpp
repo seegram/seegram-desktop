@@ -164,6 +164,10 @@ private:
 
 } // namespace
 
+void PaintBadge(QPainter &p, const Entry &entry, QRectF rect, QColor color) {
+	PaintIcon(p, entry, rect, false, color);
+}
+
 Entries Parse(const QJsonObject &owner) {
 	auto result = Entries();
 	for (const auto &value : owner.value(u"verifications"_q).toArray()) {

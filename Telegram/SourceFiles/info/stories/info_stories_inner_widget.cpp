@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "info/stories/info_stories_inner_widget.h"
 
 #include "fork/seetg/seetg_history.h"
+#include "fork/seetg/seetg_comments.h"
 
 #include "apiwrap.h"
 #include "boxes/share_box.h"
@@ -333,6 +334,7 @@ void InnerWidget::createProfileTop() {
 	const auto buttons = {
 		addButton(makeGiftsButton()),
 		addButton(Fork::SeeTg::History::MakeButton(_top, _controller, _peer)),
+		addButton(Fork::SeeTg::Comments::MakeButton(_top, _controller, _peer)),
 		addButton(makeArchiveButton()),
 		addButton(makeRecentButton()),
 	};

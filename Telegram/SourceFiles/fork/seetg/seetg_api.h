@@ -12,10 +12,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 // One GraphQL operation against the see.tg backend, signed with the
 // account's initData (see fork/seetg/seetg_auth.h).
 //
-// The backend rate-limits per user, so identical requests in flight are
-// merged and answers are kept for a few minutes: opening the same profile
-// twice costs one request, and the user's own rule stands - a request when
-// a profile or a gift opens, never one per gift in a list.
+// Query merges identical requests in flight and keeps answers for a few
+// minutes. FreshQuery and Mutation bypass both mechanisms: a read following
+// a write needs current data, and distinct writes must reach the server.
+// Only an HTTP 401 triggers a single retry after reauthentication. A network
+// failure does not prove a mutation was rejected, so it must not be replayed.
 //
 // Callbacks are not guarded here; wrap them in crl::guard at the call site
 // when the caller can die first.
@@ -42,6 +43,20 @@ using Done = Fn<void(const QJsonObject &data)>;
 using Fail = Fn<void(const Error &error)>;
 
 void Query(
+	not_null<Main::Session*> session,
+	const QString &document,
+	const QJsonObject &variables,
+	Done done,
+	Fail fail);
+
+void FreshQuery(
+	not_null<Main::Session*> session,
+	const QString &document,
+	const QJsonObject &variables,
+	Done done,
+	Fail fail);
+
+void Mutation(
 	not_null<Main::Session*> session,
 	const QString &document,
 	const QJsonObject &variables,
