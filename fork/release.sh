@@ -35,17 +35,14 @@ COUNTER="${1:-}"
 PUBLISH=1
 [ "${2:-}" = "--no-publish" ] && PUBLISH=0
 
-if ! [[ "$COUNTER" =~ ^[0-9]+$ ]] || [ "$COUNTER" -lt 1 ]; then
+if ! [[ "$COUNTER" =~ ^[1-9][0-9]{0,9}$ ]] || [ "$COUNTER" -gt 4294967295 ]; then
 	echo "[ERROR] usage: fork/release.sh <counter> [--no-publish]" >&2
 	exit 1
 fi
 
 # ---------------------------------------------------------------- preflight
 
-# The counter file is the one thing a release is allowed to have changed:
-# this script writes it itself, so re-running must not trip over that.
-DIRTY="$(git status --porcelain --untracked-files=no \
-	| grep -v 'fork/build_counter\.h$' || true)"
+DIRTY="$(git status --porcelain --untracked-files=no)"
 if [ -n "$DIRTY" ]; then
 	echo "$DIRTY" >&2
 	echo "[ERROR] working tree is dirty - a release must be reproducible." >&2
@@ -101,10 +98,8 @@ echo "    platforms        : $PLATFORMS"
 COUNTER_FILE="Telegram/SourceFiles/fork/build_counter.h"
 CURRENT="$(sed -n 's/^#define SEEGRAM_BUILD_COUNTER \([0-9]*\).*/\1/p' "$COUNTER_FILE")"
 if [ "$CURRENT" != "$COUNTER" ]; then
-	echo "==> setting the build counter to $COUNTER"
-	sed -i.bak "s/^#define SEEGRAM_BUILD_COUNTER .*/#define SEEGRAM_BUILD_COUNTER $COUNTER/" "$COUNTER_FILE"
-	rm -f "$COUNTER_FILE.bak"
-	echo "    remember to commit $COUNTER_FILE"
+	echo "[ERROR] counter differs from $COUNTER_FILE; commit the intended counter before releasing." >&2
+	exit 1
 fi
 
 echo "==> configuring"
@@ -280,6 +275,7 @@ if command -v gh >/dev/null 2>&1; then
 	( cd "$BUILD_DIR" && zip -qry "$ARCHIVE" "$APP" )
 	if ! gh release view "$TAG" --repo "$GH_REPO_SLUG" >/dev/null 2>&1; then
 		gh release create "$TAG" --repo "$GH_REPO_SLUG" \
+			--target "$(git rev-parse HEAD)" \
 			--title "SeeGram $VERSION_STR build $COUNTER" \
 			--notes "Telegram Desktop $VERSION_STR, SeeGram build $COUNTER.
 
