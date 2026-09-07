@@ -936,6 +936,12 @@ constexpr Entry Table[] = {
 		"Купити",
 		"Sotib olish",
 	},
+	{
+		"This account has a see.tg Premium subscription.",
+		"У аккаунта есть подписка see.tg Premium.",
+		"У акаунта є підписка see.tg Premium.",
+		"Bu akkauntda see.tg Premium obunasi bor.",
+	},
 };
 
 static_assert(std::size(Table) == int(Key::Count));
