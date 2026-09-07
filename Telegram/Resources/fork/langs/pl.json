@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Otwórz profil",
   "SeeTgResolveAdvanced": "Dla zaawansowanych użytkowników. Jeśli nie wiesz, jak działa rozpoznawanie peerów, zachowaj ustawienia domyślne.",
   "SeeTgCommentsCancel": "Anuluj",
-  "SeeTgCommentsRefresh": "Odśwież"
+  "SeeTgCommentsRefresh": "Odśwież",
+  "StickersTitle": "Naklejki",
+  "StickersRecent": "Ostatnie naklejki",
+  "StickersServer": "Zgodnie z odpowiedzią serwera",
+  "StickersRange": "Od {min} do {max} naklejek. Domyślnie: {default}. Tryb serwera pokazuje całą otrzymaną listę.",
+  "AboutTitle": "O programie",
+  "AboutSummary": "Niezależna odmiana Telegram Desktop z trybem ducha, historią wiadomości i integracją see.tg.",
+  "AboutSeeTg": "Prezenty, historia profili, odznaki i komentarze z miniaplikacji see.tg bezpośrednio w kliencie.",
+  "AboutHistory": "Historia jest zapisywana na tym urządzeniu: dostępne są tylko wiadomości i zmiany otrzymane przez tego klienta.",
+  "Save": "Zapisz",
+  "Close": "Zamknij",
+  "AboutReleases": "Wydania"
 }

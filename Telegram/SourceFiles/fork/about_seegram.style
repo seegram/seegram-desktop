@@ -1,0 +1,13 @@
+using "boxes/boxes.style";
+
+seegramAboutWidth: 440px;
+seegramAboutLogo: 64px;
+seegramAboutHeader: 78px;
+seegramAboutGap: 16px;
+seegramAboutVersionGap: 5px;
+seegramAboutText: FlatLabel(aboutLabel) {
+	minWidth: 1px;
+}
+seegramAboutNote: FlatLabel(seegramAboutText) {
+	textFg: windowSubTextFg;
+}

@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Otevřít profil",
   "SeeTgResolveAdvanced": "Pro pokročilé uživatele. Pokud nevíte, k čemu rozpoznávání peerů slouží, ponechte výchozí nastavení.",
   "SeeTgCommentsCancel": "Zrušit",
-  "SeeTgCommentsRefresh": "Obnovit"
+  "SeeTgCommentsRefresh": "Obnovit",
+  "StickersTitle": "Nálepky",
+  "StickersRecent": "Nedávné nálepky",
+  "StickersServer": "Podle serveru",
+  "StickersRange": "Od {min} do {max} nálepek. Výchozí: {default}. Režim serveru zobrazí celý přijatý seznam.",
+  "AboutTitle": "O aplikaci",
+  "AboutSummary": "Nezávislý fork Telegram Desktop s režimem ducha, historií zpráv a integrací see.tg.",
+  "AboutSeeTg": "Dárky, historie profilů, odznaky a komentáře z miniaplikace see.tg přímo v klientu.",
+  "AboutHistory": "Historie se ukládá na tomto zařízení: dostupné jsou jen zprávy a úpravy přijaté tímto klientem.",
+  "Save": "Uložit",
+  "Close": "Zavřít",
+  "AboutReleases": "Vydání"
 }

@@ -32,6 +32,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/message_marks.h"
 #include "fork/seetg/seetg_settings.h"
 #include "fork/spy_mode.h"
+#include "fork/settings_stickers.h"
 #include "core/launcher.h"
 #include "core/proxy_rotation_manager.h"
 #include "core/ui_integration.h"
@@ -950,6 +951,7 @@ void Application::startLocalStorage() {
 	Fork::Marks::Start();
 	Fork::Lang::Start();
 	Fork::SeeTg::Start();
+	Fork::Stickers::Start();
 	_saveSettingsTimer.emplace([=] { saveSettings(); });
 	settings().saveDelayedRequests() | rpl::on_next([=] {
 		saveSettingsDelayed();

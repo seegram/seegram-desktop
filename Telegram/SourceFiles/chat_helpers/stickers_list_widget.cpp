@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "chat_helpers/stickers_list_widget.h"
+#include "fork/settings_stickers.h"
 
 #include "base/options.h"
 #include "base/timer_rpl.h"
@@ -90,7 +91,6 @@ base::options::toggle OptionUnlimitedRecentStickers({
 	.id = kOptionUnlimitedRecentStickers,
 	.name = "Unlimited recent stickers",
 	.description = "Display as much recent stickers as the server provides",
-	.defaultValue = true, // fork: use the full server-provided recent list.
 });
 
 [[nodiscard]] bool SetInMyList(Data::StickersSetFlags flags) {
@@ -301,6 +301,7 @@ StickersListWidget::StickersListWidget(
 	) | rpl::skip(1) | rpl::map_to(
 		TabbedSelector::Action::Update
 	) | rpl::start_to_stream(_choosingUpdated, lifetime());
+	Fork::Stickers::Changes() | rpl::on_next([=] { refreshStickers(); }, lifetime());
 
 	if (_isEffects) {
 		refreshStickers();
@@ -3279,9 +3280,9 @@ auto StickersListWidget::collectRecentStickers() -> std::vector<Sticker> {
 	result.reserve(cloudCount + recent.size() + customCount);
 	_custom.reserve(cloudCount + recent.size() + customCount);
 
+	const auto limit = Fork::Stickers::RecentDisplayLimit(&session(), _isMasks, OptionUnlimitedRecentStickers.value(), kRecentDisplayLimit);
 	auto add = [&](not_null<DocumentData*> document, bool custom) {
-		if (result.size() >= kRecentDisplayLimit
-			&& !OptionUnlimitedRecentStickers.value()) {
+		if (result.size() >= limit) {
 			return;
 		}
 		const auto i = ranges::find(result, document, &Sticker::document);

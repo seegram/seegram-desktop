@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="/seegram">
+    <file alias="icon.png">../../art/icon256.png</file>
+  </qresource>
+</RCC>

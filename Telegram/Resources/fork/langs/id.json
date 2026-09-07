@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Buka profil",
   "SeeTgResolveAdvanced": "Untuk pengguna berpengalaman. Jika Anda tidak tahu fungsi resolusi peer, pertahankan pengaturan bawaan.",
   "SeeTgCommentsCancel": "Batal",
-  "SeeTgCommentsRefresh": "Muat ulang"
+  "SeeTgCommentsRefresh": "Muat ulang",
+  "StickersTitle": "Stiker",
+  "StickersRecent": "Stiker terbaru",
+  "StickersServer": "Sesuai kiriman server",
+  "StickersRange": "Dari {min} hingga {max} stiker. Bawaan: {default}. Mode server menampilkan seluruh daftar yang diterima.",
+  "AboutTitle": "Tentang",
+  "AboutSummary": "Fork independen Telegram Desktop dengan mode hantu, riwayat pesan, dan integrasi see.tg.",
+  "AboutSeeTg": "Hadiah, riwayat profil, lencana, dan komentar dari miniapp see.tg langsung di klien.",
+  "AboutHistory": "Riwayat disimpan di perangkat ini: hanya pesan dan suntingan yang diterima klien ini yang tersedia.",
+  "Save": "Simpan",
+  "Close": "Tutup",
+  "AboutReleases": "Rilis"
 }

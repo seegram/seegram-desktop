@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Profiel openen",
   "SeeTgResolveAdvanced": "Voor ervaren gebruikers. Als je niet weet hoe het opzoeken van peers werkt, behoud dan de standaardinstellingen.",
   "SeeTgCommentsCancel": "Annuleren",
-  "SeeTgCommentsRefresh": "Vernieuwen"
+  "SeeTgCommentsRefresh": "Vernieuwen",
+  "StickersTitle": "Stickers",
+  "StickersRecent": "Recente stickers",
+  "StickersServer": "Zoals de server ze levert",
+  "StickersRange": "Van {min} tot {max} stickers. Standaard: {default}. Servermodus toont de volledige ontvangen lijst.",
+  "AboutTitle": "Over",
+  "AboutSummary": "Een onafhankelijke fork van Telegram Desktop met spookmodus, berichtgeschiedenis en see.tg-integratie.",
+  "AboutSeeTg": "Cadeaus, profielgeschiedenis, badges en reacties uit de see.tg-miniapp, direct in de client.",
+  "AboutHistory": "De geschiedenis wordt op dit apparaat bewaard: alleen berichten en bewerkingen die deze client ontving zijn beschikbaar.",
+  "Save": "Opslaan",
+  "Close": "Sluiten",
+  "AboutReleases": "Versies"
 }
