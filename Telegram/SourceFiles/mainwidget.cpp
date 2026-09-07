@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "mainwidget.h"
 
+#include "fork/settings_updates.h"
+
 #include "api/api_updates.h"
 #include "api/api_views.h"
 #include "data/components/scheduled_messages.h"
@@ -445,6 +447,7 @@ MainWidget::MainWidget(
 	orderWidgets();
 
 	if (!Core::UpdaterDisabled()) {
+		Fork::Updates::PrepareStartupCheck();
 		Core::UpdateChecker checker;
 		checker.start();
 	}

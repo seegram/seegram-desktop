@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} تعليقات",
   "SeeTgCommentsMany": "{count} تعليق",
   "SeeTgCommentsOther": "{count} تعليق",
-  "SeeTgHistoryGiftMovedShort": "تم النقل"
+  "SeeTgHistoryGiftMovedShort": "تم النقل",
+  "UpdatesTitle": "التحديثات",
+  "UpdatesOnStartup": "التحقق من التحديثات عند التشغيل",
+  "UpdatesStartupAbout": "يتحقق فور تشغيل SeeGram إذا كانت التحديثات التلقائية مفعّلة."
 }
