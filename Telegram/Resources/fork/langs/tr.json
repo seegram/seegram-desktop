@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Profili aç",
   "SeeTgResolveAdvanced": "İleri düzey kullanıcılar içindir. Eş çözümlemenin ne yaptığını bilmiyorsanız varsayılan ayarları koruyun.",
   "SeeTgCommentsCancel": "İptal",
-  "SeeTgCommentsRefresh": "Yenile"
+  "SeeTgCommentsRefresh": "Yenile",
+  "StickersTitle": "Çıkartmalar",
+  "StickersRecent": "Son çıkartmalar",
+  "StickersServer": "Sunucunun gönderdiği gibi",
+  "StickersRange": "{min}–{max} çıkartma. Varsayılan: {default}. Sunucu modu alınan listenin tamamını gösterir.",
+  "AboutTitle": "Hakkında",
+  "AboutSummary": "Hayalet modu, mesaj geçmişi ve see.tg entegrasyonu sunan bağımsız bir Telegram Desktop çatalı.",
+  "AboutSeeTg": "see.tg mini uygulamasındaki hediyeler, profil geçmişi, rozetler ve yorumlar doğrudan istemcide.",
+  "AboutHistory": "Geçmiş bu cihazda saklanır: yalnızca bu istemcinin aldığı mesajlar ve düzenlemeler kullanılabilir.",
+  "Save": "Kaydet",
+  "Close": "Kapat",
+  "AboutReleases": "Sürümler"
 }

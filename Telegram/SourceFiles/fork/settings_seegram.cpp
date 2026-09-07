@@ -8,11 +8,13 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/settings_seegram.h"
 
 #include "fork/build_counter.h"
+#include "fork/about_seegram.h"
 #include "fork/fork_lang.h"
 #include "fork/settings_ghost.h"
 #include "fork/settings_marks.h"
 #include "fork/settings_seetg.h"
 #include "fork/settings_spy.h"
+#include "fork/settings_stickers.h"
 #include "core/click_handler_types.h"
 #include "core/version.h"
 #include "settings/settings_builder.h"
@@ -50,11 +52,7 @@ using Lang::Language;
 }
 
 [[nodiscard]] QString VersionText() {
-	return u"Desktop v"_q
-		+ QString::fromLatin1(AppVersionStr)
-		+ u" (build "_q
-		+ QString::number(BuildCounter)
-		+ u")"_q;
+	return About::VersionText();
 }
 
 void AddCategory(
@@ -191,6 +189,7 @@ void BuildContent(
 		SeeTg::SectionId(),
 		showOther);
 	AddLanguage(container, controller);
+	AddCategory(container, Key::StickersTitle, st::menuIconStickers, Stickers::SectionId(), showOther);
 	Ui::AddSkip(container);
 	Ui::AddDivider(container);
 

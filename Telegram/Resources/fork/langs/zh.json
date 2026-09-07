@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "打开资料页",
   "SeeTgResolveAdvanced": "供高级用户使用。如果不了解此功能的作用，请保留默认设置。",
   "SeeTgCommentsCancel": "取消",
-  "SeeTgCommentsRefresh": "刷新"
+  "SeeTgCommentsRefresh": "刷新",
+  "StickersTitle": "贴纸",
+  "StickersRecent": "最近使用的贴纸",
+  "StickersServer": "按服务器返回的列表显示",
+  "StickersRange": "显示 {min} 至 {max} 个贴纸，默认 {default} 个。服务器模式显示收到的完整列表。",
+  "AboutTitle": "关于",
+  "AboutSummary": "Telegram Desktop 的独立分支，提供幽灵模式、消息历史和 see.tg 集成。",
+  "AboutSeeTg": "在客户端内直接使用 see.tg 迷你应用的礼物、个人资料历史、徽章和评论功能。",
+  "AboutHistory": "历史保存在本设备上，仅包含此客户端收到的消息和编辑记录。",
+  "Save": "保存",
+  "Close": "关闭",
+  "AboutReleases": "发布版本"
 }

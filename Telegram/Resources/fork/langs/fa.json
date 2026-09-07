@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "باز کردن پروفایل",
   "SeeTgResolveAdvanced": "برای کاربران حرفه‌ای. اگر نمی‌دانید شناسایی همتاها چه کاری انجام می‌دهد، تنظیمات پیش‌فرض را نگه دارید.",
   "SeeTgCommentsCancel": "لغو",
-  "SeeTgCommentsRefresh": "تازه‌سازی"
+  "SeeTgCommentsRefresh": "تازه‌سازی",
+  "StickersTitle": "استیکرها",
+  "StickersRecent": "استیکرهای اخیر",
+  "StickersServer": "همان‌طور که سرور می‌فرستد",
+  "StickersRange": "از {min} تا {max} استیکر. پیش‌فرض: {default}. حالت سرور تمام فهرست دریافتی را نشان می‌دهد.",
+  "AboutTitle": "دربارهٔ برنامه",
+  "AboutSummary": "انشعابی مستقل از Telegram Desktop با حالت شبح، تاریخچهٔ پیام‌ها و یکپارچگی با see.tg.",
+  "AboutSeeTg": "هدیه‌ها، تاریخچهٔ پروفایل، نشان‌ها و نظرهای مینی‌اپ see.tg مستقیماً در برنامه.",
+  "AboutHistory": "تاریخچه در این دستگاه ذخیره می‌شود: فقط پیام‌ها و ویرایش‌های دریافت‌شده توسط این برنامه در دسترس هستند.",
+  "Save": "ذخیره",
+  "Close": "بستن",
+  "AboutReleases": "نسخه‌ها"
 }

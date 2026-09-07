@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Profilni ochish",
   "SeeTgResolveAdvanced": "Tajribali foydalanuvchilar uchun. Pirlarni aniqlash nima ekanini bilmasangiz, standart sozlamalarni saqlang.",
   "SeeTgCommentsCancel": "Bekor qilish",
-  "SeeTgCommentsRefresh": "Yangilash"
+  "SeeTgCommentsRefresh": "Yangilash",
+  "StickersTitle": "Stikerlar",
+  "StickersRecent": "Oxirgi stikerlar",
+  "StickersServer": "Server berganidek",
+  "StickersRange": "{min} tadan {max} tagacha stiker. Standart: {default}. Server rejimi olingan roʻyxatni toʻliq koʻrsatadi.",
+  "AboutTitle": "Dastur haqida",
+  "AboutSummary": "Arvoh rejimi, xabarlar tarixi va see.tg integratsiyasiga ega mustaqil Telegram Desktop forki.",
+  "AboutSeeTg": "see.tg miniappidagi sovgʻalar, profil tarixi, nishonlar va izohlar bevosita mijozda.",
+  "AboutHistory": "Tarix qurilmada saqlanadi: faqat ushbu mijoz olgan xabarlar va tahrirlar mavjud.",
+  "Save": "Saqlash",
+  "Close": "Yopish",
+  "AboutReleases": "Relizlar"
 }

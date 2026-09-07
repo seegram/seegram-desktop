@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Profili aç",
   "SeeTgResolveAdvanced": "Təcrübəli istifadəçilər üçün. Bunun nə etdiyini bilmirsinizsə, standart parametrləri saxlayın.",
   "SeeTgCommentsCancel": "Ləğv et",
-  "SeeTgCommentsRefresh": "Yenilə"
+  "SeeTgCommentsRefresh": "Yenilə",
+  "StickersTitle": "Stikerlər",
+  "StickersRecent": "Son stikerlər",
+  "StickersServer": "Serverin göndərdiyi kimi",
+  "StickersRange": "{min}–{max} stiker. Standart: {default}. Server rejimi alınmış siyahını tam göstərir.",
+  "AboutTitle": "Proqram haqqında",
+  "AboutSummary": "Ruh rejimi, mesaj tarixçəsi və see.tg inteqrasiyası olan müstəqil Telegram Desktop forku.",
+  "AboutSeeTg": "see.tg mini tətbiqindən hədiyyələr, profil tarixçəsi, nişanlar və şərhlər birbaşa müştəridə.",
+  "AboutHistory": "Tarixçə cihazda saxlanılır: yalnız bu müştərinin aldığı mesajlar və düzəlişlər əlçatandır.",
+  "Save": "Saxla",
+  "Close": "Bağla",
+  "AboutReleases": "Buraxılışlar"
 }

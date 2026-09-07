@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "פתיחת פרופיל",
   "SeeTgResolveAdvanced": "למשתמשים מתקדמים. אם לא ברור לך מה עושה זיהוי העמיתים, כדאי להשאיר את הגדרות ברירת המחדל.",
   "SeeTgCommentsCancel": "ביטול",
-  "SeeTgCommentsRefresh": "רענון"
+  "SeeTgCommentsRefresh": "רענון",
+  "StickersTitle": "מדבקות",
+  "StickersRecent": "מדבקות אחרונות",
+  "StickersServer": "כפי שהשרת מספק",
+  "StickersRange": "בין {min} ל־{max} מדבקות. ברירת מחדל: {default}. מצב שרת מציג את כל הרשימה שהתקבלה.",
+  "AboutTitle": "אודות",
+  "AboutSummary": "גרסה עצמאית המבוססת על Telegram Desktop עם מצב רוח רפאים, היסטוריית הודעות ושילוב see.tg.",
+  "AboutSeeTg": "מתנות, היסטוריית פרופילים, תגים ותגובות מהמיני־אפליקציה see.tg ישירות בלקוח.",
+  "AboutHistory": "ההיסטוריה נשמרת במכשיר הזה: רק הודעות ועריכות שהתקבלו בלקוח הזה זמינות.",
+  "Save": "שמירה",
+  "Close": "סגירה",
+  "AboutReleases": "גרסאות"
 }

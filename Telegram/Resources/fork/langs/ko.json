@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "프로필 열기",
   "SeeTgResolveAdvanced": "고급 사용자를 위한 설정입니다. 피어 확인 기능을 잘 모른다면 기본 설정을 유지하세요.",
   "SeeTgCommentsCancel": "취소",
-  "SeeTgCommentsRefresh": "새로고침"
+  "SeeTgCommentsRefresh": "새로고침",
+  "StickersTitle": "스티커",
+  "StickersRecent": "최근 스티커",
+  "StickersServer": "서버에서 받은 전체 목록",
+  "StickersRange": "스티커 {min}~{max}개. 기본값: {default}. 서버 모드에서는 받은 목록 전체를 표시합니다.",
+  "AboutTitle": "앱 정보",
+  "AboutSummary": "고스트 모드, 메시지 기록, see.tg 연동을 갖춘 독립적인 Telegram Desktop 포크입니다.",
+  "AboutSeeTg": "see.tg 미니 앱의 선물, 프로필 기록, 배지, 댓글을 클라이언트에서 바로 이용합니다.",
+  "AboutHistory": "기록은 이 기기에 저장되며, 이 클라이언트가 받은 메시지와 수정 내용만 사용할 수 있습니다.",
+  "Save": "저장",
+  "Close": "닫기",
+  "AboutReleases": "릴리스"
 }

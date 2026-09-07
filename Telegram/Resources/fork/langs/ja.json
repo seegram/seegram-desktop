@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "プロフィールを開く",
   "SeeTgResolveAdvanced": "上級ユーザー向けです。ピアの解決の役割が分からない場合は、既定の設定を変更しないでください。",
   "SeeTgCommentsCancel": "キャンセル",
-  "SeeTgCommentsRefresh": "更新"
+  "SeeTgCommentsRefresh": "更新",
+  "StickersTitle": "ステッカー",
+  "StickersRecent": "最近のステッカー",
+  "StickersServer": "サーバーからの全件を表示",
+  "StickersRange": "{min}～{max}個のステッカー。初期値：{default}。サーバーモードでは受信したリスト全体を表示します。",
+  "AboutTitle": "このアプリについて",
+  "AboutSummary": "ゴーストモード、メッセージ履歴、see.tg連携を備えたTelegram Desktopの独立した派生版です。",
+  "AboutSeeTg": "see.tgミニアプリのギフト、プロフィール履歴、バッジ、コメントをクライアント内で利用できます。",
+  "AboutHistory": "履歴はこの端末に保存されます。このクライアントが受信したメッセージと編集内容のみ利用できます。",
+  "Save": "保存",
+  "Close": "閉じる",
+  "AboutReleases": "リリース"
 }

@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Deschide profilul",
   "SeeTgResolveAdvanced": "Pentru utilizatori avansați. Dacă nu știi cum funcționează identificarea peer-urilor, păstrează setările implicite.",
   "SeeTgCommentsCancel": "Anulează",
-  "SeeTgCommentsRefresh": "Reîmprospătează"
+  "SeeTgCommentsRefresh": "Reîmprospătează",
+  "StickersTitle": "Autocolante",
+  "StickersRecent": "Autocolante recente",
+  "StickersServer": "Așa cum le trimite serverul",
+  "StickersRange": "De la {min} la {max} autocolante. Implicit: {default}. Modul server afișează întreaga listă primită.",
+  "AboutTitle": "Despre",
+  "AboutSummary": "O variantă independentă Telegram Desktop cu mod fantomă, istoric de mesaje și integrare see.tg.",
+  "AboutSeeTg": "Cadouri, istoricul profilurilor, insigne și comentarii din miniaplicația see.tg direct în client.",
+  "AboutHistory": "Istoricul este păstrat pe acest dispozitiv: sunt disponibile doar mesajele și modificările primite de acest client.",
+  "Save": "Salvează",
+  "Close": "Închide",
+  "AboutReleases": "Versiuni"
 }

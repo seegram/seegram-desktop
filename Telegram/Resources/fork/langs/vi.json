@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Mở hồ sơ",
   "SeeTgResolveAdvanced": "Dành cho người dùng có kinh nghiệm. Nếu chưa hiểu chức năng phân giải peer, hãy giữ cài đặt mặc định.",
   "SeeTgCommentsCancel": "Hủy",
-  "SeeTgCommentsRefresh": "Làm mới"
+  "SeeTgCommentsRefresh": "Làm mới",
+  "StickersTitle": "Nhãn dán",
+  "StickersRecent": "Nhãn dán gần đây",
+  "StickersServer": "Theo danh sách máy chủ",
+  "StickersRange": "Từ {min} đến {max} nhãn dán. Mặc định: {default}. Chế độ máy chủ hiển thị toàn bộ danh sách nhận được.",
+  "AboutTitle": "Giới thiệu",
+  "AboutSummary": "Bản fork độc lập của Telegram Desktop với chế độ ẩn, lịch sử tin nhắn và tích hợp see.tg.",
+  "AboutSeeTg": "Quà tặng, lịch sử hồ sơ, huy hiệu và bình luận từ miniapp see.tg ngay trong ứng dụng khách.",
+  "AboutHistory": "Lịch sử được lưu trên thiết bị này: chỉ có các tin nhắn và chỉnh sửa mà ứng dụng khách này đã nhận.",
+  "Save": "Lưu",
+  "Close": "Đóng",
+  "AboutReleases": "Bản phát hành"
 }
