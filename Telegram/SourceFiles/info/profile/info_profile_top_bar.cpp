@@ -7,6 +7,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/info_profile_top_bar.h"
 
+#include "fork/seetg/seetg_verifications.h"
+#include "styles/style_seetg_verifications.h"
+
 #include "api/api_peer_colors.h"
 #include "api/api_peer_photo.h"
 #include "api/api_user_privacy.h"
@@ -376,6 +379,10 @@ TopBar::TopBar(
 	VerifiedContentForPeer(_peer),
 	nullptr,
 	_gifPausedChecker))
+, _seeLeft(std::make_unique<Fork::SeeTg::Verification::Badges>(
+	this, _peer, u"left"_q, !_savedMessages && !_topic))
+, _seeRight(std::make_unique<Fork::SeeTg::Verification::Badges>(
+	this, _peer, u"right"_q, !_savedMessages && !_topic))
 , _hasActions(!_savedMessages
 	&& descriptor.source != Source::Stories
 	&& descriptor.source != Source::Preview
@@ -487,7 +494,8 @@ TopBar::TopBar(
 	_title->setContextCopyText(tr::lng_profile_copy_fullname(tr::now));
 	_title->setSelectable(true);
 
-	auto badgeUpdates = rpl::producer<rpl::empty_value>();
+	auto badgeUpdates = rpl::producer<>(rpl::merge(
+		_seeLeft->updated(), _seeRight->updated()));
 	if (_badge) {
 		badgeUpdates = rpl::merge(
 			std::move(badgeUpdates),
@@ -1969,6 +1977,11 @@ void TopBar::updateTitlePosition(float64 progressCurrent) {
 	if (verifiedWidget || badgeWidget) {
 		badgesWidth += st::infoVerifiedCheckPosition.x();
 	}
+	const auto seeBudget = std::max(0, width() - interpolatedPadding
+		- reservedRight - badgesWidth - st::seetgVerificationMinTitleWidth);
+	_seeLeft->fitToWidth(seeBudget / 2);
+	_seeRight->fitToWidth(seeBudget - _seeLeft->extent());
+	badgesWidth += _seeLeft->extent() + _seeRight->extent();
 	const auto titleWidth = width()
 		- interpolatedPadding
 		- reservedRight
@@ -2000,12 +2013,18 @@ void TopBar::updateTitlePosition(float64 progressCurrent) {
 	if (verifiedWidget || badgeWidget) {
 		totalElementsWidth += st::infoVerifiedCheckPosition.x();
 	}
-	totalElementsWidth += botVerifySkip;
+	totalElementsWidth += botVerifySkip
+		+ _seeLeft->extent() + _seeRight->extent();
 
 	auto titleLeft = anim::interpolate(
 		titleMostLeft,
 		(width() - totalElementsWidth) / 2,
 		progressCurrent);
+
+	_seeLeft->moveToLeft(
+		titleLeft,
+		titleTop + (_title->height() - _seeLeft->height()) / 2);
+	titleLeft += _seeLeft->extent();
 
 	if (_botVerify) {
 		_botVerify->move(
@@ -2026,6 +2045,13 @@ void TopBar::updateTitlePosition(float64 progressCurrent) {
 			badgeTop,
 			badgeBottom);
 	}
+	_seeRight->moveToLeft(
+		badgeLeft
+			+ (badgeWidget ? badgeWidget->width() : 0)
+			+ (verifiedWidget ? verifiedWidget->width() : 0)
+			+ ((badgeWidget || verifiedWidget) ? st::infoVerifiedCheckPosition.x() : 0)
+			+ st::seetgVerificationBadgeSkip,
+		titleTop + (_title->height() - _seeRight->height()) / 2);
 }
 
 void TopBar::updateStatusPosition(float64 progressCurrent) {
