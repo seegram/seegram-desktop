@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} ความคิดเห็น",
   "SeeTgCommentsMany": "{count} ความคิดเห็น",
   "SeeTgCommentsOther": "{count} ความคิดเห็น",
-  "SeeTgHistoryGiftMovedShort": "ย้ายแล้ว"
+  "SeeTgHistoryGiftMovedShort": "ย้ายแล้ว",
+  "UpdatesTitle": "การอัปเดต",
+  "UpdatesOnStartup": "ตรวจสอบการอัปเดตเมื่อเริ่มต้น",
+  "UpdatesStartupAbout": "ตรวจสอบทันทีที่เปิด SeeGram หากเปิดการอัปเดตอัตโนมัติไว้"
 }

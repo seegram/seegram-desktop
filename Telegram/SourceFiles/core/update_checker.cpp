@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "core/update_checker.h"
 
+#include "fork/settings_updates.h"
+
 #include "fork/update_feed.h"
 
 #include "platform/platform_specific.h"
@@ -2417,7 +2419,7 @@ void UpdateApplication() {
 				controller->showSection(
 					std::make_shared<Info::Memento>(
 						Info::Settings::Tag{ controller->session().user() },
-						::Settings::AdvancedId()),
+						Fork::Updates::SectionId()),
 					Window::SectionShow());
 			} else {
 				window->widget()->showSpecialLayer(

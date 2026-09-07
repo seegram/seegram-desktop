@@ -627,6 +627,8 @@ PRIVATE
     fork/settings_seegram.cpp
     fork/settings_stickers.cpp
     fork/settings_stickers.h
+    fork/settings_updates.cpp
+    fork/settings_updates.h
     fork/about_seegram.cpp
     fork/about_seegram.h
     fork/settings_seegram.h
