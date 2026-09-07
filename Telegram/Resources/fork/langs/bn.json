@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "প্রোফাইল খুলুন",
   "SeeTgResolveAdvanced": "অভিজ্ঞ ব্যবহারকারীদের জন্য। পিয়ার শনাক্তকরণ কী করে তা না জানলে ডিফল্ট সেটিংস রাখুন।",
   "SeeTgCommentsCancel": "বাতিল",
-  "SeeTgCommentsRefresh": "রিফ্রেশ"
+  "SeeTgCommentsRefresh": "রিফ্রেশ",
+  "StickersTitle": "স্টিকার",
+  "StickersRecent": "সাম্প্রতিক স্টিকার",
+  "StickersServer": "সার্ভার যেভাবে দেয়",
+  "StickersRange": "{min} থেকে {max}টি স্টিকার। ডিফল্ট: {default}। সার্ভার মোডে প্রাপ্ত সম্পূর্ণ তালিকা দেখানো হয়।",
+  "AboutTitle": "অ্যাপ সম্পর্কে",
+  "AboutSummary": "ঘোস্ট মোড, বার্তার ইতিহাস ও see.tg সংযোগসহ Telegram Desktop-এর একটি স্বতন্ত্র ফর্ক।",
+  "AboutSeeTg": "see.tg মিনি অ্যাপের উপহার, প্রোফাইলের ইতিহাস, ব্যাজ ও মন্তব্য সরাসরি ক্লায়েন্টে।",
+  "AboutHistory": "ইতিহাস এই ডিভাইসে থাকে: শুধু এই ক্লায়েন্টে পাওয়া বার্তা ও সম্পাদনাগুলো উপলব্ধ।",
+  "Save": "সংরক্ষণ",
+  "Close": "বন্ধ করুন",
+  "AboutReleases": "রিলিজ"
 }

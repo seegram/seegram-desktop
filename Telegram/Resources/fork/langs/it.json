@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Apri il profilo",
   "SeeTgResolveAdvanced": "Per utenti esperti. Se non sai a cosa serve la risoluzione dei peer, mantieni le impostazioni predefinite.",
   "SeeTgCommentsCancel": "Annulla",
-  "SeeTgCommentsRefresh": "Aggiorna"
+  "SeeTgCommentsRefresh": "Aggiorna",
+  "StickersTitle": "Sticker",
+  "StickersRecent": "Sticker recenti",
+  "StickersServer": "Come forniti dal server",
+  "StickersRange": "Da {min} a {max} sticker. Predefinito: {default}. La modalità server mostra l’intero elenco ricevuto.",
+  "AboutTitle": "Informazioni",
+  "AboutSummary": "Una variante indipendente di Telegram Desktop con modalità fantasma, cronologia dei messaggi e integrazione see.tg.",
+  "AboutSeeTg": "Regali, cronologia dei profili, badge e commenti della miniapp see.tg direttamente nel client.",
+  "AboutHistory": "La cronologia è salvata su questo dispositivo: sono disponibili solo i messaggi e le modifiche ricevuti da questo client.",
+  "Save": "Salva",
+  "Close": "Chiudi",
+  "AboutReleases": "Versioni"
 }

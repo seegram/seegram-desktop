@@ -236,6 +236,17 @@ enum class Key {
 	SeeTgResolveAdvanced,
 	SeeTgCommentsRefresh,
 	SeeTgCommentsCancel,
+	StickersTitle,
+	StickersRecent,
+	StickersServer,
+	StickersRange,
+	AboutTitle,
+	AboutSummary,
+	AboutSeeTg,
+	AboutHistory,
+	Save,
+	Close,
+	AboutReleases,
 
 	Count,
 };

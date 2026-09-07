@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Open profile",
   "SeeTgResolveAdvanced": "For advanced users. If you are unsure what peer resolution does, keep the default settings.",
   "SeeTgCommentsCancel": "Cancel",
-  "SeeTgCommentsRefresh": "Refresh"
+  "SeeTgCommentsRefresh": "Refresh",
+  "StickersTitle": "Stickers",
+  "StickersRecent": "Recent stickers",
+  "StickersServer": "As provided by the server",
+  "StickersRange": "From {min} to {max} stickers. Default: {default}. Server mode shows the entire received list.",
+  "AboutTitle": "About",
+  "AboutSummary": "An independent Telegram Desktop fork with ghost mode, message history and see.tg integration.",
+  "AboutSeeTg": "Gifts, profile history, badges and comments from the see.tg miniapp, right in the client.",
+  "AboutHistory": "History is stored on this device: only messages and edits received by this client are available.",
+  "Save": "Save",
+  "Close": "Close",
+  "AboutReleases": "Releases"
 }

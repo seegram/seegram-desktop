@@ -169,5 +169,16 @@
   "SeeTgCommentOpenProfile": "Profil öffnen",
   "SeeTgResolveAdvanced": "Für erfahrene Nutzer. Wenn du nicht weißt, was die Peer-Auflösung bewirkt, behalte die Standardeinstellungen bei.",
   "SeeTgCommentsCancel": "Abbrechen",
-  "SeeTgCommentsRefresh": "Aktualisieren"
+  "SeeTgCommentsRefresh": "Aktualisieren",
+  "StickersTitle": "Sticker",
+  "StickersRecent": "Zuletzt verwendete Sticker",
+  "StickersServer": "Wie vom Server geliefert",
+  "StickersRange": "Von {min} bis {max} Sticker. Standard: {default}. Im Servermodus wird die gesamte empfangene Liste angezeigt.",
+  "AboutTitle": "Über die App",
+  "AboutSummary": "Ein unabhängiger Fork von Telegram Desktop mit Geistermodus, Nachrichtenverlauf und see.tg-Integration.",
+  "AboutSeeTg": "Geschenke, Profilverlauf, Abzeichen und Kommentare aus der see.tg-Miniapp direkt im Client.",
+  "AboutHistory": "Der Verlauf wird auf diesem Gerät gespeichert. Nur hier empfangene Nachrichten und Änderungen sind verfügbar.",
+  "Save": "Speichern",
+  "Close": "Schließen",
+  "AboutReleases": "Versionen"
 }
