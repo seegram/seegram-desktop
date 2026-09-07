@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/seetg/seetg_history.h"
+#include "fork/seetg/seetg_history_layout.h"
 
 #include "fork/fork_lang.h"
 #include "fork/seetg/seetg_profile_counters.h"
@@ -532,7 +533,7 @@ struct RowText {
 	static const auto result = style::internal::OwnedFont(
 		st::semiboldFont->f.family(),
 		st::semiboldFont->flags(),
-		st::semiboldFont->f.pixelSize() + 2);
+		st::semiboldFont->f.pixelSize() + style::ConvertScale(2));
 	return result;
 }
 
@@ -540,7 +541,7 @@ struct RowText {
 	static const auto result = style::internal::OwnedFont(
 		st::normalFont->f.family(),
 		st::normalFont->flags(),
-		st::normalFont->f.pixelSize() + 1);
+		st::normalFont->f.pixelSize() + style::ConvertScale(1));
 	return result;
 }
 
@@ -569,7 +570,7 @@ struct RowText {
 // own sheet opens.
 class OwnerLine final {
 public:
-	OwnerLine(not_null<QWidget*> widget, const QString &caption, Owner owner);
+	OwnerLine(not_null<Ui::RpWidget*> widget, not_null<Main::Session*> session, const QString &caption, Owner owner);
 
 	void paint(Painter &p, int x, int y, int available, int outerWidth) const;
 
@@ -578,13 +579,26 @@ private:
 	Owner _owner;
 	QString _name;
 	QImage _userpic;
+	PeerData *_peer = nullptr;
+	mutable Ui::PeerUserpicView _nativeUserpic;
 
 };
 
-OwnerLine::OwnerLine(not_null<QWidget*> widget, const QString &caption, Owner owner)
+OwnerLine::OwnerLine(not_null<Ui::RpWidget*> widget, not_null<Main::Session*> session, const QString &caption, Owner owner)
 : _caption(caption)
 , _owner(std::move(owner))
 , _name(OwnerName(_owner)) {
+	_peer = _owner.known() ? session->data().peerLoaded(_owner.peerId) : nullptr;
+	if (_peer) {
+		if (!_peer->username().isEmpty()) {
+			_owner.username = _peer->username();
+		}
+		_nativeUserpic = _peer->createUserpicView();
+		_peer->loadUserpic();
+		session->downloaderTaskFinished() | rpl::on_next([widget] {
+			widget->update();
+		}, widget->lifetime());
+	}
 	if (!_owner.username.isEmpty()) {
 		Visuals::Image(
 			Visuals::UserpicUrl(_owner.username),
@@ -601,38 +615,45 @@ void OwnerLine::paint(
 		int y,
 		int available,
 		int outerWidth) const {
+	if (available <= 0) {
+		return;
+	}
 	const auto startX = x;
 	const auto &font = LineFont();
-	const auto lineHeight = font->height;
+	const auto size = std::min(style::ConvertScale(kUserpicSize), available);
+	const auto captionWidth = std::min(font->width(_caption),
+		std::max(0, available - size - 2 * font->spacew - font->width(u"…"_q)));
 	p.setFont(font->f);
 	p.setPen(st::windowSubTextFg);
-	p.drawTextLeft(x, y, outerWidth, _caption);
-	x += font->width(_caption) + font->spacew;
-
-	const auto top = y + (lineHeight - kUserpicSize) / 2;
-	{
+	if (captionWidth > 0) {
+		p.drawTextLeft(x, y, outerWidth, font->elided(_caption, captionWidth));
+		x += captionWidth + font->spacew;
+	}
+	const auto top = y + (font->height - size) / 2;
+	const auto avatar = style::rtlrect(x, top, size, size, outerWidth);
+	if (_userpic.isNull() && _peer && _peer->hasUserpic()) {
+		_peer->paintUserpicLeft(p, _nativeUserpic, x, top, outerWidth, size, true);
+	} else {
 		auto hq = PainterHighQualityEnabler(p);
 		auto path = QPainterPath();
-		path.addEllipse(QRect(x, top, kUserpicSize, kUserpicSize));
+		path.addEllipse(avatar);
 		if (_userpic.isNull()) {
 			p.setPen(Qt::NoPen);
 			p.setBrush(st::windowBgOver);
 			p.drawPath(path);
 			p.setPen(st::windowSubTextFg);
-			p.setFont(st::semiboldFont);
-			const auto letter = _name.isEmpty()
-				? QString()
-				: _name.left(1).toUpper();
-			p.drawText(QRect(x, top, kUserpicSize, kUserpicSize), letter, style::al_center);
+			auto letterFont = st::semiboldFont->f;
+			letterFont.setPixelSize(std::max(1, size * 3 / 5));
+			p.setFont(letterFont);
+			p.drawText(avatar, _name.left(1).toUpper(), style::al_center);
 		} else {
 			p.save();
-			p.setClipPath(path);
-			p.drawImage(QRect(x, top, kUserpicSize, kUserpicSize), _userpic);
+			p.setClipPath(path, Qt::IntersectClip);
+			p.drawImage(avatar, _userpic);
 			p.restore();
 		}
 	}
-	x += kUserpicSize + font->spacew;
-
+	x += size + font->spacew;
 	p.setFont(font->f);
 	p.setPen(st::windowFg);
 	p.drawTextLeft(x, y, outerWidth, font->elided(_name, std::max(0, available - (x - startX))));
@@ -642,7 +663,7 @@ void OwnerLine::paint(
 // left, what happened on the right, the time underneath.
 class Row final : public Ui::AbstractButton {
 public:
-	Row(QWidget *parent, Event event);
+	Row(QWidget *parent, not_null<Main::Session*> session, Event event);
 
 protected:
 	void paintEvent(QPaintEvent *e) override;
@@ -660,10 +681,11 @@ private:
 	// must never move: a growing vector of values did exactly that.
 	std::vector<std::unique_ptr<OwnerLine>> _owners;
 	QString _time;
+	RowGeometry _geometry;
 
 };
 
-Row::Row(QWidget *parent, Event event)
+Row::Row(QWidget *parent, not_null<Main::Session*> session, Event event)
 : AbstractButton(parent)
 , _event(std::move(event)) {
 	const auto text = TextFor(_event);
@@ -676,13 +698,13 @@ Row::Row(QWidget *parent, Event event)
 	if (withPeers) {
 		if (_event.from.known() || !_event.from.name.isEmpty()) {
 			_owners.push_back(std::make_unique<OwnerLine>(
-				this,
+				this, session,
 				Lang::Text(Key::SeeTgHistoryFrom) + ':',
 				_event.from));
 		}
 		if (_event.to.known() || !_event.to.name.isEmpty()) {
 			_owners.push_back(std::make_unique<OwnerLine>(
-				this,
+				this, session,
 				Lang::Text(Key::SeeTgHistoryTo) + ':',
 				_event.to));
 		}
@@ -700,21 +722,18 @@ Row::Row(QWidget *parent, Event event)
 }
 
 int Row::resizeGetHeight(int newWidth) {
-	const auto lines = 1
-		+ int(_meta.size())
-		+ int(_owners.size())
-		+ (_time.isEmpty() ? 0 : 1);
-	const auto textHeight = TitleFont()->height
-		+ (lines - 1) * LineFont()->height;
-	const auto art = _card ? kArtSize : kGlyphSize;
-	const auto inner = std::max(art, textHeight) + 2 * kBlockPadding;
-	const auto height = inner + 2 * kBlockMarginY;
+	const auto lines = 1 + int(_meta.size()) + int(_owners.size()) + (_time.isEmpty() ? 0 : 1);
+	const auto lineHeight = std::max(LineFont()->height, style::ConvertScale(kUserpicSize));
+	const auto textHeight = TitleFont()->height + (lines - 1) * (lineHeight + style::ConvertScale(4));
+	_geometry = ComputeRowGeometry(newWidth,
+		style::ConvertScale(_card ? kArtSize : kGlyphSize),
+		style::ConvertScale(_card ? 64 : kGlyphSize), style::ConvertScale(160),
+		textHeight, style::ConvertScale(kBlockPadding), style::ConvertScale(kBlockPadding + 4),
+		style::ConvertScale(kBlockMarginX), style::ConvertScale(kBlockMarginY));
 	if (_card) {
-		_card->move(
-			kBlockMarginX + kBlockPadding,
-			kBlockMarginY + (inner - kArtSize) / 2);
+		_card->setGeometry(style::rtlrect(_geometry.art, newWidth));
 	}
-	return height;
+	return _geometry.height;
 }
 
 void Row::paintGlyph(Painter &p, QRect rect) {
@@ -748,8 +767,7 @@ void Row::paintEvent(QPaintEvent *e) {
 	auto p = Painter(this);
 	// Every event is its own block, like the mini app: a card of the window
 	// colour on the page's divider background.
-	const auto block = rect().marginsRemoved(
-		{ kBlockMarginX, kBlockMarginY, kBlockMarginX, kBlockMarginY });
+	const auto block = _geometry.block;
 	{
 		auto hq = PainterHighQualityEnabler(p);
 		p.setPen(Qt::NoPen);
@@ -757,18 +775,11 @@ void Row::paintEvent(QPaintEvent *e) {
 		const auto radius = st::giftBoxGiftRadius;
 		p.drawRoundedRect(block, radius, radius);
 	}
-	const auto art = _card ? kArtSize : kGlyphSize;
-	const auto artLeft = block.x() + kBlockPadding;
-	const auto artTop = block.y() + (block.height() - art) / 2;
 	if (!_card) {
-		paintGlyph(p, QRect(artLeft, artTop, art, art));
+		paintGlyph(p, style::rtlrect(_geometry.art, width()));
 	}
-
-	// The first line sits on the card's top edge, the last on its bottom
-	// edge, the rest spread evenly between - the mini app's row. A row with
-	// no card is compact: its lines just follow each other.
-	const auto textLeft = artLeft + art + kBlockPadding + 4;
-	const auto available = block.x() + block.width() - kBlockPadding - textLeft;
+	const auto textLeft = _geometry.text.x();
+	const auto available = _geometry.text.width();
 	auto lines = QStringList();
 	lines.push_back(_title);
 	for (const auto &line : _meta) {
@@ -784,10 +795,10 @@ void Row::paintEvent(QPaintEvent *e) {
 	}
 	const auto count = lines.size();
 	const auto titleHeight = TitleFont()->height;
-	const auto lineHeight = LineFont()->height;
+	const auto lineHeight = std::max(LineFont()->height, style::ConvertScale(kUserpicSize));
 	const auto textHeight = int(titleHeight + (count - 1) * lineHeight);
-	const auto span = std::max(art, textHeight);
-	const auto top = block.y() + (block.height() - span) / 2;
+	const auto span = _geometry.text.height();
+	const auto top = _geometry.text.y();
 	const auto gap = (count > 1)
 		? float64(span - textHeight) / (count - 1)
 		: 0.;
@@ -809,7 +820,7 @@ void Row::paintEvent(QPaintEvent *e) {
 			continue;
 		}
 		if (i >= ownersFrom && i < ownersTill) {
-			_owners[i - ownersFrom]->paint(p, textLeft, rounded, available, width());
+			_owners[i - ownersFrom]->paint(p, textLeft, rounded + (lineHeight - LineFont()->height) / 2, available, width());
 		} else {
 			p.setFont(LineFont()->f);
 			p.setPen(st::windowSubTextFg);
@@ -2041,8 +2052,25 @@ void Inner::appendRows(const std::vector<Event> &events) {
 	if (!_rows) {
 		return;
 	}
-	for (const auto &event : events) {
-		const auto row = _rows->add(object_ptr<Row>(_rows, event));
+	auto usernames = base::flat_map<PeerId, QString>();
+	for (const auto source : std::array<const std::vector<Event>*, 2>{ &_events, &events }) {
+		for (const auto &event : *source) {
+			for (const auto &owner : { event.from, event.to }) {
+				if (owner.known() && !owner.username.isEmpty()) {
+					usernames.emplace(owner.peerId, owner.username);
+				}
+			}
+		}
+	}
+	for (auto event : events) {
+		for (const auto owner : { &event.from, &event.to }) {
+			if (owner->username.isEmpty()) {
+				if (const auto i = usernames.find(owner->peerId); i != end(usernames)) {
+					owner->username = i->second;
+				}
+			}
+		}
+		const auto row = _rows->add(object_ptr<Row>(_rows, &_controller->session(), event));
 		if (HasCard(event)) {
 			row->setClickedCallback([=] {
 				openEvent(event);
