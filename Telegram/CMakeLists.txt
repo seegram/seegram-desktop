@@ -641,6 +641,9 @@ PRIVATE
     fork/spy_ui.cpp
     fork/spy_ui.h
     fork/update_feed.h
+    fork/seetg/seetg_badge_icons.cpp
+    fork/seetg/seetg_badge_icons.h
+    fork/seetg/seetg_badge_svg.h
     fork/seetg/seetg_verifications.cpp
     fork/seetg/seetg_verifications.h
     fork/seetg/seetg_verification_icon.h
