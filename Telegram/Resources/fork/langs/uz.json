@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} ta izoh",
   "SeeTgCommentsMany": "{count} ta izoh",
   "SeeTgCommentsOther": "{count} ta izoh",
-  "SeeTgHistoryGiftMovedShort": "Koʻchirildi"
+  "SeeTgHistoryGiftMovedShort": "Koʻchirildi",
+  "UpdatesTitle": "Yangilanishlar",
+  "UpdatesOnStartup": "Ishga tushganda yangilanishlarni tekshirish",
+  "UpdatesStartupAbout": "Avtomatik yangilanishlar yoqilgan bo‘lsa, SeeGram ishga tushganda darhol tekshiradi."
 }

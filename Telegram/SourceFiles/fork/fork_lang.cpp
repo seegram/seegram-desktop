@@ -254,6 +254,9 @@ constexpr auto Keys = std::array{
 	"SeeTgCommentsFew",
 	"SeeTgCommentsMany",
 	"SeeTgCommentsOther",
+	"UpdatesTitle",
+	"UpdatesOnStartup",
+	"UpdatesStartupAbout",
 };
 static_assert(std::size(Keys) == int(Key::Count));
 

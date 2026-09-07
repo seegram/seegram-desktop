@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} commenti",
   "SeeTgCommentsMany": "{count} commenti",
   "SeeTgCommentsOther": "{count} commenti",
-  "SeeTgHistoryGiftMovedShort": "Spostato"
+  "SeeTgHistoryGiftMovedShort": "Spostato",
+  "UpdatesTitle": "Aggiornamenti",
+  "UpdatesOnStartup": "Cerca aggiornamenti all’avvio",
+  "UpdatesStartupAbout": "Controlla all’avvio di SeeGram se gli aggiornamenti automatici sono attivi."
 }

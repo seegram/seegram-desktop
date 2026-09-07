@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} comentarii",
   "SeeTgCommentsMany": "{count} de comentarii",
   "SeeTgCommentsOther": "{count} de comentarii",
-  "SeeTgHistoryGiftMovedShort": "Mutat"
+  "SeeTgHistoryGiftMovedShort": "Mutat",
+  "UpdatesTitle": "Actualizări",
+  "UpdatesOnStartup": "Caută actualizări la pornire",
+  "UpdatesStartupAbout": "Verifică la pornirea SeeGram dacă actualizările automate sunt activate."
 }

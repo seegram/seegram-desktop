@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} 条评论",
   "SeeTgCommentsMany": "{count} 条评论",
   "SeeTgCommentsOther": "{count} 条评论",
-  "SeeTgHistoryGiftMovedShort": "已移动"
+  "SeeTgHistoryGiftMovedShort": "已移动",
+  "UpdatesTitle": "更新",
+  "UpdatesOnStartup": "启动时检查更新",
+  "UpdatesStartupAbout": "启用自动更新后，启动 SeeGram 时立即检查。"
 }

@@ -699,7 +699,7 @@ private:
 		if (!_state->busy.isEmpty() || _state->loading) {
 			return;
 		}
-		_menu = std::make_unique<Ui::PopupMenu>(this);
+		_menu = base::make_unique_q<Ui::PopupMenu>(this, st::popupMenuWithIcons);
 		if (item.canManage && item.parentId.isEmpty()) {
 			_menu->addAction(Lang::Text(item.pinned ? Key::SeeTgCommentUnpin : Key::SeeTgCommentPin),
 				[model = _state, item] { model->pin(item); }, item.pinned ? &st::menuIconUnpin : &st::menuIconPin);
@@ -731,7 +731,7 @@ private:
 	Ui::FlatLabel *_counter = nullptr;
 	Ui::FlatLabel *_error = nullptr;
 	Ui::VerticalLayout *_rows = nullptr;
-	std::unique_ptr<Ui::PopupMenu> _menu;
+	base::unique_qptr<Ui::PopupMenu> _menu;
 	bool _resizing = false;
 	bool _refreshScheduled = false;
 

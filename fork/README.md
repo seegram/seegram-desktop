@@ -73,6 +73,11 @@ first. Keep this guide in release descriptions when editing them manually.
 Signing and deployment use the separate `SEEGRAM_*` settings named in the
 workflow. Private signing keys remain on the runners.
 
+Update controls live under Settings → SeeGram → Updates. The startup check is
+enabled by default and saved in the application's preferences; it bypasses the
+normal check interval once per process when automatic updates are enabled.
+`fork/settings_updates.h` keeps beta controls hidden with `kShowBetaOptions`.
+
 ## Profile badges
 
 The see.tg integration reads profile verifications from the same backend as

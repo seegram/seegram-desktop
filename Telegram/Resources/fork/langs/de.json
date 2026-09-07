@@ -193,5 +193,8 @@
   "SeeTgCommentsFew": "{count} Kommentare",
   "SeeTgCommentsMany": "{count} Kommentare",
   "SeeTgCommentsOther": "{count} Kommentare",
-  "SeeTgHistoryGiftMovedShort": "Verschoben"
+  "SeeTgHistoryGiftMovedShort": "Verschoben",
+  "UpdatesTitle": "Updates",
+  "UpdatesOnStartup": "Beim Start nach Updates suchen",
+  "UpdatesStartupAbout": "Prüft beim Start von SeeGram, wenn automatische Updates aktiviert sind."
 }
