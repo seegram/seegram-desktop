@@ -53,15 +53,14 @@ COUNTER="${1:-}"
 PUBLISH=1
 [ "${2:-}" = "--no-publish" ] && PUBLISH=0
 
-if ! [[ "$COUNTER" =~ ^[0-9]+$ ]] || [ "$COUNTER" -lt 1 ]; then
+if ! [[ "$COUNTER" =~ ^[1-9][0-9]{0,9}$ ]] || [ "$COUNTER" -gt 4294967295 ]; then
 	echo "[ERROR] usage: fork/release-linux.sh <counter> [--no-publish]" >&2
 	exit 1
 fi
 
 # ---------------------------------------------------------------- preflight
 
-DIRTY="$(git status --porcelain --untracked-files=no \
-	| grep -v 'fork/build_counter\.h$' || true)"
+DIRTY="$(git status --porcelain --untracked-files=no)"
 if [ -n "$DIRTY" ]; then
 	echo "$DIRTY" >&2
 	echo "[ERROR] working tree is dirty - a release must be reproducible." >&2
@@ -95,9 +94,8 @@ echo "    platform         : $PLATFORM_KEY"
 COUNTER_FILE="Telegram/SourceFiles/fork/build_counter.h"
 CURRENT="$(sed -n 's/^#define SEEGRAM_BUILD_COUNTER \([0-9]*\).*/\1/p' "$COUNTER_FILE")"
 if [ "$CURRENT" != "$COUNTER" ]; then
-	echo "==> setting the build counter to $COUNTER"
-	sed -i "s/^#define SEEGRAM_BUILD_COUNTER .*/#define SEEGRAM_BUILD_COUNTER $COUNTER/" "$COUNTER_FILE"
-	echo "    remember to commit $COUNTER_FILE"
+	echo "[ERROR] counter differs from $COUNTER_FILE; commit the intended counter before releasing." >&2
+	exit 1
 fi
 
 # -u so that everything the build writes into the tree stays owned by the
