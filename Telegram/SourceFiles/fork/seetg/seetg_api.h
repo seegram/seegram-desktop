@@ -1,0 +1,54 @@
+/*
+This file is part of SeeGram Desktop,
+a Telegram Desktop fork.
+
+For license and copyright information please follow this link:
+https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+*/
+#pragma once
+
+#include <QtCore/QJsonObject>
+
+// One GraphQL operation against the see.tg backend, signed with the
+// account's initData (see fork/seetg/seetg_auth.h).
+//
+// The backend rate-limits per user, so identical requests in flight are
+// merged and answers are kept for a few minutes: opening the same profile
+// twice costs one request, and the user's own rule stands - a request when
+// a profile or a gift opens, never one per gift in a list.
+//
+// Callbacks are not guarded here; wrap them in crl::guard at the call site
+// when the caller can die first.
+
+namespace Main {
+class Session;
+} // namespace Main
+
+namespace Fork::SeeTg::Api {
+
+struct Error {
+	enum class Kind {
+		Auth,
+		RateLimited,
+		Premium,
+		Network,
+		Other,
+	};
+	Kind kind = Kind::Other;
+	QString message;
+};
+
+using Done = Fn<void(const QJsonObject &data)>;
+using Fail = Fn<void(const Error &error)>;
+
+void Query(
+	not_null<Main::Session*> session,
+	const QString &document,
+	const QJsonObject &variables,
+	Done done,
+	Fail fail);
+
+// Drops the answers kept for this account.
+void ClearCache(not_null<Main::Session*> session);
+
+} // namespace Fork::SeeTg::Api

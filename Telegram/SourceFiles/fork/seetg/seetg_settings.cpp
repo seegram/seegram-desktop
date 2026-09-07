@@ -1,0 +1,114 @@
+/*
+This file is part of SeeGram Desktop,
+a Telegram Desktop fork.
+
+For license and copyright information please follow this link:
+https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+*/
+#include "fork/seetg/seetg_settings.h"
+
+#include "core/application.h"
+
+#include <rpl/event_stream.h>
+
+#include <QtCore/QFile>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QSaveFile>
+
+namespace Fork::SeeTg {
+namespace {
+
+constexpr auto kFileName = "tdata/fork_seetg.json";
+
+Settings GlobalSettings;
+rpl::event_stream<Settings> GlobalChanges;
+
+[[nodiscard]] QString FilePath() {
+	return cWorkingDir() + QString::fromLatin1(kFileName);
+}
+
+} // namespace
+
+const Settings &Current() {
+	return GlobalSettings;
+}
+
+void Start() {
+	auto file = QFile(FilePath());
+	if (!file.open(QIODevice::ReadOnly)) {
+		return;
+	}
+	const auto document = QJsonDocument::fromJson(file.readAll());
+	if (!document.isObject()) {
+		LOG(("SeeTg Error: '%1' is not a JSON object, ignoring it."
+			).arg(FilePath()));
+		return;
+	}
+	const auto object = document.object();
+	const auto defaults = Settings();
+	const auto enabled = object.value(u"enabled"_q);
+	GlobalSettings.enabled = enabled.isBool()
+		? enabled.toBool()
+		: defaults.enabled;
+	GlobalSettings.resolve = (object.value(u"resolve"_q).toString()
+		== u"username"_q)
+		? ResolveMode::ByUsername
+		: ResolveMode::ByGift;
+	const auto fallback = object.value(u"usernameFallback"_q);
+	GlobalSettings.usernameFallback = fallback.isBool()
+		? fallback.toBool()
+		: defaults.usernameFallback;
+	const auto various = object.value(u"resolveAutomatically"_q);
+	GlobalSettings.resolveAutomatically = various.isBool()
+		? various.toBool()
+		: defaults.resolveAutomatically;
+}
+
+void Set(const Settings &settings) {
+	if (GlobalSettings == settings) {
+		return;
+	}
+	GlobalSettings = settings;
+	GlobalChanges.fire_copy(settings);
+
+	auto object = QJsonObject();
+	object.insert(u"enabled"_q, settings.enabled);
+	object.insert(
+		u"resolve"_q,
+		(settings.resolve == ResolveMode::ByUsername)
+			? u"username"_q
+			: u"gift"_q);
+	object.insert(u"usernameFallback"_q, settings.usernameFallback);
+	object.insert(u"resolveAutomatically"_q, settings.resolveAutomatically);
+
+	auto file = QSaveFile(FilePath());
+	if (!file.open(QIODevice::WriteOnly)) {
+		LOG(("SeeTg Error: cant write '%1'.").arg(FilePath()));
+		return;
+	}
+	file.write(QJsonDocument(object).toJson(QJsonDocument::Indented));
+	if (!file.commit()) {
+		LOG(("SeeTg Error: cant commit '%1'.").arg(FilePath()));
+	}
+}
+
+rpl::producer<Settings> Changes() {
+	return GlobalChanges.events();
+}
+
+rpl::producer<Settings> Value() {
+	return rpl::single(GlobalSettings) | rpl::then(Changes());
+}
+
+bool Enabled() {
+	return GlobalSettings.enabled;
+}
+
+rpl::producer<bool> EnabledValue() {
+	return Value() | rpl::map([](const Settings &settings) {
+		return settings.enabled;
+	});
+}
+
+} // namespace Fork::SeeTg

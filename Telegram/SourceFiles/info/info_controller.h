@@ -181,6 +181,7 @@ public:
 		Boosts,
 		ChannelEarn,
 		BotEarn,
+		SeeTgHistory, // fork/seetg/seetg_history.h
 	};
 	using SettingsType = ::Settings::Type;
 	using MediaType = Storage::SharedMediaType;
