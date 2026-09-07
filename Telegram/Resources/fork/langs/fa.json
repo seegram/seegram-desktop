@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} نظر",
   "SeeTgCommentsFew": "{count} نظر",
   "SeeTgCommentsMany": "{count} نظر",
-  "SeeTgCommentsOther": "{count} نظر"
+  "SeeTgCommentsOther": "{count} نظر",
+  "SeeTgHistoryGiftMovedShort": "منتقل شد"
 }

@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} تبصرے",
   "SeeTgCommentsFew": "{count} تبصرے",
   "SeeTgCommentsMany": "{count} تبصرے",
-  "SeeTgCommentsOther": "{count} تبصرے"
+  "SeeTgCommentsOther": "{count} تبصرے",
+  "SeeTgHistoryGiftMovedShort": "منتقل ہوا"
 }

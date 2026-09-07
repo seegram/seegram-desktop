@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} commenti",
   "SeeTgCommentsFew": "{count} commenti",
   "SeeTgCommentsMany": "{count} commenti",
-  "SeeTgCommentsOther": "{count} commenti"
+  "SeeTgCommentsOther": "{count} commenti",
+  "SeeTgHistoryGiftMovedShort": "Spostato"
 }

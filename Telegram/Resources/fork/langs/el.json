@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} σχόλια",
   "SeeTgCommentsFew": "{count} σχόλια",
   "SeeTgCommentsMany": "{count} σχόλια",
-  "SeeTgCommentsOther": "{count} σχόλια"
+  "SeeTgCommentsOther": "{count} σχόλια",
+  "SeeTgHistoryGiftMovedShort": "Μετακινήθηκε"
 }

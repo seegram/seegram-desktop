@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} de comentarii",
   "SeeTgCommentsFew": "{count} comentarii",
   "SeeTgCommentsMany": "{count} de comentarii",
-  "SeeTgCommentsOther": "{count} de comentarii"
+  "SeeTgCommentsOther": "{count} de comentarii",
+  "SeeTgHistoryGiftMovedShort": "Mutat"
 }

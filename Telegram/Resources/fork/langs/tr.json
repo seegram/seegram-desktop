@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} yorum",
   "SeeTgCommentsFew": "{count} yorum",
   "SeeTgCommentsMany": "{count} yorum",
-  "SeeTgCommentsOther": "{count} yorum"
+  "SeeTgCommentsOther": "{count} yorum",
+  "SeeTgHistoryGiftMovedShort": "Taşındı"
 }

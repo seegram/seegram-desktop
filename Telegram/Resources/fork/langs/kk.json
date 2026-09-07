@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} пікір",
   "SeeTgCommentsFew": "{count} пікір",
   "SeeTgCommentsMany": "{count} пікір",
-  "SeeTgCommentsOther": "{count} пікір"
+  "SeeTgCommentsOther": "{count} пікір",
+  "SeeTgHistoryGiftMovedShort": "Жылжытылды"
 }
