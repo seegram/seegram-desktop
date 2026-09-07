@@ -14,7 +14,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 // Upstream's lang.strings is rewritten by every release and its keys are
 // served from the cloud; a key added there is a conflict on every rebase and
 // a hole in every language pack. The few dozen strings this fork adds live
-// here instead, in a table with one column per language.
+// in JSON dictionaries under Resources/fork/langs/.
 //
 // Which column is used follows the language of the application, unless the
 // user picks one on the fork's settings page. That override is a setting of
@@ -28,6 +28,32 @@ enum class Language {
 	Russian,
 	Ukrainian,
 	Uzbek,
+	Kazakh,
+	Azerbaijani,
+	Spanish,
+	Portuguese,
+	French,
+	German,
+	Italian,
+	Polish,
+	Dutch,
+	Romanian,
+	Czech,
+	Greek,
+	Turkish,
+	Arabic,
+	Persian,
+	Hebrew,
+	Hindi,
+	Bengali,
+	Urdu,
+	Indonesian,
+	Malay,
+	Vietnamese,
+	Thai,
+	Chinese,
+	Japanese,
+	Korean,
 
 	Count,
 };
@@ -196,6 +222,7 @@ void Choose(Language language);
 
 // The language actually in use, never SameAsApp.
 [[nodiscard]] Language Resolved();
+[[nodiscard]] QString ResolvedId();
 [[nodiscard]] rpl::producer<> Changes();
 
 // How a language calls itself, for the picker.
