@@ -38,7 +38,7 @@ public:
 		bool enabled = true);
 
 	void fitToWidth(int available);
-	void setColors(QColor seal, QColor glyph);
+	void setColor(QColor color);
 	[[nodiscard]] int extent() const;
 	[[nodiscard]] rpl::producer<> updated() const;
 
@@ -48,8 +48,7 @@ protected:
 private:
 	void updateSize();
 
-	QColor _seal;
-	QColor _glyph;
+	QColor _color;
 	Entries _entries;
 	int _available = 0;
 	int _visible = 0;
