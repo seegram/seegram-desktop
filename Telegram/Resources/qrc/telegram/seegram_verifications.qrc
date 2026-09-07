@@ -1,0 +1,14 @@
+<RCC>
+  <qresource prefix="/seegram/verifications">
+    <file alias="casino.svg">../../fork/verifications/casino.svg</file>
+    <file alias="deleted.svg">../../fork/verifications/deleted.svg</file>
+    <file alias="giftchanges.svg">../../fork/verifications/giftchanges.svg</file>
+    <file alias="main.svg">../../fork/verifications/main.svg</file>
+    <file alias="market.svg">../../fork/verifications/market.svg</file>
+    <file alias="poop.svg">../../fork/verifications/poop.svg</file>
+    <file alias="premium.svg">../../fork/verifications/premium.svg</file>
+    <file alias="warning.svg">../../fork/verifications/warning.svg</file>
+    <file alias="zv-mono.svg">../../fork/verifications/zv-mono.svg</file>
+    <file alias="zv.svg">../../fork/verifications/zv.svg</file>
+  </qresource>
+</RCC>

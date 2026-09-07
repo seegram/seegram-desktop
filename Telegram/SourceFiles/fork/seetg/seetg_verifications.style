@@ -1,0 +1,11 @@
+using "info/info.style";
+
+seetgVerificationBadgeSize: 26px;
+seetgVerificationBadgeSkip: 4px;
+seetgVerificationMinTitleWidth: 64px;
+seetgVerificationDescriptionIcon: 18px;
+seetgVerificationDescriptionSkip: 7px;
+seetgVerificationPadding: margins(22px, 8px, 22px, 8px);
+seetgVerificationDescription: FlatLabel(defaultFlatLabel) {
+	textFg: windowSubTextFg;
+}

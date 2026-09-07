@@ -25,7 +25,7 @@ Its extra controls live in **Settings → SeeGram**.
 | Ghost mode | Separate switches for read receipts, typing, online status and upload progress, plus a quick toggle in the side menu. |
 | Message history | Keep deleted messages and inspect previous message edits received by this client. |
 | Message labels | Customize the labels shown on deleted and edited messages. |
-| [see.tg · @seetgbot](https://t.me/seetgbot/app) | Browse gifts with filters and sorting, view gift and profile history, and resolve unknown gift senders through see.tg. |
+| [see.tg · @seetgbot](https://t.me/seetgbot/app) | Browse gifts with filters and sorting, view gift and profile history, resolve unknown gift senders, and show profile badges with descriptions alongside Telegram badges. |
 | Languages | English, Russian, Ukrainian and Uzbek for SeeGram settings. |
 
 Message history is local: it cannot recover messages or edits the client never received.
