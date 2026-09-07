@@ -66,6 +66,7 @@ void BuildContent(
 
 	Ui::AddSkip(container);
 	Ui::AddSubsectionTitle(container, Lang::Value(Key::SeeTgResolveTitle));
+	Ui::AddDividerText(container, Lang::Value(Key::SeeTgResolveAdvanced));
 	auto modeLabel = Value() | rpl::map([](const Settings &settings) {
 		return (settings.resolve == ResolveMode::ByUsername)
 			? Lang::Text(Key::SeeTgResolveByUsername)
