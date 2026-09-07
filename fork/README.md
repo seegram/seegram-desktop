@@ -77,6 +77,11 @@ The implementation lives in `Telegram/SourceFiles/fork/seetg/seetg_verifications
 SVG resources live in `Telegram/Resources/fork/verifications/`. Requests use
 the existing account-scoped see.tg cache and follow the integration toggle.
 
+`giftchanges.svg` keeps the miniapp's original colored artwork. Its matching
+path/gradient masks are expressed as gradient opacity stops: Qt's SVG renderer
+otherwise drops the cat's head, legs and tail. Preserve these opacity gradients
+when updating the artwork; importing the browser SVG unchanged restores the bug.
+
 Descriptions use `descriptionTranslations` from the backend, choosing the
 client’s SeeGram language, then English, then the original `description`.
 The miniapp selects its own UI language independently. Telegram-issued
