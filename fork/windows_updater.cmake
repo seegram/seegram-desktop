@@ -1,0 +1,8 @@
+set(updater_resource_source "${CMAKE_CURRENT_LIST_DIR}/../Telegram/Resources/winrc/Updater.rc")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${updater_resource_source}")
+file(READ "${updater_resource_source}" updater_resource)
+string(REPLACE "Telegram FZ-LLC" "SeeGram" updater_resource "${updater_resource}")
+string(REPLACE "Telegram Desktop" "SeeGram Desktop" updater_resource "${updater_resource}")
+string(REPLACE "FILETYPE 0x0L" "FILETYPE 0x1L" updater_resource "${updater_resource}")
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/SeeGramUpdater.rc" CONTENT "${updater_resource}")
+target_sources(Updater PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/SeeGramUpdater.rc")

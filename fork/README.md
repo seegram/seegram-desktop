@@ -64,6 +64,14 @@ build without publishing; usage is documented at the top of each script.
 The [release bot](bot/README.md) previews the version, prepares the committed
 counter and runs a pinned commit. Prefer `/release` for automatic numbering.
 Windows releases target x64 only; x86 and ARM64 are not served.
+Windows release builds scan both executable files with updated Microsoft
+Defender signatures before running the updater test or publishing. A detection,
+scan failure, or unavailable Defender blocks publication. The scan does not
+change antivirus exclusions or restore quarantined files. A successful scan
+records a point-in-time result; it is not a guarantee against later detections.
+The manually triggered `Check Windows updater` workflow builds an isolated
+Release updater, checks its product information, scans it, and tests replacement
+and restart without publishing a release.
 The Windows packer receives explicit root files, never `-path .`; the publisher
 verifies the signed file table contains `SeeGram.exe` and `Updater.exe` at its
 root before updating the feed.

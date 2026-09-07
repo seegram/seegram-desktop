@@ -1,0 +1,38 @@
+name: Check Windows updater
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  updater:
+    runs-on: [self-hosted, Windows, X64, seegram]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the updater in isolation (Release)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = Join-Path $env:RUNNER_TEMP "updater-check-$env:GITHUB_RUN_ID"
+          cmake -S fork/tests/windows-updater -B $out -A x64 "-DBASE_SOURCE_DIR=$env:SEEGRAM_TREE/Telegram/lib_base"
+          if ($LASTEXITCODE -ne 0) { throw 'Updater configure failed' }
+          cmake --build $out --config Release
+          if ($LASTEXITCODE -ne 0) { throw 'Updater build failed' }
+          $exe = Join-Path $out 'Release/Updater.exe'
+          $info = (Get-Item $exe).VersionInfo
+          if ($info.FileDescription -ne 'SeeGram Desktop Updater' -or $info.ProductName -ne 'SeeGram Desktop') {
+            throw 'Updater product information is missing or incorrect'
+          }
+          Write-Host "$($info.FileDescription), $($info.FileVersion)"
+          "UPDATER_CHECK_EXE=$exe" | Out-File -Append $env:GITHUB_ENV
+      - name: Scan the updater
+        shell: pwsh
+        run: ./fork/scan-windows-release.ps1 -Files $env:UPDATER_CHECK_EXE
+      - name: Test executable replacement and restart
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          Import-Module "$vs/Common7/Tools/Microsoft.VisualStudio.DevShell.dll"
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+          ./fork/test-windows-updater.ps1 -Updater $env:UPDATER_CHECK_EXE
