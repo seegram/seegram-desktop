@@ -637,6 +637,7 @@ PRIVATE
     fork/update_feed.h
     fork/seetg/seetg_verifications.cpp
     fork/seetg/seetg_verifications.h
+    fork/seetg/seetg_verification_icon.h
     fork/seetg/seetg_api.cpp
     fork/seetg/seetg_api.h
     fork/seetg/seetg_auth.cpp

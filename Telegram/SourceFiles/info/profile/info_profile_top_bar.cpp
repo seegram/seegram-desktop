@@ -735,12 +735,10 @@ void TopBar::adjustColors(const std::optional<QColor> &edgeColor) {
 		: nullptr);
 
 	const auto seeStyle = shouldOverrideBadges
-		? (_verifiedSt ? _verifiedSt.get() : &st::infoColoredPeerBadge)
-		: nullptr;
-	const auto seeSeal = seeStyle ? st::groupCallMembersFg->c : st::profileVerifiedCheckBg->c;
-	const auto seeGlyph = seeStyle ? seeStyle->premiumFg->c : st::profileVerifiedCheckFg->c;
-	_seeLeft->setColors(seeSeal, seeGlyph);
-	_seeRight->setColors(seeSeal, seeGlyph);
+		? (_botVerifySt ? _botVerifySt.get() : &st::infoColoredBotVerifyBadge)
+		: &st::infoBotVerifyBadge;
+	_seeLeft->setColor(seeStyle->premiumFg->c);
+	_seeRight->setColor(seeStyle->premiumFg->c);
 
 	if (_starsRating) {
 		const auto shouldOverrideRating = shouldOverride(st::windowBgActive);
