@@ -125,6 +125,9 @@ if ($LASTEXITCODE -ne 0) {
 }
 Remove-Item $buildLog -ErrorAction SilentlyContinue
 
+Write-Host "==> scanning the client and updater with Microsoft Defender"
+& "$root\fork\scan-windows-release.ps1" -Files @("$root\$buildDir\SeeGram.exe", "$root\$buildDir\Updater.exe")
+
 Write-Host "==> testing executable replacement and restart"
 & "$root\fork\test-windows-updater.ps1" -Updater "$root\$buildDir\Updater.exe"
 
