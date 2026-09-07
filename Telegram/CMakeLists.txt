@@ -2598,6 +2598,7 @@ if (NOT DESKTOP_APP_DISABLE_AUTOUPDATE AND NOT build_macstore AND NOT build_wins
     )
 
     if (WIN32)
+        include(${CMAKE_SOURCE_DIR}/fork/windows_updater.cmake)
         get_filename_component(lib_base_loc lib_base REALPATH)
         nice_target_sources(Updater ${lib_base_loc}
         PRIVATE
