@@ -2354,7 +2354,8 @@ void DetailsFiller::addBotVerify() {
 		return info ? info->description : TextWithEntities();
 	});
 
-	_stack->addTextSeparator(std::move(description), std::move(shown));
+	Fork::SeeTg::Verification::AddDescriptions(
+		_stack, _peer, std::move(description), std::move(shown));
 }
 
 void DetailsFiller::addManagedBotFooter(not_null<UserData*> managerUser) {
@@ -2732,9 +2733,6 @@ void DetailsFiller::buildSections() {
 		_stack->addPlainSeparator();
 	}
 	_stack->add(makeInfo());
-	if (!_topic && !_sublist) {
-		Fork::SeeTg::Verification::AddDescriptions(_stack, _peer);
-	}
 	if (const auto user = _peer->asUser()) {
 		_stack->add(makeAddAsContact(user));
 		addBotVerify();
