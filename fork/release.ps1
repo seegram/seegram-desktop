@@ -278,8 +278,14 @@ try {
         gh release view $tag --repo $slug *> $null
         if ($LASTEXITCODE -ne 0) {
             $notes = "Telegram Desktop $versionStr, SeeGram build $Counter.`n`n" +
-                "Installed copies update themselves; this archive is for a first install."
-            gh release create $tag --repo $slug --target (git rev-parse HEAD) --title "SeeGram $versionStr build $Counter" --notes $notes | Out-Null
+                (Get-Content -Raw -Encoding utf8 (Join-Path $root 'fork/release-installation.md'))
+            $notesFile = Join-Path $stage 'release-notes.md'
+            [System.IO.File]::WriteAllText($notesFile, $notes, [System.Text.UTF8Encoding]::new($false))
+            gh release create $tag --repo $slug --target (git rev-parse HEAD) --title "SeeGram $versionStr build $Counter" --notes-file $notesFile | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                gh release view $tag --repo $slug *> $null
+                if ($LASTEXITCODE -ne 0) { Fail "could not create release $tag" }
+            }
         }
         # "file#label": GitHub shows the label on the release page and keeps
         # the file name for the download, which is how upstream's page reads
