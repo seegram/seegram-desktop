@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Identifică automat expeditorul",
   "SeeTgWhoIs": "Cine este?",
   "SeeTgWhoIsFailed": "Persoana nu a putut fi identificată.",
-  "SeeTgHistoryButton": "Istoric",
+  "SeeTgHistoryButton": "Transferuri de cadouri",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Info",
   "SeeTgHistoryEmpty": "Istoricul e gol",
@@ -180,5 +180,17 @@
   "AboutHistory": "Istoricul este păstrat pe acest dispozitiv: sunt disponibile doar mesajele și modificările primite de acest client.",
   "Save": "Salvează",
   "Close": "Închide",
-  "AboutReleases": "Versiuni"
+  "AboutReleases": "Versiuni",
+  "SeeTgTransfersZero": "{count} de transferuri de cadouri",
+  "SeeTgTransfersOne": "{count} transfer de cadouri",
+  "SeeTgTransfersTwo": "{count} de transferuri de cadouri",
+  "SeeTgTransfersFew": "{count} transferuri de cadouri",
+  "SeeTgTransfersMany": "{count} de transferuri de cadouri",
+  "SeeTgTransfersOther": "{count} de transferuri de cadouri",
+  "SeeTgCommentsZero": "{count} de comentarii",
+  "SeeTgCommentsOne": "{count} comentariu",
+  "SeeTgCommentsTwo": "{count} de comentarii",
+  "SeeTgCommentsFew": "{count} comentarii",
+  "SeeTgCommentsMany": "{count} de comentarii",
+  "SeeTgCommentsOther": "{count} de comentarii"
 }

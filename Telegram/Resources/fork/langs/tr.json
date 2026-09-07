@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Göndereni otomatik belirle",
   "SeeTgWhoIs": "Bu kim?",
   "SeeTgWhoIsFailed": "Bu kişi belirlenemedi.",
-  "SeeTgHistoryButton": "Geçmiş",
+  "SeeTgHistoryButton": "Hediye transferleri",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Bilgi",
   "SeeTgHistoryEmpty": "Geçmiş boş",
@@ -180,5 +180,17 @@
   "AboutHistory": "Geçmiş bu cihazda saklanır: yalnızca bu istemcinin aldığı mesajlar ve düzenlemeler kullanılabilir.",
   "Save": "Kaydet",
   "Close": "Kapat",
-  "AboutReleases": "Sürümler"
+  "AboutReleases": "Sürümler",
+  "SeeTgTransfersZero": "{count} hediye transferi",
+  "SeeTgTransfersOne": "{count} hediye transferi",
+  "SeeTgTransfersTwo": "{count} hediye transferi",
+  "SeeTgTransfersFew": "{count} hediye transferi",
+  "SeeTgTransfersMany": "{count} hediye transferi",
+  "SeeTgTransfersOther": "{count} hediye transferi",
+  "SeeTgCommentsZero": "{count} yorum",
+  "SeeTgCommentsOne": "{count} yorum",
+  "SeeTgCommentsTwo": "{count} yorum",
+  "SeeTgCommentsFew": "{count} yorum",
+  "SeeTgCommentsMany": "{count} yorum",
+  "SeeTgCommentsOther": "{count} yorum"
 }

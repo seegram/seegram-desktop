@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "भेजने वाले को अपने आप पहचानें",
   "SeeTgWhoIs": "यह कौन है?",
   "SeeTgWhoIsFailed": "इस व्यक्ति की पहचान नहीं हो सकी।",
-  "SeeTgHistoryButton": "इतिहास",
+  "SeeTgHistoryButton": "उपहार हस्तांतरण",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "जानकारी",
   "SeeTgHistoryEmpty": "इतिहास खाली है",
@@ -180,5 +180,17 @@
   "AboutHistory": "इतिहास इस डिवाइस पर सहेजा जाता है: केवल इस क्लाइंट को मिले संदेश और संपादन उपलब्ध हैं।",
   "Save": "सहेजें",
   "Close": "बंद करें",
-  "AboutReleases": "रिलीज़"
+  "AboutReleases": "रिलीज़",
+  "SeeTgTransfersZero": "{count} उपहार हस्तांतरण",
+  "SeeTgTransfersOne": "{count} उपहार हस्तांतरण",
+  "SeeTgTransfersTwo": "{count} उपहार हस्तांतरण",
+  "SeeTgTransfersFew": "{count} उपहार हस्तांतरण",
+  "SeeTgTransfersMany": "{count} उपहार हस्तांतरण",
+  "SeeTgTransfersOther": "{count} उपहार हस्तांतरण",
+  "SeeTgCommentsZero": "{count} टिप्पणियाँ",
+  "SeeTgCommentsOne": "{count} टिप्पणी",
+  "SeeTgCommentsTwo": "{count} टिप्पणियाँ",
+  "SeeTgCommentsFew": "{count} टिप्पणियाँ",
+  "SeeTgCommentsMany": "{count} टिप्पणियाँ",
+  "SeeTgCommentsOther": "{count} टिप्पणियाँ"
 }

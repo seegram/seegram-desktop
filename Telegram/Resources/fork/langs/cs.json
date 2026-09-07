@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Automaticky určit odesílatele",
   "SeeTgWhoIs": "Kdo to je?",
   "SeeTgWhoIsFailed": "Tuto osobu se nepodařilo určit.",
-  "SeeTgHistoryButton": "Historie",
+  "SeeTgHistoryButton": "Převody dárků",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Info",
   "SeeTgHistoryEmpty": "Historie je prázdná",
@@ -180,5 +180,17 @@
   "AboutHistory": "Historie se ukládá na tomto zařízení: dostupné jsou jen zprávy a úpravy přijaté tímto klientem.",
   "Save": "Uložit",
   "Close": "Zavřít",
-  "AboutReleases": "Vydání"
+  "AboutReleases": "Vydání",
+  "SeeTgTransfersZero": "{count} převodů dárků",
+  "SeeTgTransfersOne": "{count} převod dárků",
+  "SeeTgTransfersTwo": "{count} převodů dárků",
+  "SeeTgTransfersFew": "{count} převody dárků",
+  "SeeTgTransfersMany": "{count} převodů dárků",
+  "SeeTgTransfersOther": "{count} převodů dárků",
+  "SeeTgCommentsZero": "{count} komentářů",
+  "SeeTgCommentsOne": "{count} komentář",
+  "SeeTgCommentsTwo": "{count} komentářů",
+  "SeeTgCommentsFew": "{count} komentáře",
+  "SeeTgCommentsMany": "{count} komentářů",
+  "SeeTgCommentsOther": "{count} komentářů"
 }

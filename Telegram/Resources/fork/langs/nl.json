@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Afzender automatisch herkennen",
   "SeeTgWhoIs": "Wie is dit?",
   "SeeTgWhoIsFailed": "Deze persoon kon niet worden herkend.",
-  "SeeTgHistoryButton": "Geschiedenis",
+  "SeeTgHistoryButton": "Cadeauoverdrachten",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Info",
   "SeeTgHistoryEmpty": "Nog geen geschiedenis",
@@ -180,5 +180,17 @@
   "AboutHistory": "De geschiedenis wordt op dit apparaat bewaard: alleen berichten en bewerkingen die deze client ontving zijn beschikbaar.",
   "Save": "Opslaan",
   "Close": "Sluiten",
-  "AboutReleases": "Versies"
+  "AboutReleases": "Versies",
+  "SeeTgTransfersZero": "{count} cadeauoverdrachten",
+  "SeeTgTransfersOne": "{count} cadeauoverdracht",
+  "SeeTgTransfersTwo": "{count} cadeauoverdrachten",
+  "SeeTgTransfersFew": "{count} cadeauoverdrachten",
+  "SeeTgTransfersMany": "{count} cadeauoverdrachten",
+  "SeeTgTransfersOther": "{count} cadeauoverdrachten",
+  "SeeTgCommentsZero": "{count} reacties",
+  "SeeTgCommentsOne": "{count} reactie",
+  "SeeTgCommentsTwo": "{count} reacties",
+  "SeeTgCommentsFew": "{count} reacties",
+  "SeeTgCommentsMany": "{count} reacties",
+  "SeeTgCommentsOther": "{count} reacties"
 }

@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "自动识别发送者",
   "SeeTgWhoIs": "这是谁",
   "SeeTgWhoIsFailed": "无法识别此人。",
-  "SeeTgHistoryButton": "历史",
+  "SeeTgHistoryButton": "礼物转赠",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "信息",
   "SeeTgHistoryEmpty": "暂无历史记录",
@@ -180,5 +180,17 @@
   "AboutHistory": "历史保存在本设备上，仅包含此客户端收到的消息和编辑记录。",
   "Save": "保存",
   "Close": "关闭",
-  "AboutReleases": "发布版本"
+  "AboutReleases": "发布版本",
+  "SeeTgTransfersZero": "{count} 次礼物转赠",
+  "SeeTgTransfersOne": "{count} 次礼物转赠",
+  "SeeTgTransfersTwo": "{count} 次礼物转赠",
+  "SeeTgTransfersFew": "{count} 次礼物转赠",
+  "SeeTgTransfersMany": "{count} 次礼物转赠",
+  "SeeTgTransfersOther": "{count} 次礼物转赠",
+  "SeeTgCommentsZero": "{count} 条评论",
+  "SeeTgCommentsOne": "{count} 条评论",
+  "SeeTgCommentsTwo": "{count} 条评论",
+  "SeeTgCommentsFew": "{count} 条评论",
+  "SeeTgCommentsMany": "{count} 条评论",
+  "SeeTgCommentsOther": "{count} 条评论"
 }

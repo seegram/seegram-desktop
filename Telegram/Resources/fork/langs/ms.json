@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Kenal pasti pengirim secara automatik",
   "SeeTgWhoIs": "Siapakah ini?",
   "SeeTgWhoIsFailed": "Orang ini tidak dapat dikenal pasti.",
-  "SeeTgHistoryButton": "Sejarah",
+  "SeeTgHistoryButton": "Pemindahan hadiah",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Info",
   "SeeTgHistoryEmpty": "Tiada sejarah lagi",
@@ -180,5 +180,17 @@
   "AboutHistory": "Sejarah disimpan pada peranti ini: hanya mesej dan suntingan yang diterima oleh klien ini tersedia.",
   "Save": "Simpan",
   "Close": "Tutup",
-  "AboutReleases": "Keluaran"
+  "AboutReleases": "Keluaran",
+  "SeeTgTransfersZero": "{count} pemindahan hadiah",
+  "SeeTgTransfersOne": "{count} pemindahan hadiah",
+  "SeeTgTransfersTwo": "{count} pemindahan hadiah",
+  "SeeTgTransfersFew": "{count} pemindahan hadiah",
+  "SeeTgTransfersMany": "{count} pemindahan hadiah",
+  "SeeTgTransfersOther": "{count} pemindahan hadiah",
+  "SeeTgCommentsZero": "{count} komen",
+  "SeeTgCommentsOne": "{count} komen",
+  "SeeTgCommentsTwo": "{count} komen",
+  "SeeTgCommentsFew": "{count} komen",
+  "SeeTgCommentsMany": "{count} komen",
+  "SeeTgCommentsOther": "{count} komen"
 }

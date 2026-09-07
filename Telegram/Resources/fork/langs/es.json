@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Identificar al remitente automáticamente",
   "SeeTgWhoIs": "¿Quién es?",
   "SeeTgWhoIsFailed": "No se pudo identificar a esa persona.",
-  "SeeTgHistoryButton": "Historial",
+  "SeeTgHistoryButton": "Transferencias de regalos",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Info",
   "SeeTgHistoryEmpty": "Aún no hay historial",
@@ -180,5 +180,17 @@
   "AboutHistory": "El historial se guarda en este dispositivo: solo están disponibles los mensajes y cambios recibidos por este cliente.",
   "Save": "Guardar",
   "Close": "Cerrar",
-  "AboutReleases": "Versiones"
+  "AboutReleases": "Versiones",
+  "SeeTgTransfersZero": "{count} transferencias de regalos",
+  "SeeTgTransfersOne": "{count} transferencia de regalos",
+  "SeeTgTransfersTwo": "{count} transferencias de regalos",
+  "SeeTgTransfersFew": "{count} transferencias de regalos",
+  "SeeTgTransfersMany": "{count} transferencias de regalos",
+  "SeeTgTransfersOther": "{count} transferencias de regalos",
+  "SeeTgCommentsZero": "{count} comentarios",
+  "SeeTgCommentsOne": "{count} comentario",
+  "SeeTgCommentsTwo": "{count} comentarios",
+  "SeeTgCommentsFew": "{count} comentarios",
+  "SeeTgCommentsMany": "{count} comentarios",
+  "SeeTgCommentsOther": "{count} comentarios"
 }

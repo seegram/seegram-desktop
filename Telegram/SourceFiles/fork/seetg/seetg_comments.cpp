@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/seetg/seetg_comments.h"
 
 #include "fork/fork_lang.h"
+#include "fork/seetg/seetg_profile_counters.h"
 #include "fork/seetg/seetg_api.h"
 #include "fork/seetg/seetg_comments_data.h"
 #include "fork/seetg/seetg_peers.h"
@@ -217,6 +218,7 @@ public:
 				return;
 			}
 			self->busy.clear();
+			Counters::Invalidate(self->session.get(), self->seeId);
 			self->draft.clear();
 			self->replying.reset();
 			self->loaded = true;
@@ -287,6 +289,7 @@ public:
 				self->fail({ Api::Error::Kind::Other, {} });
 				return;
 			}
+			Counters::Invalidate(self->session.get(), self->seeId);
 			self->deleted.insert(item.id);
 			const auto erase = [&](std::vector<Comment> &list) {
 				list.erase(std::remove_if(list.begin(), list.end(), [&](const Comment &other) {
@@ -801,7 +804,7 @@ not_null<Ui::SettingsButton*> AddButton(
 		not_null<PeerData*> peer,
 		Ui::MultiSlideTracker &tracker) {
 	const auto wrap = parent->add(object_ptr<Ui::SlideWrap<Ui::SettingsButton>>(parent,
-		object_ptr<Ui::SettingsButton>(parent, Lang::Value(Key::SeeTgCommentsTab), st::infoSharedMediaButton)));
+		object_ptr<Ui::SettingsButton>(parent, Counters::Label(peer, Counters::Kind::Comments), st::infoSharedMediaButton)));
 	wrap->toggleOn(EnabledValue());
 	tracker.track(wrap);
 	const auto button = wrap->entity();

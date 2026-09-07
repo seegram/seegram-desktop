@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "보낸 사람 자동 식별",
   "SeeTgWhoIs": "누구인가요",
   "SeeTgWhoIsFailed": "이 사람을 식별하지 못했습니다.",
-  "SeeTgHistoryButton": "기록",
+  "SeeTgHistoryButton": "선물 전송",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "정보",
   "SeeTgHistoryEmpty": "기록이 없어요",
@@ -180,5 +180,17 @@
   "AboutHistory": "기록은 이 기기에 저장되며, 이 클라이언트가 받은 메시지와 수정 내용만 사용할 수 있습니다.",
   "Save": "저장",
   "Close": "닫기",
-  "AboutReleases": "릴리스"
+  "AboutReleases": "릴리스",
+  "SeeTgTransfersZero": "선물 전송 {count}건",
+  "SeeTgTransfersOne": "선물 전송 {count}건",
+  "SeeTgTransfersTwo": "선물 전송 {count}건",
+  "SeeTgTransfersFew": "선물 전송 {count}건",
+  "SeeTgTransfersMany": "선물 전송 {count}건",
+  "SeeTgTransfersOther": "선물 전송 {count}건",
+  "SeeTgCommentsZero": "댓글 {count}개",
+  "SeeTgCommentsOne": "댓글 {count}개",
+  "SeeTgCommentsTwo": "댓글 {count}개",
+  "SeeTgCommentsFew": "댓글 {count}개",
+  "SeeTgCommentsMany": "댓글 {count}개",
+  "SeeTgCommentsOther": "댓글 {count}개"
 }

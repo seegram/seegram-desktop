@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "প্রেরককে স্বয়ংক্রিয়ভাবে শনাক্ত করুন",
   "SeeTgWhoIs": "ইনি কে?",
   "SeeTgWhoIsFailed": "এই ব্যক্তিকে শনাক্ত করা যায়নি।",
-  "SeeTgHistoryButton": "ইতিহাস",
+  "SeeTgHistoryButton": "উপহার স্থানান্তর",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "তথ্য",
   "SeeTgHistoryEmpty": "ইতিহাস খালি",
@@ -180,5 +180,17 @@
   "AboutHistory": "ইতিহাস এই ডিভাইসে থাকে: শুধু এই ক্লায়েন্টে পাওয়া বার্তা ও সম্পাদনাগুলো উপলব্ধ।",
   "Save": "সংরক্ষণ",
   "Close": "বন্ধ করুন",
-  "AboutReleases": "রিলিজ"
+  "AboutReleases": "রিলিজ",
+  "SeeTgTransfersZero": "{count}টি উপহার স্থানান্তর",
+  "SeeTgTransfersOne": "{count}টি উপহার স্থানান্তর",
+  "SeeTgTransfersTwo": "{count}টি উপহার স্থানান্তর",
+  "SeeTgTransfersFew": "{count}টি উপহার স্থানান্তর",
+  "SeeTgTransfersMany": "{count}টি উপহার স্থানান্তর",
+  "SeeTgTransfersOther": "{count}টি উপহার স্থানান্তর",
+  "SeeTgCommentsZero": "{count}টি মন্তব্য",
+  "SeeTgCommentsOne": "{count}টি মন্তব্য",
+  "SeeTgCommentsTwo": "{count}টি মন্তব্য",
+  "SeeTgCommentsFew": "{count}টি মন্তব্য",
+  "SeeTgCommentsMany": "{count}টি মন্তব্য",
+  "SeeTgCommentsOther": "{count}টি মন্তব্য"
 }

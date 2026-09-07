@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Identifica automaticamente il mittente",
   "SeeTgWhoIs": "Chi è?",
   "SeeTgWhoIsFailed": "Impossibile identificare questa persona.",
-  "SeeTgHistoryButton": "Cronologia",
+  "SeeTgHistoryButton": "Trasferimenti di regali",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Info",
   "SeeTgHistoryEmpty": "Cronologia vuota",
@@ -180,5 +180,17 @@
   "AboutHistory": "La cronologia è salvata su questo dispositivo: sono disponibili solo i messaggi e le modifiche ricevuti da questo client.",
   "Save": "Salva",
   "Close": "Chiudi",
-  "AboutReleases": "Versioni"
+  "AboutReleases": "Versioni",
+  "SeeTgTransfersZero": "{count} trasferimenti di regali",
+  "SeeTgTransfersOne": "{count} trasferimento di regali",
+  "SeeTgTransfersTwo": "{count} trasferimenti di regali",
+  "SeeTgTransfersFew": "{count} trasferimenti di regali",
+  "SeeTgTransfersMany": "{count} trasferimenti di regali",
+  "SeeTgTransfersOther": "{count} trasferimenti di regali",
+  "SeeTgCommentsZero": "{count} commenti",
+  "SeeTgCommentsOne": "{count} commento",
+  "SeeTgCommentsTwo": "{count} commenti",
+  "SeeTgCommentsFew": "{count} commenti",
+  "SeeTgCommentsMany": "{count} commenti",
+  "SeeTgCommentsOther": "{count} commenti"
 }
