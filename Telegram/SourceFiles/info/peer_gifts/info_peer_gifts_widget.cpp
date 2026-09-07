@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/peer_gifts/info_peer_gifts_widget.h"
 
+#include "fork/seetg/seetg_gifts.h"
+
 #include "api/api_credits.h"
 #include "api/api_hash.h"
 #include "api/api_premium.h"
@@ -2471,13 +2473,18 @@ Widget::Widget(QWidget *parent, not_null<Controller*> controller)
 , _descriptor(Descriptor{
 	.collectionId = controller->giftsCollectionId(),
 }) {
-	_inner = setInnerWidget(
-		object_ptr<InnerWidget>(
-			this,
-			controller->parentController(),
-			controller->giftsPeer(),
-			_descriptor.value(),
-			scroll()));
+	auto native = object_ptr<InnerWidget>(
+		this,
+		controller->parentController(),
+		controller->giftsPeer(),
+		_descriptor.value(),
+		scroll());
+	_inner = native.data();
+	setInnerWidget(Fork::SeeTg::WrapGifts(
+		this,
+		std::move(native),
+		controller->parentController(),
+		controller->giftsPeer()));
 	_emptyCollectionShown = _inner->collectionEmptyValue();
 	_inner->notifyEnabled(
 	) | rpl::take(1) | rpl::on_next([=](bool enabled) {
@@ -2659,7 +2666,9 @@ void Widget::setupNotifyCheckbox(int wasBottomHeight, bool enabled) {
 }
 
 void Widget::fillTopBarMenu(const Ui::Menu::MenuCallback &addAction) {
-	_inner->fillMenu(addAction);
+	Fork::SeeTg::FillGiftsMenu(_inner, addAction, [&] {
+		_inner->fillMenu(addAction);
+	});
 }
 
 rpl::producer<QString> Widget::title() {

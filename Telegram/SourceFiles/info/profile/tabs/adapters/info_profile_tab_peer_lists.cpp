@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/tabs/adapters/info_profile_tab_peer_lists.h"
 
+#include "fork/seetg/seetg_gifts.h"
+
 #include "data/components/recent_shared_media_gifts.h"
 #include "data/data_channel.h"
 #include "data/data_document.h"
@@ -145,7 +147,11 @@ public:
 			context.controller->parentController(),
 			peer,
 			_descriptor.value());
-		_content = std::move(inline_.widget);
+		_content = Fork::SeeTg::WrapGifts(
+			context.parent,
+			std::move(inline_.widget),
+			context.controller->parentController(),
+			peer);
 		_fillMenu = std::move(inline_.fillMenu);
 		std::move(
 			inline_.descriptorChanges
@@ -174,7 +180,9 @@ public:
 			.fillMenu = crl::guard(
 				base::make_weak(_content.data()),
 				[this](const Ui::Menu::MenuCallback &addAction) {
-					_fillMenu(addAction);
+					Fork::SeeTg::FillGiftsMenu(_content.data(), addAction, [&] {
+						_fillMenu(addAction);
+					});
 				}),
 		};
 	}
