@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "شناسایی خودکار فرستنده",
   "SeeTgWhoIs": "این کیست؟",
   "SeeTgWhoIsFailed": "شناسایی این شخص ممکن نشد.",
-  "SeeTgHistoryButton": "تاریخچه",
+  "SeeTgHistoryButton": "انتقال هدایا",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "اطلاعات",
   "SeeTgHistoryEmpty": "تاریخچه خالی است",
@@ -180,5 +180,17 @@
   "AboutHistory": "تاریخچه در این دستگاه ذخیره می‌شود: فقط پیام‌ها و ویرایش‌های دریافت‌شده توسط این برنامه در دسترس هستند.",
   "Save": "ذخیره",
   "Close": "بستن",
-  "AboutReleases": "نسخه‌ها"
+  "AboutReleases": "نسخه‌ها",
+  "SeeTgTransfersZero": "{count} انتقال هدیه",
+  "SeeTgTransfersOne": "{count} انتقال هدیه",
+  "SeeTgTransfersTwo": "{count} انتقال هدیه",
+  "SeeTgTransfersFew": "{count} انتقال هدیه",
+  "SeeTgTransfersMany": "{count} انتقال هدیه",
+  "SeeTgTransfersOther": "{count} انتقال هدیه",
+  "SeeTgCommentsZero": "{count} نظر",
+  "SeeTgCommentsOne": "{count} نظر",
+  "SeeTgCommentsTwo": "{count} نظر",
+  "SeeTgCommentsFew": "{count} نظر",
+  "SeeTgCommentsMany": "{count} نظر",
+  "SeeTgCommentsOther": "{count} نظر"
 }

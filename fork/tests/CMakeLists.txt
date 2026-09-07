@@ -16,3 +16,7 @@ target_include_directories(comments_data_tests PRIVATE
 target_link_libraries(comments_data_tests PRIVATE Qt6::Core)
 target_precompile_headers(comments_data_tests PRIVATE <base/basic_types.h>)
 add_test(NAME comments_data COMMAND comments_data_tests)
+
+add_executable(plural_tests plural_tests.cpp)
+target_include_directories(plural_tests PRIVATE "${telegram}/SourceFiles")
+add_test(NAME profile_counter_plurals COMMAND plural_tests)

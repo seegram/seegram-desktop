@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "送信者を自動で特定",
   "SeeTgWhoIs": "誰ですか",
   "SeeTgWhoIsFailed": "この人を特定できませんでした。",
-  "SeeTgHistoryButton": "履歴",
+  "SeeTgHistoryButton": "ギフトの譲渡",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "情報",
   "SeeTgHistoryEmpty": "履歴はまだありません",
@@ -180,5 +180,17 @@
   "AboutHistory": "履歴はこの端末に保存されます。このクライアントが受信したメッセージと編集内容のみ利用できます。",
   "Save": "保存",
   "Close": "閉じる",
-  "AboutReleases": "リリース"
+  "AboutReleases": "リリース",
+  "SeeTgTransfersZero": "ギフトの譲渡 {count} 件",
+  "SeeTgTransfersOne": "ギフトの譲渡 {count} 件",
+  "SeeTgTransfersTwo": "ギフトの譲渡 {count} 件",
+  "SeeTgTransfersFew": "ギフトの譲渡 {count} 件",
+  "SeeTgTransfersMany": "ギフトの譲渡 {count} 件",
+  "SeeTgTransfersOther": "ギフトの譲渡 {count} 件",
+  "SeeTgCommentsZero": "コメント {count} 件",
+  "SeeTgCommentsOne": "コメント {count} 件",
+  "SeeTgCommentsTwo": "コメント {count} 件",
+  "SeeTgCommentsFew": "コメント {count} 件",
+  "SeeTgCommentsMany": "コメント {count} 件",
+  "SeeTgCommentsOther": "コメント {count} 件"
 }
