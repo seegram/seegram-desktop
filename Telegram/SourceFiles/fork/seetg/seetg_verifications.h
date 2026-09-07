@@ -29,6 +29,8 @@ using Entries = std::vector<Entry>;
 [[nodiscard]] Entries Parse(const QJsonObject &owner);
 [[nodiscard]] rpl::producer<Entries> Value(not_null<PeerData*> peer);
 
+void PaintBadge(QPainter &p, const Entry &entry, QRectF rect, QColor color);
+
 class Badges final : public Ui::AbstractButton {
 public:
 	Badges(

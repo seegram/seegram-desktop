@@ -470,7 +470,8 @@ void WrapWidget::setupTopBarMenuToggle() {
 			_controller->showSettings(::Settings::InformationId());
 		});
 	} else if (section.type() == Section::Type::Media
-		|| section.type() == Section::Type::SeeTgHistory) { // fork/seetg
+		|| section.type() == Section::Type::SeeTgHistory
+		|| section.type() == Section::Type::SeeTgComments) { // fork/seetg
 		addTopBarMenuButton();
 	} else if (section.type() == Section::Type::Downloads) {
 		auto &manager = Core::App().downloadManager();
