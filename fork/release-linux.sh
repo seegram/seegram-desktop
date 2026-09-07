@@ -164,7 +164,7 @@ docker run --rm \
 	-channel stable \
 	-keys-loc /usr/src/tdesktop/Telegram/Resources/update \
 	-local-key /keys/$KEY_FILE \
-	-local-key-id "$KEY_ID" | tail -3
+	-local-key-id "$KEY_ID"
 
 PACKAGE="$(find "$STAGE" -maxdepth 1 -type f -name 'td-update-*' | head -1)"
 if [ -z "$PACKAGE" ]; then
