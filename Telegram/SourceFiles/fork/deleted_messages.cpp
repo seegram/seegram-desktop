@@ -23,6 +23,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "ui/painter.h"
 
+#include <crl/crl_on_main.h>
+
 #include <unordered_set>
 
 namespace Fork::Deleted {
@@ -63,33 +65,49 @@ std::unordered_set<const HistoryItem*> Marked;
 void Mark(not_null<HistoryItem*> item) {
 	Marked.emplace(item.get());
 
-	const auto history = item->history();
-	const auto id = item->id;
-
-	// A kept message can never be read again as far as the server knows, so
-	// an unread mention or reaction on it would stay unread forever.
-	if (item->isUnreadMention()) {
-		history->unreadMentions().erase(id);
-		if (const auto topic = item->topic()) {
-			topic->unreadMentions().erase(id);
+	// Everything else waits for the next main loop pass, and this is not a
+	// nicety. The client tells us a message is gone from inside a loop over
+	// its own message map; refreshing a view or touching the unread counters
+	// there reaches straight back into that map and can rehash it under the
+	// iterator the loop is holding. Upstream itself never touches anything
+	// inside that loop - it collects the items and acts afterwards.
+	const auto session = &item->history()->session();
+	const auto fullId = item->fullId();
+	crl::on_main(session, [=] {
+		const auto item = session->data().message(fullId);
+		if (!item || !Is(item)) {
+			return;
 		}
-	}
-	if (item->hasUnreadReaction()) {
-		history->unreadReactions().erase(id);
-		if (const auto topic = item->topic()) {
-			topic->unreadReactions().erase(id);
+		const auto history = item->history();
+		const auto id = item->id;
+
+		// A kept message can never be read again as far as the server
+		// knows, so an unread mention or reaction on it would stay unread
+		// forever.
+		if (item->isUnreadMention()) {
+			history->unreadMentions().erase(id);
+			if (const auto topic = item->topic()) {
+				topic->unreadMentions().erase(id);
+			}
 		}
-	}
+		if (item->hasUnreadReaction()) {
+			history->unreadReactions().erase(id);
+			if (const auto topic = item->topic()) {
+				topic->unreadReactions().erase(id);
+			}
+		}
 
-	// A self-destructing message is kept too. Its timer stays armed inside
-	// the item, so it is taken off the session's schedule by hand: left
-	// there, the next check would find it expired again, and again.
-	if (const auto when = item->ttlDestroyAt()) {
-		history->owner().unregisterMessageTTL(when, item);
-	}
+		// A self-destructing message is kept too. Its timer stays armed
+		// inside the item, so it is taken off the session's schedule by
+		// hand: left there, the next check would find it expired again,
+		// and again.
+		if (const auto when = item->ttlDestroyAt()) {
+			history->owner().unregisterMessageTTL(when, item);
+		}
 
-	history->owner().requestItemViewRefresh(item);
-	history->owner().requestItemResize(item);
+		history->owner().requestItemViewRefresh(item);
+		history->owner().requestItemResize(item);
+	});
 }
 
 } // namespace
