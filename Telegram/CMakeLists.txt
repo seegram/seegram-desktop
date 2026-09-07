@@ -652,6 +652,9 @@ PRIVATE
     fork/seetg/seetg_card.h
     fork/seetg/seetg_history.cpp
     fork/seetg/seetg_history.h
+    fork/fork_plural.h
+    fork/seetg/seetg_profile_counters.cpp
+    fork/seetg/seetg_profile_counters.h
     fork/seetg/seetg_comments.cpp
     fork/seetg/seetg_comments.h
     fork/seetg/seetg_comments_data.cpp

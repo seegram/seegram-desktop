@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Absender automatisch ermitteln",
   "SeeTgWhoIs": "Wer ist das?",
   "SeeTgWhoIsFailed": "Diese Person konnte nicht ermittelt werden.",
-  "SeeTgHistoryButton": "Verlauf",
+  "SeeTgHistoryButton": "Geschenkübertragungen",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Info",
   "SeeTgHistoryEmpty": "Noch kein Verlauf",
@@ -180,5 +180,17 @@
   "AboutHistory": "Der Verlauf wird auf diesem Gerät gespeichert. Nur hier empfangene Nachrichten und Änderungen sind verfügbar.",
   "Save": "Speichern",
   "Close": "Schließen",
-  "AboutReleases": "Versionen"
+  "AboutReleases": "Versionen",
+  "SeeTgTransfersZero": "{count} Geschenkübertragungen",
+  "SeeTgTransfersOne": "{count} Geschenkübertragung",
+  "SeeTgTransfersTwo": "{count} Geschenkübertragungen",
+  "SeeTgTransfersFew": "{count} Geschenkübertragungen",
+  "SeeTgTransfersMany": "{count} Geschenkübertragungen",
+  "SeeTgTransfersOther": "{count} Geschenkübertragungen",
+  "SeeTgCommentsZero": "{count} Kommentare",
+  "SeeTgCommentsOne": "{count} Kommentar",
+  "SeeTgCommentsTwo": "{count} Kommentare",
+  "SeeTgCommentsFew": "{count} Kommentare",
+  "SeeTgCommentsMany": "{count} Kommentare",
+  "SeeTgCommentsOther": "{count} Kommentare"
 }

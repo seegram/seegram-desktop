@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Tự động xác định người gửi",
   "SeeTgWhoIs": "Đây là ai?",
   "SeeTgWhoIsFailed": "Không xác định được người này.",
-  "SeeTgHistoryButton": "Lịch sử",
+  "SeeTgHistoryButton": "Chuyển quà tặng",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Thông tin",
   "SeeTgHistoryEmpty": "Chưa có lịch sử",
@@ -180,5 +180,17 @@
   "AboutHistory": "Lịch sử được lưu trên thiết bị này: chỉ có các tin nhắn và chỉnh sửa mà ứng dụng khách này đã nhận.",
   "Save": "Lưu",
   "Close": "Đóng",
-  "AboutReleases": "Bản phát hành"
+  "AboutReleases": "Bản phát hành",
+  "SeeTgTransfersZero": "{count} lần chuyển quà",
+  "SeeTgTransfersOne": "{count} lần chuyển quà",
+  "SeeTgTransfersTwo": "{count} lần chuyển quà",
+  "SeeTgTransfersFew": "{count} lần chuyển quà",
+  "SeeTgTransfersMany": "{count} lần chuyển quà",
+  "SeeTgTransfersOther": "{count} lần chuyển quà",
+  "SeeTgCommentsZero": "{count} bình luận",
+  "SeeTgCommentsOne": "{count} bình luận",
+  "SeeTgCommentsTwo": "{count} bình luận",
+  "SeeTgCommentsFew": "{count} bình luận",
+  "SeeTgCommentsMany": "{count} bình luận",
+  "SeeTgCommentsOther": "{count} bình luận"
 }

@@ -79,7 +79,7 @@
   "SeeTgResolveAuto": "Identifier automatiquement l’expéditeur",
   "SeeTgWhoIs": "Qui est-ce ?",
   "SeeTgWhoIsFailed": "Impossible d’identifier cette personne.",
-  "SeeTgHistoryButton": "Historique",
+  "SeeTgHistoryButton": "Transferts de cadeaux",
   "SeeTgHistoryTabNft": "NFT",
   "SeeTgHistoryTabInfo": "Infos",
   "SeeTgHistoryEmpty": "Aucun historique",
@@ -180,5 +180,17 @@
   "AboutHistory": "L’historique est conservé sur cet appareil : seuls les messages et modifications reçus par ce client sont disponibles.",
   "Save": "Enregistrer",
   "Close": "Fermer",
-  "AboutReleases": "Versions"
+  "AboutReleases": "Versions",
+  "SeeTgTransfersZero": "{count} transferts de cadeaux",
+  "SeeTgTransfersOne": "{count} transfert de cadeaux",
+  "SeeTgTransfersTwo": "{count} transferts de cadeaux",
+  "SeeTgTransfersFew": "{count} transferts de cadeaux",
+  "SeeTgTransfersMany": "{count} transferts de cadeaux",
+  "SeeTgTransfersOther": "{count} transferts de cadeaux",
+  "SeeTgCommentsZero": "{count} commentaires",
+  "SeeTgCommentsOne": "{count} commentaire",
+  "SeeTgCommentsTwo": "{count} commentaires",
+  "SeeTgCommentsFew": "{count} commentaires",
+  "SeeTgCommentsMany": "{count} commentaires",
+  "SeeTgCommentsOther": "{count} commentaires"
 }
