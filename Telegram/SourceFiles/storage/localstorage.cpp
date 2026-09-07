@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "storage/localstorage.h"
 
+#include "fork/update_feed.h"
+
 #include "storage/serialize_common.h"
 #include "storage/storage_account.h"
 #include "storage/details/storage_file_utilities.h"
@@ -582,7 +584,7 @@ QString readAutoupdatePrefix() {
 	Expects(!Core::UpdaterDisabled());
 
 	static const auto RegExp = QRegularExpression("/+$");
-	auto result = readAutoupdatePrefixRaw();
+	auto result = QString::fromLatin1(Fork::UpdateFeedPrefix);
 	return result.replace(RegExp, QString());
 }
 
