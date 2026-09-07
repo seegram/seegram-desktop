@@ -55,6 +55,17 @@ then:
 Telegram/configure.sh -D TDESKTOP_API_ID=... -D TDESKTOP_API_HASH=...
 ```
 
+For private local builds, put the two `set(... CACHE STRING "" FORCE)`
+entries in `fork/private/api_credentials.cmake`. This directory is ignored
+by Git. Environment variables `TDESKTOP_API_ID` and `TDESKTOP_API_HASH`
+take precedence over that file and any previous CMake cache. Without either
+source, the usual `-D` options above apply. Reconfigure an existing build tree
+after changing credentials.
+
+Release workflows read the GitHub Actions repository secrets
+`TDESKTOP_API_ID` and `TDESKTOP_API_HASH`. Do not put their values in tracked
+files. Upstream's `TDESKTOP_API_TEST=ON` remains available for test builds.
+
 on macos:
 
 ```
