@@ -634,6 +634,7 @@ PRIVATE
     fork/spy_mode.h
     fork/spy_ui.cpp
     fork/spy_ui.h
+    fork/update_feed.h
     fork/seetg/seetg_api.cpp
     fork/seetg/seetg_api.h
     fork/seetg/seetg_auth.cpp
