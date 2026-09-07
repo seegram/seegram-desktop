@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} ความคิดเห็น",
   "SeeTgCommentsFew": "{count} ความคิดเห็น",
   "SeeTgCommentsMany": "{count} ความคิดเห็น",
-  "SeeTgCommentsOther": "{count} ความคิดเห็น"
+  "SeeTgCommentsOther": "{count} ความคิดเห็น",
+  "SeeTgHistoryGiftMovedShort": "ย้ายแล้ว"
 }

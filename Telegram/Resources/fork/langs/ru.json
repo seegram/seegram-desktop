@@ -192,5 +192,6 @@
   "SeeTgCommentsTwo": "{count} комментариев",
   "SeeTgCommentsFew": "{count} комментария",
   "SeeTgCommentsMany": "{count} комментариев",
-  "SeeTgCommentsOther": "{count} комментариев"
+  "SeeTgCommentsOther": "{count} комментариев",
+  "SeeTgHistoryGiftMovedShort": "Перемещён"
 }
