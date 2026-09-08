@@ -1,0 +1,62 @@
+name: SeeGram Windows Build Check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seegram-release
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Compile Windows client
+    runs-on: [self-hosted, Windows, X64, seegram]
+    timeout-minutes: 90
+    steps:
+      - name: Compile this revision without publishing
+        shell: pwsh
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          if (-not $env:SEEGRAM_TREE -or -not (Test-Path "$env:SEEGRAM_TREE\out\CMakeCache.txt")) {
+            throw 'Prepared Windows build tree is missing'
+          }
+          Set-Location $env:SEEGRAM_TREE
+          if (git status --porcelain --untracked-files=no) {
+            throw 'Build tree has local changes; refusing to replace them'
+          }
+          $log = Join-Path $env:RUNNER_TEMP ('windows-build-check-' + [guid]::NewGuid().ToString('N') + '.log')
+          $auth = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('x-access-token:' + $env:GH_TOKEN))
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --quiet origin $env:SOURCE_SHA *> $log
+          if ($LASTEXITCODE -ne 0) { throw 'Could not fetch the requested revision' }
+          git reset --quiet --hard $env:SOURCE_SHA *> $log
+          if ($LASTEXITCODE -ne 0) { throw 'Could not select the requested revision' }
+          git submodule update --quiet --init --recursive *> $log
+          if ($LASTEXITCODE -ne 0) { throw 'Could not prepare submodules' }
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          Import-Module (Join-Path $vs 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
+          Set-Location $env:SEEGRAM_TREE
+          # Keep the prepared cache and compile with the same configuration as releases.
+          Remove-Item Env:QT -ErrorAction SilentlyContinue
+          cmake -S . -B out *> $log
+          if ($LASTEXITCODE -ne 0) { throw 'Windows configuration failed; log kept locally on runner' }
+          cmake --build out --config Release --target Telegram *> $log
+          if ($LASTEXITCODE -ne 0) {
+            $errors = Select-String -Path $log -Pattern '(?:fatal )?error (?:C|LNK|MSB)\d+:[^\r\n]*'
+            foreach ($error in ($errors | Select-Object -First 15)) {
+              $message = $error.Matches[0].Value -replace '\s*\[.*\]\s*$', ''
+              $message = $message -replace '[A-Za-z]:\\[^\s"'']+', '<local path>'
+              Write-Host $message
+            }
+            throw 'Windows compilation failed; full log kept locally on runner'
+          }
+          Remove-Item -LiteralPath $log
+          Write-Host 'WINDOWS_BUILD=passed'
