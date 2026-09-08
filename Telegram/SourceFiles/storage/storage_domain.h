@@ -7,6 +7,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #pragma once
 
+#include "fork/account_profile_keys.h"
+#include "fork/account_profile_policy.h"
+
 namespace MTP {
 class Config;
 class AuthKey;
@@ -56,14 +59,18 @@ private:
 
 	PasscodeDerivation(
 		std::unique_ptr<PasscodeWrap> wrap,
-		const QByteArray &passcode);
+		const QByteArray &passcode,
+		std::vector<Fork::AccountProfiles::PasscodeKey> profileKeys);
 
 	[[nodiscard]] MTP::AuthKeyPtr keyFor(const PasscodeWrap &wrap);
+	void deriveProfiles();
 	void cleanse();
 
 	std::unique_ptr<PasscodeWrap> _wrap;
 	QByteArray _passcode;
 	MTP::AuthKeyPtr _key;
+	std::vector<Fork::AccountProfiles::PasscodeKey> _profileKeys;
+	bool _profilesDerived = false;
 	bool _cleansed = false;
 
 };
@@ -124,6 +131,27 @@ private:
 
 class Domain final {
 public:
+	struct AccountProfile {
+		QByteArray id;
+		QString name;
+		Fork::AccountProfiles::Indices accounts;
+		QByteArray salt;
+		QByteArray encryptedKey;
+	};
+	[[nodiscard]] bool tryUnlockPasscode(PasscodeDerivation derived);
+	[[nodiscard]] bool applyPendingProfile();
+	[[nodiscard]] bool restrictedProfile() const;
+	[[nodiscard]] bool hasAccountProfiles() const;
+	[[nodiscard]] const std::vector<AccountProfile> &accountProfiles() const;
+	[[nodiscard]] bool saveAccountProfile(
+		const QByteArray &id,
+		const QString &name,
+		const Fork::AccountProfiles::Indices &accounts,
+		const QByteArray &passcode);
+	[[nodiscard]] bool removeAccountProfile(const QByteArray &id);
+	[[nodiscard]] bool accountIndexReserved(int index) const;
+	[[nodiscard]] rpl::producer<> accountProfilesChanged() const;
+
 	Domain(not_null<Main::Domain*> owner, const QString &dataName);
 	~Domain();
 
@@ -200,7 +228,7 @@ private:
 		PasscodeDerivation &derived,
 		quint32 generation) const;
 	void migrateFromLegacy(const QByteArray &passcode);
-	[[nodiscard]] QByteArray prepareAccountsInfo() const;
+	[[nodiscard]] QByteArray prepareAccountsInfo(bool includeProfiles) const;
 	bool writeKeyData(const KeyData &data, bool sync) const;
 	[[nodiscard]] bool writeKeyDataChecked(const KeyData &data) const;
 	[[nodiscard]] bool wrapOnDiskOpensLocalKey(
@@ -208,6 +236,17 @@ private:
 		const MTP::AuthKeyPtr &wrapKey) const;
 	[[nodiscard]] std::unique_ptr<PasscodeWrap> wrapToOpen() const;
 	[[nodiscard]] bool accepts(PasscodeVerification verification) const;
+	[[nodiscard]] bool checkPasscodeKey(PasscodeDerivation &derived) const;
+	[[nodiscard]] bool unlockMasterProfile(PasscodeDerivation &derived);
+	[[nodiscard]] Fork::AccountProfiles::Selection profileSelection(
+		const QByteArray &id) const;
+	[[nodiscard]] QByteArray decryptProfileKey(
+		const QByteArray &passcode,
+		const QByteArray &salt,
+		const QByteArray &encrypted,
+		MTP::AuthKeyPtr &key) const;
+	[[nodiscard]] std::vector<Fork::AccountProfiles::PasscodeKey>
+		profileKeys() const;
 	[[nodiscard]] SetPasscodeResult changePasscode(
 		PasscodeDerivation *derived,
 		PasscodeVerification verification);
@@ -225,6 +264,12 @@ private:
 	bool _keyDataDirty = false;
 
 	rpl::event_stream<> _passcodeKeyChanged;
+	std::vector<AccountProfile> _accountProfiles;
+	std::vector<int> _storedAccounts;
+	Fork::AccountProfiles::Indices _loadedAccounts;
+	QByteArray _activeProfile;
+	std::optional<QByteArray> _pendingProfile;
+	rpl::event_stream<> _accountProfilesChanged;
 
 };
 

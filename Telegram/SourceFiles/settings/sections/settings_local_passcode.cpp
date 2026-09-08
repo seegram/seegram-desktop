@@ -1572,6 +1572,9 @@ void BuildManageContent(
 		});
 
 		builder.add([=](const WidgetContext &ctx) {
+			if (Core::App().domain().local().hasAccountProfiles()) {
+				return SectionBuilder::WidgetToAdd{};
+			}
 			const auto systemUnlockWrap = ctx.container->add(
 				object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
 					ctx.container,

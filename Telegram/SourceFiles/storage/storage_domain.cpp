@@ -38,6 +38,7 @@ struct KeyData final {
 	QByteArray openSalt;
 	QByteArray openKeyEncrypted;
 	std::vector<PasscodeWrap> passcodeWraps;
+	std::vector<Fork::AccountProfiles::PasscodeKey> profileKeys;
 	quint32 committed = 0;
 	bool legacy = false;
 	bool legacyPasscode = false;
@@ -65,6 +66,8 @@ enum class ReadKeyDataResult {
 constexpr auto kKeyDataMagic = quint32(0x4B443200);
 constexpr auto kKeyDataFormatVersion = quint32(2);
 constexpr auto kMaxWrapCount = quint32(2);
+constexpr auto kProfilesMagic = quint32(0x53475031);
+constexpr auto kMaxProfiles = 16;
 
 [[nodiscard]] QString BaseGlobalPath() {
 	return cWorkingDir() + u"tdata/"_q;
@@ -162,7 +165,17 @@ constexpr auto kMaxWrapCount = quint32(2);
 	auto magic = quint32();
 	auto formatVersion = quint32();
 	auto wrapCount = quint32();
-	inner >> magic >> formatVersion >> data.committed >> wrapCount;
+	inner >> magic;
+	if (magic != kKeyDataMagic) {
+		// SeeGram 7.2 stored group key slots in the fourth blob. Keep that
+		// layout until the master passcode can migrate its own key wrap.
+		if (!Fork::AccountProfiles::ReadKeys(trailer, data.profileKeys)) {
+			return ReadKeyDataResult::Failed;
+		}
+		data.legacy = true;
+		return ReadKeyDataResult::Success;
+	}
+	inner >> formatVersion >> data.committed >> wrapCount;
 	if (!CheckStreamStatus(inner)) {
 		return ReadKeyDataResult::Failed;
 	} else if (magic != kKeyDataMagic) {
@@ -208,6 +221,14 @@ constexpr auto kMaxWrapCount = quint32(2);
 		}
 		data.passcodeWraps.push_back(std::move(wrap));
 	}
+	if (!stream.atEnd()) {
+		auto profiles = QByteArray();
+		stream >> profiles;
+		if (!CheckStreamStatus(stream)
+			|| !Fork::AccountProfiles::ReadKeys(profiles, data.profileKeys)) {
+			return ReadKeyDataResult::Failed;
+		}
+	}
 	return unsupportedCost
 		? ReadKeyDataResult::UnsupportedKdf
 		: ReadKeyDataResult::Success;
@@ -221,6 +242,9 @@ void WriteKeyData(
 	file.writeData(data.openKeyEncrypted);
 	file.writeData(infoEncrypted);
 	if (data.legacy) {
+		if (!data.profileKeys.empty()) {
+			file.writeData(Fork::AccountProfiles::WriteKeys(data.profileKeys));
+		}
 		return;
 	}
 	auto trailer = QByteArray();
@@ -246,6 +270,9 @@ void WriteKeyData(
 	}
 	buffer.close();
 	file.writeData(trailer);
+	if (!data.profileKeys.empty()) {
+		file.writeData(Fork::AccountProfiles::WriteKeys(data.profileKeys));
+	}
 }
 
 } // namespace
@@ -256,15 +283,19 @@ PasscodeVerification::PasscodeVerification(quint64 nonce)
 
 PasscodeDerivation::PasscodeDerivation(
 	std::unique_ptr<PasscodeWrap> wrap,
-	const QByteArray &passcode)
+	const QByteArray &passcode,
+	std::vector<Fork::AccountProfiles::PasscodeKey> profileKeys)
 : _wrap(std::move(wrap))
-, _passcode(passcode.constData(), passcode.size()) {
+, _passcode(passcode.constData(), passcode.size())
+, _profileKeys(std::move(profileKeys)) {
 }
 
 PasscodeDerivation::PasscodeDerivation(PasscodeDerivation &&other) noexcept
 : _wrap(base::take(other._wrap))
 , _passcode(base::take(other._passcode))
 , _key(base::take(other._key))
+, _profileKeys(base::take(other._profileKeys))
+, _profilesDerived(base::take(other._profilesDerived))
 , _cleansed(base::take(other._cleansed)) {
 }
 
@@ -274,6 +305,8 @@ PasscodeDerivation &PasscodeDerivation::operator=(
 	_wrap = base::take(other._wrap);
 	_passcode = base::take(other._passcode);
 	_key = base::take(other._key);
+	_profileKeys = base::take(other._profileKeys);
+	_profilesDerived = base::take(other._profilesDerived);
 	_cleansed = base::take(other._cleansed);
 	return *this;
 }
@@ -282,7 +315,19 @@ PasscodeDerivation::~PasscodeDerivation() {
 	cleanse();
 }
 
+void PasscodeDerivation::deriveProfiles() {
+	if (_profilesDerived || _cleansed || _passcode.isEmpty()) {
+		return;
+	}
+	_profilesDerived = true;
+	for (auto &slot : _profileKeys) {
+		slot.id = Fork::AccountProfiles::DecryptKey(
+			_passcode, slot.salt, slot.encryptedKey, slot.localKey);
+	}
+}
+
 void PasscodeDerivation::run() {
+	deriveProfiles();
 	if (!_wrap || _passcode.isEmpty()) {
 		return;
 	} else if (_wrap->kdf.kind == 0) {
@@ -337,6 +382,9 @@ StartResult Domain::start(PasscodeDerivation derived) {
 		}
 		return StartResult::Success;
 	} else if (modern == StartModernResult::IncorrectPasscode) {
+		_localKey = nullptr;
+		_accountProfiles.clear();
+		_activeProfile.clear();
 		return StartResult::IncorrectPasscode;
 	} else if (modern == StartModernResult::Failed) {
 		// startFromScratch() drops a local key startModern() already read.
@@ -359,6 +407,20 @@ void Domain::startAdded(
 
 	account->prepareToStartAdded(_localKey);
 	account->start(std::move(config));
+	for (const auto &entry : _owner->accounts()) {
+		if (entry.account.get() != account) {
+			continue;
+		}
+		_loadedAccounts.emplace(entry.index);
+		if (restrictedProfile()) {
+			for (auto &profile : _accountProfiles) {
+				if (profile.id == _activeProfile) {
+					profile.accounts.emplace(entry.index);
+				}
+			}
+		}
+		break;
+	}
 }
 
 void Domain::startWithSingleAccount(
@@ -495,6 +557,11 @@ Domain::StartModernResult Domain::startModern(
 
 	FileReadDescriptor file;
 	if (!ReadFile(file, name, BaseGlobalPath())) {
+		for (const auto suffix : { 's', '0', '1' }) {
+			if (QFile::exists(BaseGlobalPath() + name + QChar(suffix))) {
+				return StartModernResult::IncorrectPasscode;
+			}
+		}
 		return StartModernResult::Empty;
 	}
 	LOG(("App Info: reading accounts info..."));
@@ -503,11 +570,18 @@ Domain::StartModernResult Domain::startModern(
 	auto infoEncrypted = QByteArray();
 	const auto read = ReadKeyData(file.stream, parsed, infoEncrypted);
 	if (read == ReadKeyDataResult::Failed) {
-		return StartModernResult::Failed;
+		return StartModernResult::IncorrectPasscode;
 	} else if (read == ReadKeyDataResult::UnsupportedKdf) {
 		return StartModernResult::IncorrectPasscode;
 	}
 	*_keyData = std::move(parsed);
+	if (!derived._profilesDerived && !derived._cleansed) {
+		derived._profileKeys = _keyData->profileKeys;
+	}
+	_activeProfile.clear();
+	_accountProfiles.clear();
+	_storedAccounts.clear();
+	_loadedAccounts.clear();
 
 	// Probe the stored open wrap independently of the typed passcode result.
 	// PrepareEncrypted adds a 16-byte prefix to the padded length and key.
@@ -575,35 +649,57 @@ Domain::StartModernResult Domain::startModern(
 
 	EncryptedDescriptor keyInnerData, info;
 	if (!DecryptLocal(keyInnerData, localKeyEncrypted, wrapKey)) {
-		LOG(("App Info: could not decrypt pass-protected key from info file, "
-			"maybe bad password..."));
-		return StartModernResult::IncorrectPasscode;
-	}
-	// An authentic envelope that does not hold a local key cannot be told
-	// from an overwritten open field by the empty start alone, so while a
-	// live passcode wrap survives, asking for it beats resetting what that
-	// passcode still opens, and the file stays untouched for the typed
-	// retry. Nothing is published yet here - the candidate key and its
-	// verified-open claim are settled below - so returning is all this
-	// refusal has to do.
-	auto key = Serialize::read<MTP::AuthKey::Data>(keyInnerData.stream);
-	if (keyInnerData.stream.status() != QDataStream::Ok
-		|| !keyInnerData.stream.atEnd()) {
-		if (derived.empty() && _keyData->passcodeWraps.size() == 1) {
-			LOG(("App Info: the open wrap does not hold a local key, "
-				"a passcode is needed."));
+		derived.deriveProfiles();
+		auto recovered = false;
+		for (const auto &candidate : derived._profileKeys) {
+			if (!candidate.localKey || candidate.id.isEmpty()) {
+				continue;
+			}
+			for (const auto &slot : _keyData->profileKeys) {
+				if (candidate.salt == slot.salt
+					&& candidate.encryptedKey == slot.encryptedKey) {
+					_localKey = candidate.localKey;
+					_activeProfile = candidate.id;
+					recovered = true;
+					break;
+				}
+			}
+			if (recovered) {
+				break;
+			}
+		}
+		if (!recovered) {
 			return StartModernResult::IncorrectPasscode;
 		}
-		LOG(("App Error: could not read pass-protected key from info file"));
-		return StartModernResult::Failed;
+	} else {
+		// An authentic envelope that does not hold a local key cannot be told
+		// from an overwritten open field by the empty start alone, so while a
+		// live passcode wrap survives, asking for it beats resetting what that
+		// passcode still opens, and the file stays untouched for the typed
+		// retry. Nothing is published yet here - the candidate key and its
+		// verified-open claim are settled below - so returning is all this
+		// refusal has to do.
+		auto key = Serialize::read<MTP::AuthKey::Data>(keyInnerData.stream);
+		if (keyInnerData.stream.status() != QDataStream::Ok
+			|| !keyInnerData.stream.atEnd()) {
+			if (derived.empty() && _keyData->passcodeWraps.size() == 1) {
+				LOG(("App Info: the open wrap does not hold a local key, "
+					"a passcode is needed."));
+				return StartModernResult::IncorrectPasscode;
+			}
+			LOG(("App Error: could not read pass-protected key from info file"));
+			return StartModernResult::IncorrectPasscode;
+		}
+		_localKey = std::make_shared<MTP::AuthKey>(key);
 	}
-	_localKey = std::make_shared<MTP::AuthKey>(key);
 	_keyData->openKeyVerified = openKey && openKey->equals(_localKey);
 	openKey = nullptr;
 
 	if (_keyData->legacy) {
 		_keyData->legacyPasscode = !derived.empty();
-		migrateFromLegacy(derived._passcode);
+		if (!restrictedProfile()) {
+			migrateFromLegacy(derived._passcode);
+		}
 	}
 
 	// The empty start cannot tell an open wrap that holds another key from a
@@ -622,56 +718,111 @@ Domain::StartModernResult Domain::startModern(
 			return StartModernResult::IncorrectPasscode;
 		}
 		LOG(("App Error: could not decrypt info."));
-		return StartModernResult::Failed;
+		return StartModernResult::IncorrectPasscode;
 	}
 	LOG(("App Info: reading encrypted info..."));
 	auto count = qint32();
 	info.stream >> count;
 	if (!Fork::Accounts::ValidStoredCount(count, info.stream.device()->bytesAvailable())) {
 		LOG(("App Error: bad accounts count: %1").arg(count));
-		return StartModernResult::Failed;
+		return StartModernResult::IncorrectPasscode;
 	}
 
 	_oldVersion = file.version;
 
-	auto tried = base::flat_set<int>();
-	auto sessions = base::flat_set<uint64>();
-	auto active = 0;
+	auto tried = Fork::AccountProfiles::Indices();
 	for (auto i = 0; i != count; ++i) {
 		auto index = qint32();
 		info.stream >> index;
-		if (index >= 0
-			&& index < Fork::Accounts::kNoLimit
-			&& tried.emplace(index).second) {
-			auto account = std::make_unique<Main::Account>(
-				_owner,
-				_dataName,
-				index);
-			auto config = account->prepareToStart(_localKey);
-			const auto sessionId = account->willHaveSessionUniqueId(
-				config.get());
-			if (!sessions.contains(sessionId)
-				&& (sessionId != 0 || (sessions.empty() && i + 1 == count))) {
-				if (sessions.empty()) {
-					active = index;
-				}
-				account->start(std::move(config));
-				_owner->accountAddedInStorage({
-					.index = index,
-					.account = std::move(account)
-				});
-				sessions.emplace(sessionId);
-			}
+		if (index < 0 || index >= Fork::Accounts::kNoLimit
+			|| !tried.emplace(index).second) {
+			return StartModernResult::IncorrectPasscode;
 		}
+		_storedAccounts.push_back(index);
 	}
-	if (sessions.empty()) {
-		LOG(("App Error: no accounts read."));
-		return StartModernResult::Failed;
-	}
-
+	auto active = _storedAccounts.front();
 	if (!info.stream.atEnd()) {
 		info.stream >> active;
 	}
+	if (!info.stream.atEnd()) {
+		auto magic = quint32();
+		auto profiles = quint32();
+		info.stream >> magic >> profiles;
+		if (magic != kProfilesMagic || profiles > kMaxProfiles) {
+			return StartModernResult::IncorrectPasscode;
+		}
+		auto ids = std::set<QByteArray>();
+		for (auto i = 0U; i != profiles; ++i) {
+			auto profile = AccountProfile();
+			auto accounts = quint32();
+			info.stream >> profile.id >> profile.name >> accounts;
+			if (profile.id.size() != 16 || profile.name.size() > 128
+				|| !ids.emplace(profile.id).second
+				|| accounts > info.stream.device()->bytesAvailable() / 4) {
+				return StartModernResult::IncorrectPasscode;
+			}
+			for (auto j = 0U; j != accounts; ++j) {
+				auto index = qint32();
+				info.stream >> index;
+				profile.accounts.emplace(index);
+			}
+			info.stream >> profile.salt >> profile.encryptedKey;
+			if (!Fork::AccountProfiles::ValidIndices(profile.accounts)
+				|| profile.salt.size() != LocalEncryptSaltSize
+				|| profile.encryptedKey.size() > 1024
+				|| profile.encryptedKey.isEmpty()) {
+				return StartModernResult::IncorrectPasscode;
+			}
+			_accountProfiles.push_back(std::move(profile));
+		}
+	}
+	if (info.stream.status() != QDataStream::Ok) {
+		return StartModernResult::IncorrectPasscode;
+	}
+	if (!_activeProfile.isEmpty()) {
+		auto verified = false;
+		for (const auto &profile : _accountProfiles) {
+			if (profile.id == _activeProfile) {
+				for (const auto &candidate : derived._profileKeys) {
+					if (candidate.id == profile.id
+						&& candidate.salt == profile.salt
+						&& candidate.encryptedKey == profile.encryptedKey
+						&& candidate.localKey
+						&& candidate.localKey->equals(_localKey)) {
+						verified = true;
+					}
+				}
+			}
+		}
+		if (!verified) {
+			return StartModernResult::IncorrectPasscode;
+		}
+	}
+	const auto selected = Fork::AccountProfiles::SelectAccounts(
+		_storedAccounts, profileSelection(_activeProfile));
+	if (selected.empty()) {
+		return StartModernResult::IncorrectPasscode;
+	}
+	auto sessions = base::flat_set<uint64>();
+	for (const auto index : selected) {
+		auto account = std::make_unique<Main::Account>(
+			_owner, _dataName, index);
+		auto config = account->prepareToStart(_localKey);
+		const auto sessionId = account->willHaveSessionUniqueId(config.get());
+		if (!sessionId || !sessions.contains(sessionId)) {
+			_loadedAccounts.emplace(index);
+			account->start(std::move(config));
+			_owner->accountAddedInStorage({
+				.index = index,
+				.account = std::move(account),
+			});
+			sessions.emplace(sessionId);
+		}
+	}
+	if (!_loadedAccounts.contains(active)) {
+		active = selected.front();
+	}
+
 	_owner->activateFromStorage(active);
 
 	Ensures(!sessions.empty());
@@ -684,23 +835,69 @@ void Domain::writeAccounts() {
 		|| !_keyData->passcodeWraps.empty());
 	Expects(_keyData->passcodeWraps.size() <= 1);
 
-	writeKeyData(*_keyData, false);
+	auto current = std::vector<int>();
+	for (const auto &[index, account] : _owner->accounts()) {
+		current.push_back(index);
+	}
+	const auto merged = Fork::AccountProfiles::MergeStoredAccounts(
+		_storedAccounts, _loadedAccounts, current,
+		profileSelection(_activeProfile));
+	if (!merged || !writeKeyData(*_keyData, false)) {
+		return;
+	}
+	_storedAccounts = *merged;
+	_loadedAccounts = Fork::AccountProfiles::Indices(
+		begin(current), end(current));
+	_keyData->profileKeys = profileKeys();
 	_keyDataDirty = false;
 }
 
-QByteArray Domain::prepareAccountsInfo() const {
+QByteArray Domain::prepareAccountsInfo(bool includeProfiles) const {
 	Expects(_localKey != nullptr);
 
-	const auto &list = _owner->accounts();
-	auto keySize = sizeof(qint32) + sizeof(qint32) * list.size();
-
-	EncryptedDescriptor info(keySize);
-	info.stream << qint32(list.size());
-	for (const auto &[index, account] : list) {
+	auto current = std::vector<int>();
+	for (const auto &[index, account] : _owner->accounts()) {
+		current.push_back(index);
+	}
+	const auto merged = Fork::AccountProfiles::MergeStoredAccounts(
+		_storedAccounts, _loadedAccounts, current,
+		profileSelection(_activeProfile));
+	if (!merged) {
+		return {};
+	}
+	EncryptedDescriptor info(0);
+	info.stream << qint32(merged->size());
+	for (const auto index : *merged) {
 		info.stream << qint32(index);
 	}
 	info.stream << qint32(_owner->activeForStorage());
+	info.stream << kProfilesMagic
+		<< quint32(includeProfiles ? _accountProfiles.size() : 0);
+	if (includeProfiles) {
+		for (const auto &profile : _accountProfiles) {
+			info.stream << profile.id << profile.name
+				<< quint32(profile.accounts.size());
+			for (const auto index : profile.accounts) {
+				info.stream << qint32(index);
+			}
+			info.stream << profile.salt << profile.encryptedKey;
+		}
+	}
 	return PrepareEncrypted(info, _localKey);
+}
+
+std::vector<Fork::AccountProfiles::PasscodeKey> Domain::profileKeys() const {
+	if (!_localKey) {
+		return _keyData->profileKeys;
+	}
+	auto result = std::vector<Fork::AccountProfiles::PasscodeKey>();
+	for (const auto &profile : _accountProfiles) {
+		result.push_back({
+			.salt = profile.salt,
+			.encryptedKey = profile.encryptedKey,
+		});
+	}
+	return result;
 }
 
 bool Domain::writeKeyData(const KeyData &data, bool sync) const {
@@ -709,8 +906,17 @@ bool Domain::writeKeyData(const KeyData &data, bool sync) const {
 		QDir().mkpath(path);
 	}
 
+	const auto includeProfiles = data.legacy || !data.passcodeWraps.empty();
+	const auto info = prepareAccountsInfo(includeProfiles);
+	if (info.isEmpty()) {
+		return false;
+	}
+	auto complete = data;
+	complete.profileKeys = includeProfiles
+		? profileKeys()
+		: std::vector<Fork::AccountProfiles::PasscodeKey>();
 	FileWriteDescriptor key(ComputeKeyName(_dataName), path, sync);
-	WriteKeyData(key, data, prepareAccountsInfo());
+	WriteKeyData(key, complete, info);
 	return key.finish();
 }
 
@@ -827,6 +1033,11 @@ bool Domain::removeWalletKeyring() {
 }
 
 void Domain::startFromScratch() {
+	_accountProfiles.clear();
+	_storedAccounts.clear();
+	_loadedAccounts.clear();
+	_activeProfile.clear();
+	_pendingProfile.reset();
 	if (!removeWalletKeyring()) {
 		LOG(("Wallet Error: could not remove the discarded device keyring."));
 	}
@@ -852,7 +1063,7 @@ std::unique_ptr<PasscodeWrap> Domain::wrapToOpen() const {
 }
 
 PasscodeDerivation Domain::prepareOpen(const QByteArray &passcode) const {
-	return PasscodeDerivation(wrapToOpen(), passcode);
+	return PasscodeDerivation(wrapToOpen(), passcode, profileKeys());
 }
 
 PasscodeDerivation Domain::prepareNewWrap(const QByteArray &passcode) const {
@@ -861,7 +1072,8 @@ PasscodeDerivation Domain::prepareNewWrap(const QByteArray &passcode) const {
 			.kdf = DefaultPasscodeKdf(),
 			.salt = RandomSalt(),
 		}),
-		passcode);
+		passcode,
+		profileKeys());
 }
 
 // The only decisions this makes before the derivation runs are which wrap the
@@ -878,6 +1090,21 @@ PasscodeDerivation Domain::prepareNewWrap(const QByteArray &passcode) const {
 // opens it. That state reports a passcode with the app lock armed, and this
 // leg is what lets the lock it arms be opened by the passcode that armed it.
 bool Domain::checkPasscode(PasscodeDerivation derived) const {
+	return checkPasscodeKey(derived);
+}
+
+bool Domain::unlockMasterProfile(PasscodeDerivation &derived) {
+	if (!checkPasscodeKey(derived)) {
+		return false;
+	}
+	if (_keyData->legacy) {
+		migrateFromLegacy(derived._passcode);
+		writeAccounts();
+	}
+	return true;
+}
+
+bool Domain::checkPasscodeKey(PasscodeDerivation &derived) const {
 	Expects(_localKey != nullptr);
 
 	const auto wrap = wrapToOpen();
@@ -959,12 +1186,20 @@ SetPasscodeResult Domain::changePasscode(
 
 	const auto singleUse = gsl::finally([&] { _verificationNonce = 0; });
 
-	if (_keyData->legacy) {
+	if (restrictedProfile()) {
+		return SetPasscodeResult::Failed;
+	} else if (_keyData->legacy) {
 		LOG(("App Error: refusing a passcode change before the migration."));
 		return SetPasscodeResult::Failed;
 	} else if (!_keyData->passcodeWraps.empty() && !accepts(verification)) {
 		return SetPasscodeResult::NeedsVerification;
 	} else if (derived) {
+		derived->deriveProfiles();
+		for (const auto &candidate : derived->_profileKeys) {
+			if (candidate.localKey && candidate.localKey->equals(_localKey)) {
+				return SetPasscodeResult::Failed;
+			}
+		}
 		return installPasscode(*derived, !_keyData->passcodeWraps.empty());
 	}
 	auto updated = *_keyData;
@@ -977,9 +1212,12 @@ SetPasscodeResult Domain::changePasscode(
 		return SetPasscodeResult::Failed;
 	}
 	*_keyData = std::move(updated);
+	_accountProfiles.clear();
+	_keyData->profileKeys.clear();
 	_keyDataDirty = false;
 
 	_verificationNonce = 0;
+	_accountProfilesChanged.fire({});
 	_passcodeKeyChanged.fire({});
 	return SetPasscodeResult::Success;
 }
@@ -1057,7 +1295,9 @@ SetPasscodeResult Domain::setAppLockEnabled(
 	const auto singleUse = gsl::finally([&] { _verificationNonce = 0; });
 
 	const auto hasWrap = !_keyData->passcodeWraps.empty();
-	if (_keyData->legacy) {
+	if (restrictedProfile() || (!enabled && hasAccountProfiles())) {
+		return SetPasscodeResult::Failed;
+	} else if (_keyData->legacy) {
 		LOG(("App Error: refusing an app lock change before the migration."));
 		return SetPasscodeResult::Failed;
 	} else if ((enabled && !hasWrap)
@@ -1094,6 +1334,10 @@ SetPasscodeResult Domain::setAppLockEnabled(
 // checked so failure does not claim the passcode was removed.
 void Domain::clearPasscodeAfterReset() {
 	Expects(_localKey != nullptr);
+
+	if (restrictedProfile() || hasAccountProfiles()) {
+		return;
+	}
 
 	auto updated = *_keyData;
 	updated.legacy = false;

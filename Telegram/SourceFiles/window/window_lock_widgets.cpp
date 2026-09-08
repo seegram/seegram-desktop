@@ -134,7 +134,8 @@ PasscodeLockWidget::PasscodeLockWidget(
 	});
 
 	using namespace rpl::mappers;
-	if (Core::App().settings().systemUnlockEnabled()) {
+	if (Core::App().settings().systemUnlockEnabled()
+		&& !Core::App().domain().local().hasAccountProfiles()) {
 		_systemUnlockAvailable = base::SystemUnlockStatus(
 			true
 		) | rpl::map([](base::SystemUnlockAvailability status) {

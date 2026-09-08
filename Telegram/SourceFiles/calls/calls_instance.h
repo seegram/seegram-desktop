@@ -122,6 +122,7 @@ public:
 	bool minimizeCurrentActiveCall();
 	bool toggleFullScreenCurrentActiveCall();
 	bool closeCurrentActiveCall();
+	void endForAccountSwitch();
 	void hidePanelLayers();
 	[[nodiscard]] auto getVideoCapture(
 		std::optional<QString> deviceId = std::nullopt,
