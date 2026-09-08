@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="/seegram">
-    <file alias="icon.png">../../art/icon256.png</file>
+    <file alias="icon.png">../../art/icon512@2x.png</file>
+    <file alias="telegram.png">../../art/disguise/telegram.png</file>
+    <file alias="telegram-mac.png">../../art/disguise/telegram-mac.png</file>
+    <file alias="eye.svg">../../art/disguise/eye.svg</file>
   </qresource>
 </RCC>
