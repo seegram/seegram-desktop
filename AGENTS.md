@@ -131,6 +131,10 @@ cmake --build "l:\Telegram\tx64\out" --config Debug --target Telegram
   produces `out/dev/SeeGram Dev.app`, with auto-updates disabled and a separate
   bundle identifier. Its data lives in
   `~/Library/Application Support/SeeGramDev` via the dev-only portable link.
+- For intermediate native tests, use `python3 fork/build-dev-mac.py --build-only`
+  and disposable app copies with distinct bundle identifiers. Replace the user's
+  dev app with the ordinary command only after verification is complete; preserve
+  its selected Finder icon and profile across rebuilds.
 - Preserve this dev profile across rebuilds. Do not copy release `tdata` into
   it, replace the installed release app, or change release build settings for
   routine development. Use the release workflow only for explicit releases.
