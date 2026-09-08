@@ -126,6 +126,14 @@ cmake --build "l:\Telegram\tx64\out" --config Debug --target Telegram
 - Dependencies: `../win64/Libraries` (64-bit) or `../Libraries` (32-bit)
 
 ### macOS
+- For this user's local SeeGram development builds, always run
+  `python3 fork/build-dev-mac.py`. This builds Debug in `out/dev-build` and
+  produces `out/dev/SeeGram Dev.app`, with auto-updates disabled and a separate
+  bundle identifier. Its data lives in
+  `~/Library/Application Support/SeeGramDev` via the dev-only portable link.
+- Preserve this dev profile across rebuilds. Do not copy release `tdata` into
+  it, replace the installed release app, or change release build settings for
+  routine development. Use the release workflow only for explicit releases.
 - Requires Xcode
 - Dependencies: `../Libraries/local/Qt-*`
 - First-time configure of a new `out/` tree: set the `QT` environment variable
