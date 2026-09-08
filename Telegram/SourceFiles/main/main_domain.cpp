@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "main/main_domain.h"
+#include "fork/disguise.h"
 #include "fork/account_limits.h"
 
 #include "core/application.h"
@@ -527,7 +528,12 @@ void Domain::scheduleWriteAccounts() {
 }
 
 int Domain::maxAccounts() const {
-	return Fork::Accounts::kNoLimit;
+	if (Fork::Disguise::FeaturesEnabled()) return Fork::Accounts::kNoLimit;
+	const auto premiumCount = ranges::count_if(accounts(), [](const AccountWithIndex &entry) {
+		return entry.account->sessionExists()
+			&& (entry.account->session().premium() || entry.account->session().isTestMode());
+	});
+	return std::min(int(premiumCount) + kMaxAccounts, kPremiumMaxAccounts);
 }
 
 rpl::producer<int> Domain::maxAccountsChanges() const {

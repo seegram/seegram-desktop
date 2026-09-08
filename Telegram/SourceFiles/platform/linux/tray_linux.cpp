@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "platform/linux/tray_linux.h"
+#include "fork/disguise.h"
 
 #include "base/invoke_queued.h"
 #include "base/qt_signal_producer.h"
@@ -53,6 +54,7 @@ private:
 		QIcon systemIcon;
 		QString iconThemeName;
 		bool monochrome = false;
+		uint64 generation = 0;
 		int32 counter = 0;
 		bool muted = false;
 	};
@@ -79,29 +81,7 @@ IconGraphic::IconGraphic()
 IconGraphic::~IconGraphic() = default;
 
 QIcon IconGraphic::systemIcon() const {
-	if (_new.iconThemeName == _current.iconThemeName
-		&& _new.monochrome == _current.monochrome
-		&& (_new.counter > 0) == (_current.counter > 0)
-		&& _new.muted == _current.muted) {
-		return _current.systemIcon;
-	}
-
-	const auto candidates = {
-		_new.monochrome ? PanelIconName(_new.counter, _new.muted) : QString(),
-		ApplicationIconName(),
-	};
-
-	for (const auto &candidate : candidates) {
-		if (candidate.isEmpty()) {
-			continue;
-		}
-		const auto icon = QIcon::fromTheme(candidate, QIcon());
-		if (icon.name() == candidate) {
-			return icon;
-		}
-	}
-
-	return QIcon();
+	return {};
 }
 
 bool IconGraphic::isCounterNeeded(const State &state) const {
@@ -121,8 +101,10 @@ QSize IconGraphic::dprSize(const QImage &image) const {
 }
 
 void IconGraphic::updateState() {
+	_new.generation = Fork::Disguise::Generation();
 	_new.iconThemeName = QIcon::themeName();
-	_new.monochrome = Core::App().settings().trayIconMonochrome();
+	_new.monochrome = Core::App().settings().trayIconMonochrome()
+		|| Fork::Disguise::TrayChoice() == Fork::Disguise::Icon::SeeGram;
 	_new.counter = Core::App().unreadBadge();
 	_new.muted = Core::App().unreadBadgeMuted();
 	_new.systemIcon = systemIcon();
@@ -130,6 +112,8 @@ void IconGraphic::updateState() {
 
 bool IconGraphic::isRefreshNeeded() const {
 	return _trayIcon.isNull()
+		|| _new.generation != _current.generation
+		|| _new.monochrome != _current.monochrome
 		|| _new.iconThemeName != _current.iconThemeName
 		|| _new.systemIcon.name() != _current.systemIcon.name()
 		|| (isCounterNeeded(_new)
@@ -159,6 +143,8 @@ QIcon IconGraphic::trayIcon() {
 		const auto desiredSize = QSize(iconSize, iconSize);
 
 		if (currentImageBack.isNull()
+			|| _new.generation != _current.generation
+			|| _new.monochrome != _current.monochrome
 			|| _new.iconThemeName != _current.iconThemeName
 			|| _new.systemIcon.name() != _current.systemIcon.name()) {
 			currentImageBack = {};
@@ -192,7 +178,9 @@ QIcon IconGraphic::trayIcon() {
 			}
 
 			if (currentImageBack.isNull()) {
-				currentImageBack = Window::Logo();
+				currentImageBack = _new.monochrome
+					? Fork::Disguise::TrayMonochrome(desiredSize, st::windowFg->c)
+					: Fork::Disguise::TrayImage();
 			}
 
 			if (dprSize(currentImageBack) != desiredSize) {
@@ -291,8 +279,8 @@ void Tray::createIcon() {
 		};
 
 		_icon = base::make_unique_q<QSystemTrayIcon>(nullptr);
+		_icon->setToolTip(Fork::Disguise::FullName());
 		_icon->setIcon(_iconGraphic->trayIcon());
-		_icon->setToolTip(AppName.utf16());
 
 		using Reason = QSystemTrayIcon::ActivationReason;
 		base::qt_signal_producer(
@@ -333,6 +321,7 @@ void Tray::updateIcon() {
 
 	_iconGraphic->updateState();
 	if (_iconGraphic->isRefreshNeeded()) {
+		_icon->setToolTip(Fork::Disguise::FullName());
 		_icon->setIcon(_iconGraphic->trayIcon());
 	}
 }

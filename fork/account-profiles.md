@@ -28,3 +28,42 @@ Validation for the initial implementation includes the account profile policy
 tests, 31 native storage checks on disposable data, and manual client testing.
 The storage checks cover cold unlock, restricted writes, master/group password
 collisions, changing the master passcode, deleting groups and corrupt files.
+
+## Clean groups and application appearance
+
+The group editor can mark a password group as clean. Before its accounts start,
+SeeGram disables extension settings and see.tg HTTP/GraphQL requests. Entering
+or leaving clean mode recreates each retained account's Main::Session while
+preserving the MTProto account, local storage and authorization. This clears
+session-owned retained messages, self-destruct previews and extension widgets.
+Other groups and the master view restore the user's stored extension settings.
+Updates from the SeeGram feed are suspended in clean mode.
+
+The master-only Appearance (Маскировка) section controls the in-app name, the
+application icon and an independent tray icon (follow application, SeeGram or
+Telegram). Clean mode always selects Telegram for all three. The encrypted
+account-list tail stores the appearance settings and clean group IDs after the
+existing profile data; files without the new tail keep their old behavior.
+The group editor and storage mutators both reject changes from restricted groups.
+
+macOS uses NSWorkspace custom Finder icons to retain the selected app icon after
+quitting. Signed Contents remain byte-for-byte unchanged and normal deep code
+signature verification passes. Strict packaging verification rejects Finder
+metadata; packaging must start from clean build output, not from a running app
+with a custom icon. The dev build script validates its clean stage strictly,
+then preserves an existing custom Finder icon and verifies the signature again.
+A read-only app bundle can only change the running icon. Package identifiers,
+executable names, signatures and local data paths are not renamed.
+
+`python3 fork/build-dev-mac.py --build-only` compiles without replacing the
+user's dev app or touching its profile. Use this for intermediate native tests
+in disposable app copies with a distinct bundle identifier. The ordinary command
+installs the final dev app at the existing development path.
+
+Validation for clean groups and appearance: the 10 standalone fork tests pass,
+and a disposable native macOS scenario passes 58 checks, including cold storage
+reload, overlapping account session replacement, restricted writes, synchronous
+network rejection and independent tray selection. Native settings and the group
+editor were captured at 100% and 200% scale. Both application icons persist as
+Finder icons after quitting; signed Contents are unchanged. The temporary test
+scenario is removed from the production source before the final dev build.

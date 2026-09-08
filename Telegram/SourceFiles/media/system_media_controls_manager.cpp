@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "media/system_media_controls_manager.h"
+#include "fork/disguise.h"
 
 #include "base/platform/base_platform_system_media_controls.h"
 #include "core/application.h"
@@ -209,7 +210,7 @@ SystemMediaControlsManager::SystemMediaControlsManager()
 		= base::Platform::SystemMediaControls::PlaybackStatus;
 	using Command = base::Platform::SystemMediaControls::Command;
 
-	_controls->setApplicationName(AppName.utf16());
+	_controls->setApplicationName(Fork::Disguise::FullName());
 	const auto inited = _controls->init();
 	if (!inited) {
 		LOG(("SystemMediaControlsManager failed to init."));

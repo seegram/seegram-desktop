@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/settings_updates.h"
+#include "fork/disguise.h"
 
 #include "fork/about_seegram.h"
 #include "fork/fork_lang.h"
@@ -78,7 +79,7 @@ rpl::producer<QString> Section::title() {
 } // namespace
 
 void PrepareStartupCheck() {
-	if (StartupHandled) {
+	if (Disguise::Clean() || StartupHandled) {
 		return;
 	}
 	StartupHandled = true;

@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "window/main_window.h"
+#include "fork/disguise.h"
 
 #include "core/version.h"
 #include "api/api_updates.h"
@@ -138,13 +139,11 @@ const char kOptionNewWindowsSizeAsFirst[] = "new-windows-size-as-first";
 const char kOptionDisableTouchbar[] = "touchbar-disabled";
 
 const QImage &Logo() {
-	static const auto result = QImage(u":/gui/art/logo_256.png"_q);
-	return result;
+	return Fork::Disguise::Image();
 }
 
 const QImage &LogoNoMargin() {
-	static const auto result = QImage(u":/gui/art/logo_256_no_margin.png"_q);
-	return result;
+	return Fork::Disguise::Image();
 }
 
 void ConvertIconToBlack(QImage &image) {
@@ -211,16 +210,16 @@ QIcon CreateSupportIcon(Main::Session *session) {
 	return QIcon(Ui::PixmapFromImage(std::move(image)));
 }
 
-QIcon CreateIcon(Main::Session *session, bool returnNullIfDefault) {
+QIcon CreateIcon(Main::Session *session, bool /*returnNullIfDefault*/) {
 	const auto supportIcon = CreateSupportIcon(session);
-	if (!supportIcon.isNull() || returnNullIfDefault) {
+	if (!supportIcon.isNull()) {
 		return supportIcon;
 	}
 
 	const auto officialIcon = QIcon(
 		Ui::PixmapFromImage(base::duplicate(Logo())));
 
-	if constexpr (!Platform::IsLinux()) {
+	if (!Platform::IsLinux() || !Fork::Disguise::Image().isNull()) {
 		return officialIcon;
 	}
 
@@ -912,7 +911,7 @@ void MainWindow::updateTitle() {
 		: Dialogs::Key();
 	const auto thread = key ? key.thread() : nullptr;
 	if (!thread) {
-		setTitle((user.isEmpty() ? AppFile.utf16() : user) + added + suffix);
+		setTitle((user.isEmpty() ? Fork::Disguise::Name() : user) + added + suffix);
 		return;
 	}
 	const auto history = thread->owningHistory();

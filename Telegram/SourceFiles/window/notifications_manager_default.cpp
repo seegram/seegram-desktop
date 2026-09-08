@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "window/notifications_manager_default.h"
+#include "fork/disguise.h"
 
 #include "core/version.h"
 #include "platform/platform_notifications_manager.h"
@@ -1006,7 +1007,7 @@ void Notification::updateNotifyDisplay() {
 				: TextWithEntities{ name };
 		};
 		auto title = options.hideNameAndPhoto
-			? TextWithEntities{ AppName.utf16() }
+			? TextWithEntities{ Fork::Disguise::FullName() }
 			: reminder
 			? tr::lng_notification_reminder(tr::now, tr::marked)
 			: topicWithChat();

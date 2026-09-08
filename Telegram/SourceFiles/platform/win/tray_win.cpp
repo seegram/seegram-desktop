@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "platform/win/tray_win.h"
+#include "fork/disguise.h"
 
 #include "base/invoke_queued.h"
 #include "base/qt_signal_producer.h"
@@ -104,11 +105,22 @@ bool DarkTasbarValueValid/* = false*/;
 		Window::CounterLayerArgs &&args,
 		bool supportMode,
 		bool smallIcon,
-		bool monochrome) {
+		bool monochrome,
+		bool forTray) {
+	monochrome = monochrome || (forTray
+		&& Fork::Disguise::TrayChoice() == Fork::Disguise::Icon::SeeGram);
 	static auto ScaledLogo = base::flat_map<int, QImage>();
 	static auto ScaledLogoNoMargin = base::flat_map<int, QImage>();
 	static auto ScaledLogoDark = base::flat_map<int, QImage>();
 	static auto ScaledLogoLight = base::flat_map<int, QImage>();
+	static auto generation = uint64(0);
+	if (generation != Fork::Disguise::Generation()) {
+		generation = Fork::Disguise::Generation();
+		ScaledLogo.clear();
+		ScaledLogoNoMargin.clear();
+		ScaledLogoDark.clear();
+		ScaledLogoLight.clear();
+	}
 
 	const auto darkMode = IsDarkTaskbar();
 	auto &scaled = (monochrome && darkMode)
@@ -120,14 +132,18 @@ bool DarkTasbarValueValid/* = false*/;
 		: ScaledLogo;
 
 	auto result = [&] {
-		if (const auto it = scaled.find(args.size); it != scaled.end()) {
+		const auto cacheKey = args.size * 2 + int(forTray);
+		if (const auto it = scaled.find(cacheKey); it != scaled.end()) {
 			return it->second;
 		} else if (monochrome && darkMode) {
-			return MonochromeIconFor(args.size, *darkMode);
+			return forTray
+				? Fork::Disguise::TrayMonochrome(QSize(args.size, args.size),
+					*darkMode ? QColor(255, 255, 255) : QColor(0, 0, 0, 228))
+				: MonochromeIconFor(args.size, *darkMode);
 		}
 		return scaled.emplace(
-			args.size,
-			(smallIcon
+			cacheKey,
+			(forTray ? Fork::Disguise::TrayImage() : smallIcon
 				? Window::LogoNoMargin()
 				: Window::Logo()
 			).scaledToWidth(args.size, Qt::SmoothTransformation)
@@ -169,7 +185,7 @@ void Tray::createIcon() {
 		}
 		_icon->init();
 		updateIcon();
-		_icon->updateToolTip(AppName.utf16());
+		_icon->updateToolTip(Fork::Disguise::FullName());
 
 		using Reason = QPlatformSystemTrayIcon::ActivationReason;
 		base::qt_signal_producer(
@@ -227,8 +243,9 @@ void Tray::updateIcon() {
 				Core::App().unreadBadgeMuted()),
 			true,
 			Core::App().settings().trayIconMonochrome(),
-			session && session->supportMode()));
+			session && session->supportMode(), true));
 	_icon->updateIcon(forTrayIcon);
+	_icon->updateToolTip(Fork::Disguise::FullName());
 }
 
 void Tray::createMenu() {
@@ -270,7 +287,7 @@ void Tray::addAction(rpl::producer<QString> text, Fn<void()> &&callback) {
 void Tray::showTrayMessage() const {
 	if (!cSeenTrayTooltip() && _icon) {
 		_icon->showMessage(
-			AppName.utf16(),
+			Fork::Disguise::FullName(),
 			tr::lng_tray_icon_text(tr::now),
 			QIcon(),
 			QPlatformSystemTrayIcon::Information,
@@ -324,12 +341,14 @@ QPixmap Tray::IconWithCounter(
 		Window::CounterLayerArgs &&args,
 		bool smallIcon,
 		bool monochrome,
-		bool supportMode) {
+		bool supportMode,
+		bool forTray) {
 	return Ui::PixmapFromImage(ImageIconWithCounter(
 		std::move(args),
 		supportMode,
 		smallIcon,
-		monochrome));
+		monochrome,
+		forTray));
 }
 
 void WriteIco(const QString &path, std::vector<QImage> images) {

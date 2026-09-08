@@ -1,4 +1,5 @@
 #include "fork/gift_grid.h"
+#include "fork/disguise.h"
 #include "fork/gift_batch.h"
 #include "fork/gift_batch_policy.h"
 #include "fork/fork_lang.h"
@@ -261,11 +262,12 @@ void AddSetting(not_null<Ui::VerticalLayout*> content) {
 	Ui::AddSkip(content);
 }
 
-rpl::producer<bool> EnabledValue() { return Enabled().value(); }
+rpl::producer<bool> EnabledValue() { return rpl::combine(Enabled().value(), Disguise::FeaturesValue())
+	| rpl::map([](bool enabled, bool allowed) { return enabled && allowed; }); }
 
 void Show(not_null<Ui::GenericBox*> original,
 	not_null<Window::SessionController*> window, not_null<PeerData*> peer) {
-	if (!Enabled().current()) return;
+	if (Disguise::Clean() || !Enabled().current()) return;
 	const auto weak = base::make_weak(original);
 	window->show(Box(GridBox, window, peer, Fn<void()>([=] { if (const auto strong = weak.get()) strong->closeBox(); })));
 }

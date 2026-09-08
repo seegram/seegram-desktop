@@ -58,7 +58,8 @@ public:
 		Window::CounterLayerArgs &&args,
 		bool smallIcon,
 		bool monochrome,
-		bool supportMode);
+		bool supportMode,
+		bool forTray = false);
 	[[nodiscard]] static QString QuitJumpListIconPath();
 
 private:

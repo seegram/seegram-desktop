@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "core/application.h"
+#include "fork/disguise.h"
 
 #include "data/data_abstract_structure.h"
 #include "data/data_channel.h"
@@ -2010,7 +2011,10 @@ void Application::refreshApplicationIcon(Main::Session *session) {
 	Shortcuts::ToggleSupportShortcuts(support);
 	Platform::SetApplicationIcon(Window::CreateIcon(
 		session,
-		Platform::IsMac()));
+		false));
+#ifdef Q_OS_MAC
+	Fork::Disguise::RefreshNativeIcon();
+#endif // Q_OS_MAC
 }
 
 void Application::startShortcuts() {
