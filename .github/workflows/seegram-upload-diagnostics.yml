@@ -1,0 +1,66 @@
+name: SeeGram Upload Diagnostics
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seegram-upload-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Check Windows deployment connection
+    runs-on: [self-hosted, Windows, X64, seegram]
+    timeout-minutes: 3
+    steps:
+      - name: Diagnose SSH without exposing connection details
+        shell: pwsh
+        env:
+          SEEGRAM_SSH_KEY: ${{ secrets.SEEGRAM_SSH_KEY }}
+          SEEGRAM_UPDATE_SERVER: ${{ secrets.SEEGRAM_UPDATE_SERVER }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          $key = $env:SEEGRAM_SSH_KEY
+          $server = $env:SEEGRAM_UPDATE_SERVER
+          if (-not $key -or -not $server) {
+            Write-Host 'SSH_RESULT=missing_configuration'
+            exit 1
+          }
+          if (-not [IO.Path]::IsPathRooted($key)) { $key = Join-Path $HOME $key }
+          if (-not (Test-Path -LiteralPath $key -PathType Leaf)) {
+            Write-Host 'SSH_RESULT=deployment_key_missing'
+            exit 1
+          }
+          $options = @(
+            '-o', 'BatchMode=yes',
+            '-o', 'IdentitiesOnly=yes',
+            '-o', 'IdentityAgent=none',
+            '-o', 'ConnectTimeout=15',
+            '-o', 'ServerAliveInterval=15',
+            '-o', 'ServerAliveCountMax=3',
+            '-i', $key
+          )
+          $output = @(& ssh.exe -v -T @options $server true 2>&1)
+          $code = $LASTEXITCODE
+          $detail = ($output | ForEach-Object { $_.ToString() }) -join "`n"
+          Write-Host ('KEY_OFFERED=' + [bool]($detail -match 'Offering public key'))
+          Write-Host ('SERVER_ACCEPTED_KEY=' + [bool]($detail -match 'Server accepts key'))
+          $reason = if ($code -eq 0) { 'ok' }
+            elseif ($detail -match 'REMOTE HOST IDENTIFICATION HAS CHANGED') { 'host_key_changed' }
+            elseif ($detail -match 'Host key verification failed') { 'host_key_not_trusted' }
+            elseif ($detail -match 'UNPROTECTED PRIVATE KEY FILE|bad permissions') { 'private_key_permissions' }
+            elseif ($detail -match 'incorrect passphrase|bad passphrase|read_passphrase') { 'private_key_requires_passphrase' }
+            elseif ($detail -match 'Load key.*invalid format') { 'invalid_private_key_format' }
+            elseif ($detail -match 'no such identity|Load key.*No such file') { 'deployment_key_missing' }
+            elseif ($detail -match 'Load key.*Permission denied') { 'deployment_key_unreadable' }
+            elseif ($detail -match 'Permission denied|No more authentication methods') { 'authentication_rejected' }
+            elseif ($detail -match 'Connection timed out|Operation timed out') { 'connection_timeout' }
+            elseif ($detail -match 'Connection refused') { 'connection_refused' }
+            elseif ($detail -match 'Could not resolve hostname') { 'hostname_resolution_failed' }
+            else { 'connection_closed' }
+          Write-Host ('SSH_RESULT=' + $reason)
+          if ($code -ne 0) { exit 1 }
