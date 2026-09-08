@@ -586,7 +586,6 @@ bool MainWindow::nativeEvent(
 
 void MainWindow::updateWindowIcon() {
 	updateTaskbarAndIconCounters();
-	Fork::Disguise::RefreshNativeIcon(this);
 }
 
 bool MainWindow::isActiveForTrayMenu() {
@@ -611,6 +610,7 @@ void MainWindow::updateTaskbarAndIconCounters() {
 		GetSystemMetrics(SM_CXICON),
 		GetSystemMetrics(SM_CYICON));
 	const auto supportMode = session && session->supportMode();
+	Fork::Disguise::RefreshNativeIcon(this);
 
 	auto iconSmallPixmap16 = Tray::IconWithCounter(
 		Tray::CounterLayerArgs(16, counter, muted),

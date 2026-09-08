@@ -2369,6 +2369,8 @@ if (WIN32)
     nice_target_sources(Telegram ${src_loc}
     PRIVATE
         fork/disguise_win.cpp
+        fork/disguise_shell_win.cpp
+        fork/disguise_shell_win.h
     )
     # message(${CMAKE_GENERATOR})
     # mt.exe -manifest "${res_loc}/winrc/Telegram.manifest" "-inputresource:\"$<TARGET_FILE:Telegram>\";#1" "-outputresource:\"$<TARGET_FILE:Telegram>\";#1" >NUL

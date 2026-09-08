@@ -31,6 +31,7 @@ struct Settings {
 [[nodiscard]] QString Name();
 [[nodiscard]] QString FullName();
 [[nodiscard]] rpl::producer<QString> NameValue();
+[[nodiscard]] Icon AppChoice();
 [[nodiscard]] const QImage &Image();
 [[nodiscard]] const QImage &Image(Icon icon);
 [[nodiscard]] Icon TrayChoice();
