@@ -3,7 +3,7 @@
 #include "fork/disguise_shell_win.h"
 
 #include <array>
-#include <gsl/gsl_util>
+#include <gsl/util>
 #include <propkey.h>
 #include <propvarutil.h>
 #include <shellapi.h>
