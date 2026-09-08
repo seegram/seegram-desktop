@@ -26,11 +26,32 @@ enum class ResolveMode {
 	ByUsername,
 };
 
+enum class Feature { Gifts, Transfers, Comments, Reactions, GiftDetails, MarketPreviews };
+
 struct Settings {
 	bool enabled = true;
+	bool gifts = true;
+	bool transfers = true;
+	bool comments = true;
+	bool reactions = true;
+	bool giftDetails = true;
+	bool marketPreviews = true;
 	ResolveMode resolve = ResolveMode::ByGift;
 	bool usernameFallback = true;
 	bool resolveAutomatically = true;
+
+	[[nodiscard]] bool featureEnabled(Feature feature) const {
+		if (!enabled) return false;
+		switch (feature) {
+		case Feature::Gifts: return gifts;
+		case Feature::Transfers: return transfers;
+		case Feature::Comments: return comments;
+		case Feature::Reactions: return reactions;
+		case Feature::GiftDetails: return giftDetails;
+		case Feature::MarketPreviews: return marketPreviews;
+		}
+		return false;
+	}
 
 	friend inline bool operator==(
 		const Settings &,
@@ -46,6 +67,8 @@ void Start();
 [[nodiscard]] rpl::producer<Settings> Changes();
 [[nodiscard]] rpl::producer<Settings> Value();
 
+[[nodiscard]] bool Enabled(Feature feature);
+[[nodiscard]] rpl::producer<bool> EnabledValue(Feature feature);
 [[nodiscard]] bool Enabled();
 [[nodiscard]] rpl::producer<bool> EnabledValue();
 

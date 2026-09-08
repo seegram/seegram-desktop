@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/settings_marks.h"
 
 #include "fork/fork_lang.h"
+#include "fork/settings_rows.h"
 #include "fork/message_marks.h"
 #include "lang/lang_keys.h"
 #include "settings/settings_common.h"
@@ -117,6 +118,16 @@ void BuildContent(
 		not_null<Window::SessionController*> controller) {
 	Ui::AddSkip(container);
 	Ui::AddSubsectionTitle(container, Lang::Value(Key::Messages));
+	const auto seconds = SettingsRows::AddToggle(container,
+		Lang::Value(Key::MessageSeconds),
+		rpl::single(u"14:30 → 14:30:25"_q),
+		Value() | rpl::map([](const Settings &settings) { return settings.showSeconds; }));
+	seconds->toggledChanges() | rpl::on_next([](bool enabled) {
+		auto settings = Current();
+		settings.showSeconds = enabled;
+		Set(settings);
+	}, seconds->lifetime());
+	Ui::AddSkip(container);
 	AddMarkButton(
 		container,
 		controller,
@@ -134,7 +145,7 @@ void BuildContent(
 		Key::TranslucentDeleted,
 		&Settings::translucentDeleted);
 	Ui::AddSkip(container);
-	Ui::AddDividerText(container, Lang::Value(Key::MarksAbout));
+	SettingsRows::AddDescription(container, Lang::Value(Key::MarksAbout));
 }
 
 class MarksSection final : public ::Settings::Section<MarksSection> {

@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "dialogs/dialogs_inner_widget_accessibility.h"
 
+#include "fork/scheduled_preview.h"
+
 #include "data/notify/data_notify_settings.h"
 #include "data/data_channel.h"
 #include "data/data_chat_filters.h"
@@ -64,7 +66,7 @@ namespace {
 	QString status;
 	auto statusBeforeMessage = false;
 	if (item->out()) {
-		if (item->isSending()) {
+		if (item->isSending() || Fork::ScheduledPreview::Is(item)) {
 			status = tr::lng_sr_chat_sending(tr::now);
 			statusBeforeMessage = true;
 		} else if (item->hasFailed()) {
@@ -449,7 +451,7 @@ QString SubItemValue(
 			return {};
 		}
 		if (chatItem->out()) {
-			if (chatItem->isSending()) {
+			if (chatItem->isSending() || Fork::ScheduledPreview::Is(chatItem)) {
 				return tr::lng_sr_chat_sending(tr::now);
 			} else if (chatItem->hasFailed()) {
 				return tr::lng_sr_chat_failed(tr::now);

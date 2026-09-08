@@ -26,12 +26,15 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 // hand-written binary serializer, so every upstream field addition would
 // collide. See fork/RULES.md.
 
+class HistoryItem;
+
 namespace Fork::Spy {
 
 struct Settings {
 	bool saveDeletedMessages = true;
 	bool saveEditsHistory = true;
 	bool saveForBots = false;
+	bool previewSelfDestructMedia = true;
 
 	friend inline bool operator==(
 		const Settings &,
@@ -44,6 +47,7 @@ struct Settings {
 
 // Applies and persists in one step.
 void Set(const Settings &settings);
+[[nodiscard]] bool PreviewSelfDestructMedia(const HistoryItem *item);
 
 // Called once from Core::Application before any session exists.
 void Start();

@@ -99,9 +99,9 @@ QString AuthorName(const QJsonObject &author) {
 		: author.value(u"telegramId"_q).toString();
 }
 
-QString ListQuery() {
+QString ListQuery(bool gift) {
 	return u"query Comments($targetId: String!, $after: String) { "
-		"comments(target: OWNER, targetId: $targetId, after: $after) { items { "_q
+		"comments(target: "_q + (gift ? u"GIFT"_q : u"OWNER"_q) + u", targetId: $targetId, after: $after) { items { "_q
 		+ Fields + u" } pageInfo { endCursor hasNextPage } } }"_q;
 }
 
@@ -111,9 +111,9 @@ QString RepliesQuery() {
 		+ Fields + u" } pageInfo { endCursor hasNextPage } } }"_q;
 }
 
-QString PostMutation() {
+QString PostMutation(bool gift) {
 	return u"mutation PostComment($targetId: String!, $body: String!, $replyToId: String) { "
-		"postComment(target: OWNER, targetId: $targetId, body: $body, replyToId: $replyToId) { "_q
+		"postComment(target: "_q + (gift ? u"GIFT"_q : u"OWNER"_q) + u", targetId: $targetId, body: $body, replyToId: $replyToId) { "_q
 		+ Fields + u" } }"_q;
 }
 
