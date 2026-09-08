@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #pragma once
 
 #include "fork/account_profile_policy.h"
+#include "fork/disguise.h"
 
 namespace MTP {
 class Config;
@@ -36,6 +37,7 @@ public:
 		Fork::AccountProfiles::Indices accounts;
 		QByteArray salt;
 		QByteArray encryptedKey;
+		bool clean = false;
 	};
 	Domain(not_null<Main::Domain*> owner, const QString &dataName);
 	~Domain();
@@ -58,8 +60,12 @@ public:
 		const QByteArray &id,
 		const QString &name,
 		const Fork::AccountProfiles::Indices &accounts,
-		const QByteArray &passcode);
+		const QByteArray &passcode,
+		std::optional<bool> clean = std::nullopt);
 	[[nodiscard]] bool removeAccountProfile(const QByteArray &id);
+	[[nodiscard]] bool cleanProfile() const;
+	[[nodiscard]] Fork::Disguise::Settings disguiseSettings() const;
+	[[nodiscard]] bool setDisguiseSettings(const Fork::Disguise::Settings &settings);
 	[[nodiscard]] bool accountIndexReserved(int index) const;
 	[[nodiscard]] rpl::producer<> accountProfilesChanged() const;
 
@@ -83,6 +89,9 @@ private:
 		std::unique_ptr<Main::Account> account);
 	void generateLocalKey();
 	void encryptLocalKey(const QByteArray &passcode);
+	[[nodiscard]] bool readDisguise(QDataStream &stream);
+	void writeDisguise(QDataStream &stream) const;
+	void applyDisguise() const;
 	[[nodiscard]] Fork::AccountProfiles::Selection profileSelection(
 		const QByteArray &id) const;
 	[[nodiscard]] QByteArray decryptProfileKey(
@@ -108,6 +117,7 @@ private:
 	QByteArray _activeProfile;
 	std::optional<QByteArray> _pendingProfile;
 	rpl::event_stream<> _accountProfilesChanged;
+	Fork::Disguise::Settings _disguise;
 
 };
 

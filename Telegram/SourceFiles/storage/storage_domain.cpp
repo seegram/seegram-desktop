@@ -89,6 +89,7 @@ void Domain::startWithSingleAccount(
 		const QByteArray &passcode,
 		std::unique_ptr<Main::Account> account) {
 	Expects(account != nullptr);
+	applyDisguise();
 
 	if (auto localKey = account->local().peekLegacyLocalKey()) {
 		_localKey = std::move(localKey);
@@ -265,7 +266,7 @@ Domain::StartModernResult Domain::startModern(
 			_accountProfiles.push_back(std::move(profile));
 		}
 	}
-	if (info.stream.status() != QDataStream::Ok) {
+	if (!readDisguise(info.stream) || info.stream.status() != QDataStream::Ok) {
 		return StartModernResult::IncorrectPasscode;
 	}
 	if (!_activeProfile.isEmpty()) {
@@ -287,6 +288,7 @@ Domain::StartModernResult Domain::startModern(
 	if (selected.empty()) {
 		return StartModernResult::IncorrectPasscode;
 	}
+	applyDisguise();
 	auto sessions = base::flat_set<uint64>();
 	for (const auto index : selected) {
 		auto account = std::make_unique<Main::Account>(
@@ -354,6 +356,7 @@ void Domain::writeAccounts() {
 		keyData.stream << profile.salt << profile.encryptedKey;
 		slots << profile.salt << profile.encryptedKey;
 	}
+	writeDisguise(keyData.stream);
 	FileWriteDescriptor key(ComputeKeyName(_dataName), path, true);
 	key.writeData(_passcodeKeySalt);
 	key.writeData(_passcodeKeyEncrypted);

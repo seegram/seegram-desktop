@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/message_marks.h"
+#include "fork/disguise.h"
 #include "fork/message_time_format.h"
 #include "ui/text/format_values.h"
 #include <QtCore/QDateTime>
@@ -35,7 +36,8 @@ rpl::event_stream<Settings> GlobalChanges;
 } // namespace
 
 const Settings &Current() {
-	return GlobalSettings;
+	static const auto clean = Settings();
+	return Disguise::Clean() ? clean : GlobalSettings;
 }
 
 void Start() {
@@ -67,7 +69,7 @@ void Start() {
 }
 
 void Set(const Settings &settings) {
-	if (GlobalSettings == settings) {
+	if (Disguise::Clean() || GlobalSettings == settings) {
 		return;
 	}
 	GlobalSettings = settings;
@@ -91,20 +93,21 @@ void Set(const Settings &settings) {
 }
 
 rpl::producer<Settings> Changes() {
-	return GlobalChanges.events();
+	return rpl::merge(GlobalChanges.events() | rpl::to_empty,
+		Disguise::Changes()) | rpl::map([] { return Current(); });
 }
 
 rpl::producer<Settings> Value() {
-	return rpl::single(GlobalSettings) | rpl::then(Changes());
+	return rpl::single(Current()) | rpl::then(Changes());
 }
 
 QString DeletedMark() {
-	const auto &mark = GlobalSettings.deletedMark;
+	const auto &mark = Current().deletedMark;
 	return mark.isEmpty() ? DefaultDeletedMark() : mark;
 }
 
 QString EditedMark() {
-	const auto &mark = GlobalSettings.editedMark;
+	const auto &mark = Current().editedMark;
 	return mark.isEmpty() ? DefaultEditedMark() : mark;
 }
 
@@ -117,12 +120,12 @@ QString DefaultEditedMark() {
 }
 
 QString FormatTime(QTime time) {
-	return FormatMessageTime(time, QLocale(), GlobalSettings.showSeconds);
+	return FormatMessageTime(time, QLocale(), Current().showSeconds);
 }
 
 QString FormatSavedFrom(QDateTime date) {
 	auto text = Ui::FormatDateTimeSavedFrom(date);
-	if (GlobalSettings.showSeconds) {
+	if (Current().showSeconds) {
 		text.replace(QLocale().toString(date.time(), QLocale::ShortFormat),
 			FormatTime(date.time()));
 	}
@@ -130,7 +133,7 @@ QString FormatSavedFrom(QDateTime date) {
 }
 
 bool TranslucentDeleted() {
-	return GlobalSettings.translucentDeleted;
+	return Current().translucentDeleted;
 }
 
 } // namespace Fork::Marks

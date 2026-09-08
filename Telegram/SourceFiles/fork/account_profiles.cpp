@@ -3,6 +3,12 @@
 #include "storage/serialize_common.h"
 #include "main/main_domain.h"
 #include "main/main_account.h"
+#include "main/main_session.h"
+#include "main/main_session_settings.h"
+#include "data/data_user.h"
+#include "storage/storage_account.h"
+#include "storage/serialize_peer.h"
+#include "core/version.h"
 #include "mtproto/mtproto_config.h"
 #include "base/random.h"
 #include "core/application.h"
@@ -63,6 +69,84 @@ bool Domain::hasAccountProfiles() const {
 	return !_accountProfiles.empty();
 }
 
+bool Domain::cleanProfile() const {
+	for (const auto &profile : _accountProfiles) {
+		if (profile.id == _activeProfile) {
+			return profile.clean;
+		}
+	}
+	return false;
+}
+
+Fork::Disguise::Settings Domain::disguiseSettings() const {
+	return restrictedProfile() ? Fork::Disguise::Settings() : _disguise;
+}
+
+bool Domain::setDisguiseSettings(const Fork::Disguise::Settings &settings) {
+	if (restrictedProfile() || !Fork::Disguise::ValidName(settings.name)
+		|| settings.trayIcon < Fork::Disguise::TrayIcon::Application
+		|| settings.trayIcon > Fork::Disguise::TrayIcon::Telegram
+		|| (settings.icon != Fork::Disguise::Icon::SeeGram
+			&& settings.icon != Fork::Disguise::Icon::Telegram)) {
+		return false;
+	}
+	_disguise = settings;
+	_disguise.name = _disguise.name.trimmed();
+	writeAccounts();
+	applyDisguise();
+	Fork::Disguise::RefreshApplication();
+	return true;
+}
+
+void Domain::applyDisguise() const {
+	Fork::Disguise::Apply(cleanProfile(), _disguise);
+}
+
+bool Domain::readDisguise(QDataStream &stream) {
+	_disguise = {};
+	if (stream.atEnd()) {
+		return true;
+	}
+	auto magic = quint32();
+	auto icon = quint32();
+	auto count = quint32();
+	stream >> magic >> _disguise.name >> icon >> count;
+	if (magic != 0x53474D31 || icon > 1 || count > _accountProfiles.size()
+		|| !Fork::Disguise::ValidName(_disguise.name)) {
+		return false;
+	}
+	_disguise.icon = Fork::Disguise::Icon(icon);
+	auto seen = std::set<QByteArray>();
+	for (auto i = 0U; i != count; ++i) {
+		auto id = QByteArray();
+		stream >> id;
+		const auto profile = ranges::find(_accountProfiles, id, &AccountProfile::id);
+		if (profile == end(_accountProfiles) || !seen.emplace(id).second) {
+			return false;
+		}
+		profile->clean = true;
+	}
+	if (!stream.atEnd()) {
+		auto tray = quint32();
+		stream >> tray;
+		if (tray > 2) return false;
+		_disguise.trayIcon = Fork::Disguise::TrayIcon(tray);
+	}
+	return stream.status() == QDataStream::Ok && stream.atEnd();
+}
+
+void Domain::writeDisguise(QDataStream &stream) const {
+	const auto count = ranges::count_if(_accountProfiles, &AccountProfile::clean);
+	stream << quint32(0x53474D31) << _disguise.name
+		<< quint32(_disguise.icon) << quint32(count);
+	for (const auto &profile : _accountProfiles) {
+		if (profile.clean) {
+			stream << profile.id;
+		}
+	}
+	stream << quint32(_disguise.trayIcon);
+}
+
 const std::vector<Domain::AccountProfile> &Domain::accountProfiles() const {
 	static const auto empty = std::vector<AccountProfile>();
 	return restrictedProfile() ? empty : _accountProfiles;
@@ -104,6 +188,10 @@ bool Domain::applyPendingProfile() {
 	if (selected.empty()) {
 		return false;
 	}
+	const auto wasClean = cleanProfile();
+	_activeProfile = target;
+	const auto reload = (wasClean != cleanProfile());
+	applyDisguise();
 	auto added = std::vector<Main::Domain::AccountWithIndex>();
 	for (const auto index : selected) {
 		if (_loadedAccounts.contains(index)) {
@@ -114,11 +202,11 @@ bool Domain::applyPendingProfile() {
 		account->start(std::move(config));
 		added.push_back({ index, std::move(account) });
 	}
-	_activeProfile = target;
-	_owner->applyAccountProfile(selected, std::move(added));
+	_owner->applyAccountProfile(selected, std::move(added), reload);
 	_loadedAccounts = Fork::AccountProfiles::Indices(
 		begin(selected), end(selected));
 	writeAccounts();
+	Fork::Disguise::RefreshApplication();
 	return true;
 }
 
@@ -126,7 +214,8 @@ bool Domain::saveAccountProfile(
 		const QByteArray &id,
 		const QString &name,
 		const Fork::AccountProfiles::Indices &accounts,
-		const QByteArray &passcode) {
+		const QByteArray &passcode,
+		std::optional<bool> clean) {
 	if (restrictedProfile() || !hasLocalPasscode()
 		|| name.trimmed().isEmpty() || name.size() > 128
 		|| accounts.empty() || !Fork::AccountProfiles::ValidIndices(accounts)) {
@@ -166,6 +255,9 @@ bool Domain::saveAccountProfile(
 	}
 	profile.name = name.trimmed();
 	profile.accounts = accounts;
+	if (clean) {
+		profile.clean = *clean;
+	}
 	if (!passcode.isEmpty()) {
 		profile.salt.resize(LocalEncryptSaltSize);
 		base::RandomFill(profile.salt.data(), profile.salt.size());
@@ -219,9 +311,32 @@ rpl::producer<> Domain::accountProfilesChanged() const {
 
 namespace Main {
 
+void Account::reloadSessionForProfile() {
+	const auto session = maybeSession();
+	if (!session) {
+		return;
+	}
+	session->saveSettingsNowIfNeeded();
+	local().writeSearchSuggestionsIfNeeded();
+	auto settings = std::make_unique<SessionSettings>();
+	settings->addFromSerialized(session->settings().serialize());
+	const auto self = session->user();
+	const auto id = peerToUser(self->id);
+	auto serialized = QByteArray();
+	{
+		auto stream = QDataStream(&serialized, QIODevice::WriteOnly);
+		Serialize::writePeer(stream, self);
+		stream << self->about();
+	}
+	destroySession(DestroyReason::Quitting);
+	_sessionUserId = id;
+	createSession(id, std::move(serialized), AppVersion, std::move(settings));
+}
+
 void Domain::applyAccountProfile(
 		const std::vector<int> &selected,
-		std::vector<AccountWithIndex> added) {
+		std::vector<AccountWithIndex> added,
+		bool reloadSessions) {
 	Expects(!selected.empty());
 	_switchingProfiles = true;
 	Core::App().calls().endForAccountSwitch();
@@ -238,6 +353,13 @@ void Domain::applyAccountProfile(
 		Core::App().closeWindow(window);
 	}
 	keep->hideSettingsAndLayer(anim::type::instant);
+	if (reloadSessions) {
+		for (const auto &entry : _accounts) {
+			if (ranges::contains(selected, entry.index)) {
+				entry.account->reloadSessionForProfile();
+			}
+		}
+	}
 	for (auto &entry : added) {
 		const auto account = entry.account.get();
 		accountAddedInStorage(std::move(entry));
@@ -249,6 +371,7 @@ void Domain::applyAccountProfile(
 		&AccountWithIndex::index)->account.get();
 	activate(target);
 	keep->showAccount(target);
+
 	auto removed = std::vector<AccountWithIndex>();
 	for (auto i = begin(_accounts); i != end(_accounts);) {
 		if (!ranges::contains(selected, i->index)) {

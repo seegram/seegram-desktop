@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/settings_stickers.h"
+#include "fork/disguise.h"
 
 #include "fork/fork_lang.h"
 #include "fork/settings_rows.h"
@@ -170,7 +171,7 @@ rpl::producer<> Changes() {
 
 int RecentDisplayLimit(not_null<Main::Session*> session, bool masks,
 		bool upstreamUnlimited, int upstreamLimit) {
-	if (masks) {
+	if (masks || Disguise::Clean()) {
 		return upstreamUnlimited ? std::numeric_limits<int>::max() : upstreamLimit;
 	}
 	return RecentLimit ? std::min(RecentLimit, ServerMaximum(session))

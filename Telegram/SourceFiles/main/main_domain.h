@@ -82,7 +82,8 @@ public:
 	void activateFromStorage(int index);
 	void applyAccountProfile(
 		const std::vector<int> &selected,
-		std::vector<AccountWithIndex> added);
+		std::vector<AccountWithIndex> added,
+		bool reloadSessions = false);
 	[[nodiscard]] int activeForStorage() const;
 
 private:

@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "core/update_checker.h"
+#include "fork/disguise.h"
 
 #include "fork/settings_updates.h"
 
@@ -1844,6 +1845,15 @@ private:
 Updater::Updater()
 : _timer([=] { check(); })
 , _retryTimer([=] { handleTimeout(); }) {
+	Fork::Disguise::FeaturesValue() | rpl::on_next([=](bool enabled) {
+		if (!enabled) {
+			_timer.cancel();
+			_retryTimer.cancel();
+			stop();
+		} else {
+			start(false);
+		}
+	}, _lifetime);
 	checking() | rpl::on_next([=] {
 		handleChecking();
 	}, _lifetime);
@@ -1956,6 +1966,7 @@ void Updater::stop() {
 }
 
 void Updater::start(bool forceWait) {
+	if (Fork::Disguise::Clean()) return;
 	if (cExeName().isEmpty()) {
 		return;
 	}
@@ -2393,6 +2404,7 @@ bool checkReadyUpdate() {
 }
 
 void UpdateApplication() {
+	if (Fork::Disguise::Clean()) return;
 	if (UpdaterDisabled()) {
 		const auto url = [&] {
 #ifdef OS_WIN_STORE

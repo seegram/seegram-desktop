@@ -629,6 +629,10 @@ PRIVATE
     fork/settings_account_profiles.h
     fork/account_profile_policy.h
     fork/account_profiles.cpp
+    fork/disguise.cpp
+    fork/disguise.h
+    fork/settings_disguise.cpp
+    fork/settings_disguise.h
     fork/settings_ghost.cpp
     fork/settings_ghost.h
     fork/settings_rows.h
@@ -2299,6 +2303,7 @@ if (APPLE)
     PRIVATE
         tray_accounts_menu.cpp
         fork/seetg/seetg_http_mac.mm
+        fork/disguise_mac.mm
         media/view/media_view_metal_texture.mm
         media/streaming/media_streaming_native_frame_mac.mm
     )
