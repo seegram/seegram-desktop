@@ -42,6 +42,7 @@ void BindWindow(not_null<Window::MainWindow*> window);
 void RefreshApplication();
 #ifdef Q_OS_WIN
 void RefreshNativeIcon(not_null<Window::MainWindow*> window);
+void ClearNativeIcon(not_null<Window::MainWindow*> window);
 #endif // Q_OS_WIN
 #ifdef Q_OS_MAC
 void RefreshNativeMenu();
