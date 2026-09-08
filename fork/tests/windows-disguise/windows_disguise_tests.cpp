@@ -5,7 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-#include <gsl/gsl_util>
+#include <gsl/util>
 #include <propkey.h>
 #include <propvarutil.h>
 #include <shellapi.h>
