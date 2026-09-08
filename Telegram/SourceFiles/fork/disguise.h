@@ -5,6 +5,10 @@
 class QImage;
 class QColor;
 
+namespace Window {
+class MainWindow;
+} // namespace Window
+
 namespace Fork::Disguise {
 
 enum class Icon { SeeGram, Telegram };
@@ -34,7 +38,11 @@ struct Settings {
 [[nodiscard]] QImage TrayMonochrome(QSize size, QColor color);
 [[nodiscard]] bool ValidName(const QString &name);
 void Apply(bool clean, const Settings &settings);
+void BindWindow(not_null<Window::MainWindow*> window);
 void RefreshApplication();
+#ifdef Q_OS_WIN
+void RefreshNativeIcon(not_null<Window::MainWindow*> window);
+#endif // Q_OS_WIN
 #ifdef Q_OS_MAC
 void RefreshNativeMenu();
 void RefreshNativeIcon();

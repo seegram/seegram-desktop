@@ -574,8 +574,7 @@ void MainWindow::init() {
 		setupCanaryTitleLabel();
 	}
 
-	updateTitle();
-	updateWindowIcon();
+	Fork::Disguise::BindWindow(this);
 }
 
 void MainWindow::handleStateChanged(Qt::WindowState state) {
