@@ -54,7 +54,8 @@ struct ValueWithSmallButton {
 	not_null<RpWidget*> value,
 	rpl::producer<QString> buttonText,
 	Fn<void(not_null<RpWidget*> button)> handler = nullptr,
-	int topSkip = 0);
+	int topSkip = 0,
+	bool wrapButton = false);
 [[nodiscard]] object_ptr<RpWidget> MakePeerTableValue(
 	not_null<TableLayout*> table,
 	std::shared_ptr<ChatHelpers::Show> show,
