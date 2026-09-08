@@ -7,6 +7,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/spy_ui.h"
 
+#include "apiwrap.h"
+#include "data/data_media_types.h"
+
 #include "fork/deleted_messages.h"
 #include "fork/edit_history.h"
 #include "fork/fork_lang.h"
@@ -184,6 +187,34 @@ void ShowDeletedMessages(
 		}
 		box->addButton(tr::lng_close(), [=] { box->closeBox(); });
 	}));
+}
+
+void AddViewSelfDestructAction(
+		not_null<Ui::PopupMenu*> menu,
+		HistoryItem *item,
+		not_null<Window::SessionController*> controller) {
+	if (!Spy::PreviewSelfDestructMedia(item) || !item->isRegular()) {
+		return;
+	}
+	const auto id = item->fullId();
+	menu->addAction(Lang::Text(Key::ViewSelfDestructMedia), crl::guard(controller, [=] {
+		const auto session = &controller->session();
+		const auto current = session->data().message(id);
+		if (!Spy::PreviewSelfDestructMedia(current)) {
+			return;
+		}
+		const auto readAt = base::unixtime::now();
+		session->api().request(MTPmessages_ReadMessageContents(
+			MTP_vector<MTPint>(1, MTP_int(id.msg))
+		)).done(crl::guard(controller, [=](const MTPmessages_AffectedMessages &result) {
+			session->api().applyAffectedMessages(session->data().peer(id.peer), result);
+			if (const auto current = session->data().message(id)
+				; current && current->hasUnreadMediaFlag()) {
+				current->markContentsRead();
+				current->applyMediaContentsRead(readAt);
+			}
+		})).send();
+	}), &st::menuIconShowInChat);
 }
 
 void AddHistoryAction(

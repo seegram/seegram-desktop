@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/peer_gifts/info_peer_gifts_common.h"
+#include <QtSvg/QSvgRenderer>
 
 #include "api/api_global_privacy.h"
 #include "api/api_premium.h"
@@ -193,6 +194,13 @@ void GiftButton::unsubscribe() {
 	}
 }
 
+void GiftButton::setExternalSale(const QString &price, const QImage &logo) {
+	if (_externalSale == price && _externalSaleLogo.cacheKey() == logo.cacheKey()) return;
+	_externalSale = price;
+	_externalSaleLogo = logo;
+	update();
+}
+
 void GiftButton::setDescriptor(const GiftDescriptor &descriptor, Mode mode) {
 	_mode = mode;
 
@@ -205,6 +213,8 @@ void GiftButton::setDescriptor(const GiftDescriptor &descriptor, Mode mode) {
 	if (_descriptor == descriptor && _resalePrice == resalePrice) {
 		return;
 	}
+	_externalSale.clear();
+	_externalSaleLogo = {};
 	const auto starsType = Ui::Premium::MiniStarsType::SlowStars;
 	unsubscribe();
 	update();
@@ -723,7 +733,8 @@ void GiftButton::paintEvent(QPaintEvent *e) {
 void GiftButton::paint(QPainter &p, float64 craftProgress) {
 	const auto stargift = std::get_if<GiftTypeStars>(&_descriptor);
 	const auto unique = stargift ? stargift->info.unique.get() : nullptr;
-	const auto onsale = unique && unique->starsForResale && small();
+	const auto externalSale = unique && !unique->starsForResale && small() && !_externalSale.isEmpty();
+	const auto onsale = unique && (unique->starsForResale || externalSale) && small();
 	const auto requirePremium = stargift
 		&& !stargift->userpic
 		&& !stargift->resale
@@ -916,7 +927,7 @@ void GiftButton::paint(QPainter &p, float64 craftProgress) {
 		const auto now = base::unixtime::now();
 		const auto upcomingAuction = (data.info.auctionStartDate > 0)
 			&& (data.info.auctionStartDate > now);
-		if (count || pinned) {
+		if (count || pinned || externalSale) {
 			const auto yourLeft = data.info.perUserTotal
 				? (data.info.perUserRemains
 					? tr::lng_gift_stars_your_left(
@@ -1072,6 +1083,49 @@ void GiftButton::paint(QPainter &p, float64 craftProgress) {
 		p.setPen(st::white);
 		p.setFont(font);
 		p.drawText(x + space, y + font->ascent, percent);
+	}
+
+	if (externalSale) {
+		const auto padding = st::giftBoxButtonPadding;
+		const auto font = st::semiboldFont;
+		const auto icon = font->height;
+		const auto gap = font->spacew;
+		const auto ton = _externalSale.endsWith(u" TON"_q);
+		const auto tonSize = icon * 3 / 4;
+		const auto logoWidth = icon + gap + (ton ? tonSize + gap : 0);
+		const auto maxWidth = std::max(singlew - 2 * st::giftBoxUserpicSkip
+			- padding.left() - padding.right() - logoWidth, 0);
+		const auto text = font->elided(ton ? _externalSale.chopped(4) : _externalSale, maxWidth);
+		const auto w = font->width(text) + logoWidth + padding.left() + padding.right();
+		const auto h = font->height + padding.top() + padding.bottom();
+		const auto x = (width - w) / 2;
+		const auto y = _delegate->buttonSize().height() - st::giftBoxButtonBottomSmall - h;
+		p.setPen(Qt::NoPen);
+		p.setBrush(anim::with_alpha(unique->backdrop.patternColor, .8));
+		p.drawRoundedRect(QRect(x, y, w, h), h / 2., h / 2.);
+		const auto logo = QRect(x + padding.left(), y + padding.top(), icon, icon);
+		p.save();
+		auto clip = QPainterPath();
+		clip.addEllipse(QRectF(logo));
+		p.setClipPath(clip);
+		p.setRenderHint(QPainter::SmoothPixmapTransform);
+		if (!_externalSaleLogo.isNull()) p.drawImage(logo, _externalSaleLogo);
+		p.restore();
+		if (ton) {
+			const auto pixels = QSize(tonSize, tonSize) * style::DevicePixelRatio();
+			if (_externalSaleTon.size() != pixels) {
+				_externalSaleTon = QImage(pixels, QImage::Format_ARGB32_Premultiplied);
+				_externalSaleTon.fill(Qt::transparent);
+				QPainter painter(&_externalSaleTon);
+				QSvgRenderer renderer(u":/fork/gifts/ton.svg"_q);
+				renderer.render(&painter);
+			}
+			p.drawImage(QRect(x + padding.left() + icon + gap,
+				y + padding.top() + (icon - tonSize) / 2, tonSize, tonSize), _externalSaleTon);
+		}
+		p.setFont(font);
+		p.setPen(st::white);
+		p.drawText(x + padding.left() + logoWidth, y + padding.top() + font->ascent, text);
 	}
 
 	if (!_button.isEmpty()) {

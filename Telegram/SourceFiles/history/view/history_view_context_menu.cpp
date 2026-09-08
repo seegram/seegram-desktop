@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_context_menu.h"
 
+#include "fork/scheduled_preview.h"
+
 #include "fork/spy_ui.h"
 
 #include "api/api_attached_stickers.h"
@@ -1396,6 +1398,7 @@ void AddTopMessageActions(
 	AddViewRepliesAction(menu, request, list);
 	AddEditMessageAction(menu, request, list);
 	Fork::SpyUi::AddHistoryAction(menu, request.item, list->controller());
+	Fork::SpyUi::AddViewSelfDestructAction(menu, request.item, list->controller());
 	AddFactcheckAction(menu, request, list);
 	AddPinMessageAction(menu, request, list);
 	AddViewStatisticsAction(menu, request, list);
@@ -1758,6 +1761,9 @@ void FillContextMenuItems(
 		not_null<ListWidget*> list,
 		const ContextMenuRequest &request,
 		bool skipWhoReacted = false) {
+	if (Fork::ScheduledPreview::FillMenu(result, request.item, list->controller())) {
+		return;
+	}
 	const auto link = request.link;
 	const auto view = request.view;
 	const auto item = request.item;

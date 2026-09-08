@@ -175,6 +175,11 @@ struct Event {
 	};
 	Type type = Type::Hidden;
 	QString id;
+	QString eventTitle;
+	QStringList eventDetails;
+	QString glyph;
+	QString market;
+	bool compact = false;
 	TimeId time = 0;
 
 	// Gift (collectible) action.
@@ -457,6 +462,7 @@ struct RowText {
 
 [[nodiscard]] RowText TextFor(const Event &e) {
 	auto result = RowText();
+	if (!e.eventTitle.isEmpty()) return { e.eventTitle, QString(), e.eventDetails };
 	switch (e.type) {
 	case Event::Type::Hidden:
 		result.title = Lang::Text(Key::SeeTgHistoryHiddenEvent);
@@ -663,7 +669,7 @@ void OwnerLine::paint(
 // left, what happened on the right, the time underneath.
 class Row final : public Ui::AbstractButton {
 public:
-	Row(QWidget *parent, not_null<Main::Session*> session, Event event);
+	Row(QWidget *parent, not_null<Main::Session*> session, Event event, std::optional<RowText> text = std::nullopt);
 
 protected:
 	void paintEvent(QPaintEvent *e) override;
@@ -681,14 +687,15 @@ private:
 	// must never move: a growing vector of values did exactly that.
 	std::vector<std::unique_ptr<OwnerLine>> _owners;
 	QString _time;
+	QImage _marketLogo;
 	RowGeometry _geometry;
 
 };
 
-Row::Row(QWidget *parent, not_null<Main::Session*> session, Event event)
+Row::Row(QWidget *parent, not_null<Main::Session*> session, Event event, std::optional<RowText> overrideText)
 : AbstractButton(parent)
 , _event(std::move(event)) {
-	const auto text = TextFor(_event);
+	const auto text = overrideText.value_or(TextFor(_event));
 	_title = text.title;
 	_shortTitle = text.shortTitle;
 	_meta = text.meta;
@@ -712,11 +719,20 @@ Row::Row(QWidget *parent, not_null<Main::Session*> session, Event event)
 	_time = _event.time
 		? langDateTime(base::unixtime::parse(_event.time))
 		: QString();
-	if (HasCard(_event)) {
+	if (HasCard(_event) && !_event.compact) {
 		_card = Ui::CreateChild<Card>(this, CardFor(_event));
 		_card->resize(kArtSize, kArtSize);
 		_card->setAttribute(Qt::WA_TransparentForMouseEvents);
 		_card->show();
+	}
+	if (!_event.market.isEmpty()) {
+		const auto username = _event.market == u"mrkt" ? u"mrkt"_q
+			: _event.market == u"portals" ? u"portals"_q
+			: _event.market == u"tonnel" ? u"tonnel_relayer_bot"_q
+			: _event.market == u"getgems" ? u"getgems"_q : QString();
+		if (!username.isEmpty()) Visuals::Image(Visuals::UserpicUrl(username), crl::guard(this, [=](QImage image) {
+			_marketLogo = std::move(image); update();
+		}));
 	}
 	setPointerCursor(HasCard(_event));
 }
@@ -738,6 +754,56 @@ int Row::resizeGetHeight(int newWidth) {
 
 void Row::paintGlyph(Painter &p, QRect rect) {
 	auto hq = PainterHighQualityEnabler(p);
+	if (_event.compact) {
+		// Match gift-history-row__mark in the miniapp: a 42px tinted ring,
+		// a 24px coloured centre, and a white 19px extra-bold glyph.
+		const auto mix = [](QColor a, QColor b, double weight) {
+			return QColor::fromRgbF(a.redF() * weight + b.redF() * (1 - weight),
+				a.greenF() * weight + b.greenF() * (1 - weight),
+				a.blueF() * weight + b.blueF() * (1 - weight));
+		};
+		const auto accent = st::windowActiveTextFg->c;
+		const auto kind = _event.action;
+		const auto green = kind == u"listing" || !_event.market.isEmpty();
+		const auto base = green ? QColor("#33c46a")
+			: kind == u"delisting" ? QColor("#ff4d4d")
+			: kind == u"price" ? QColor("#f0a400") : accent;
+		const auto whiteWeight = kind == u"delisting" || kind == u"mint" ? .78
+			: green || kind == u"price" ? .82 : .88;
+		const auto tint = kind == u"price" ? .13 : kind == u"mint" ? .10 : .12;
+		const auto scale = rect.width() / 42.;
+		const auto bounds = QRectF(rect);
+		p.setPen(Qt::NoPen);
+		p.setBrush(mix(base, st::windowBg->c, tint));
+		p.drawEllipse(bounds);
+		if (!_marketLogo.isNull()) {
+			auto path = QPainterPath(); path.addEllipse(bounds);
+			p.save(); p.setClipPath(path); p.drawImage(rect, _marketLogo); p.restore();
+		} else {
+			auto centre = QRadialGradient(bounds.center(), 13 * scale);
+			const auto fill = mix(base, QColor(Qt::white), whiteWeight);
+			centre.setColorAt(0, fill);
+			centre.setColorAt(12. / 13., fill);
+			auto transparent = fill; transparent.setAlpha(0);
+			centre.setColorAt(1, transparent);
+			p.setBrush(centre);
+			p.drawEllipse(bounds.center(), 13 * scale, 13 * scale);
+			auto outline = accent; outline.setAlphaF(.22);
+			p.setBrush(Qt::NoBrush); p.setPen(QPen(outline, scale));
+			p.drawEllipse(bounds.adjusted(scale / 2, scale / 2, -scale / 2, -scale / 2));
+			auto sheen = QLinearGradient(bounds.topLeft(), bounds.bottomLeft());
+			sheen.setColorAt(0, QColor(255, 255, 255, 36));
+			sheen.setColorAt(.5, QColor(255, 255, 255, 0));
+			p.setPen(QPen(QBrush(sheen), scale));
+			p.drawEllipse(bounds.adjusted(scale / 2, scale / 2, -scale / 2, -scale / 2));
+			auto font = st::semiboldFont->f;
+			font.setPixelSize(int(std::round(19 * scale)));
+			font.setWeight(QFont::ExtraBold);
+			p.setFont(font); p.setPen(Qt::white);
+			p.drawText(bounds.translated(0, -.5 * scale), Qt::AlignCenter, _event.glyph);
+		}
+		return;
+	}
 	const auto radius = rect.width() / 4;
 	p.setPen(Qt::NoPen);
 	p.setBrush(st::windowBgOver);
@@ -1325,6 +1391,11 @@ void AddEventTable(
 			table,
 			Lang::Value(Key::SeeTgHistoryGiftLabel),
 			rpl::single(TextWithEntities{ GoneHint(event) }));
+	}
+	for (const auto &detail : event.eventDetails) {
+		const auto split = detail.indexOf(u": "_q);
+		Ui::AddTableRow(table, rpl::single(split < 0 ? Lang::Text(Key::GiftHistoryPriceLabel) : detail.left(split)),
+			rpl::single(TextWithEntities{ split < 0 ? detail : detail.mid(split + 2) }));
 	}
 	if (!event.message.isEmpty()) {
 		Ui::AddTableRow(
@@ -2082,6 +2153,33 @@ void Inner::appendRows(const std::vector<Event> &events) {
 
 } // namespace
 
+object_ptr<Ui::RpWidget> GiftEventRow(
+		QWidget *parent, not_null<Window::SessionController*> controller,
+		const QJsonObject &item, QString title, QStringList details) {
+	auto event = ParseEvent(item);
+	event.compact = true;
+	event.eventTitle = std::move(title);
+	event.eventDetails = std::move(details);
+	event.market = item[u"saleAction"_q].toObject()[u"market"_q].toString();
+	const auto kind = item[u"giftAction"_q].toObject()[u"action"_q].toString();
+	event.glyph = !event.market.isEmpty() ? u"$"_q : kind == u"listing" ? u"+"_q
+		: kind == u"delisting" ? u"−"_q : kind == u"price" ? u"$"_q
+		: kind == u"moved" ? u"⇄"_q : kind == u"mint" ? u"#"_q : u"→"_q;
+	if (!item[u"hidden"_q].toBool()) {
+		const auto action = item[u"giftAction"_q].toObject();
+		for (const auto &entry : { std::pair{ &event.from, u"from"_q }, std::pair{ &event.to, u"to"_q } }) {
+			const auto owner = action[entry.second].toObject();
+			if (entry.first->name.isEmpty()) entry.first->name = owner[u"address"_q].toString();
+		}
+	}
+	auto result = object_ptr<Row>(parent, &controller->session(), event);
+	result->setPointerCursor(true);
+	result->setClickedCallback(crl::guard(controller, [=] {
+		ShowEventBox(controller, controller->session().user(), event, std::nullopt);
+	}));
+	return result;
+}
+
 Memento::Memento(not_null<PeerData*> peer)
 : ContentMemento(peer, nullptr, nullptr, PeerId()) {
 }
@@ -2172,7 +2270,7 @@ not_null<Ui::SettingsButton*> AddButton(
 				parent,
 				Counters::Label(peer, Counters::Kind::Transfers),
 				st::infoSharedMediaButton)));
-	wrap->toggleOn(EnabledValue());
+	wrap->toggleOn(EnabledValue(Feature::Transfers));
 	tracker.track(wrap);
 	const auto button = wrap->entity();
 	button->addClickHandler([=] {

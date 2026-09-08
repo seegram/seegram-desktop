@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/settings_stickers.h"
 
 #include "fork/fork_lang.h"
+#include "fork/settings_rows.h"
 #include "core/application.h"
 #include "data/data_session.h"
 #include "data/stickers/data_stickers.h"
@@ -133,7 +134,7 @@ public:
 			SetLimit(enabled ? 0 : kDefaultRecentLimit);
 		}, server->lifetime());
 		Ui::AddSkip(content);
-		Ui::AddDividerText(content, rpl::single(rpl::empty)
+		SettingsRows::AddDescription(content, rpl::single(rpl::empty)
 			| rpl::then(rpl::duplicate(updates)) | rpl::map([=] {
 				return RangeText(&controller->session());
 			}));

@@ -113,6 +113,10 @@ public:
 	: session(base::make_weak(&peer->session())), seeId(SeeId(peer->id)) {
 	}
 
+	State(not_null<Main::Session*> owner, QString giftId)
+	: session(base::make_weak(owner.get())), seeId(std::move(giftId)), giftTarget(true) {
+	}
+
 	void load(bool more = false) {
 		if (!session || loading || !busy.isEmpty() || (more && !hasMore)) {
 			return;
@@ -122,7 +126,7 @@ public:
 		loadError = false;
 		const auto self = shared_from_this();
 		changes.fire({});
-		Api::FreshQuery(session.get(), ListQuery(), {
+		Api::FreshQuery(session.get(), ListQuery(giftTarget), {
 			{ u"targetId"_q, seeId },
 			{ u"after"_q, more ? QJsonValue(cursor) : QJsonValue(QJsonValue::Null) },
 		}, [self, more](const QJsonObject &data) {
@@ -210,7 +214,7 @@ public:
 		const auto self = shared_from_this();
 		const auto target = replying ? QJsonValue(replying->id) : QJsonValue(QJsonValue::Null);
 		changes.fire({});
-		Api::Mutation(session.get(), PostMutation(), {
+		Api::Mutation(session.get(), PostMutation(giftTarget), {
 			{ u"targetId"_q, seeId }, { u"body"_q, body }, { u"replyToId"_q, target },
 		}, [self](const QJsonObject &data) {
 			const auto item = ParseComment(data.value(u"postComment"_q).toObject());
@@ -219,7 +223,7 @@ public:
 				return;
 			}
 			self->busy.clear();
-			Counters::Invalidate(self->session.get(), self->seeId);
+			if (!self->giftTarget) Counters::Invalidate(self->session.get(), self->seeId);
 			self->draft.clear();
 			self->replying.reset();
 			self->loaded = true;
@@ -290,7 +294,7 @@ public:
 				self->fail({ Api::Error::Kind::Other, {} });
 				return;
 			}
-			Counters::Invalidate(self->session.get(), self->seeId);
+			if (!self->giftTarget) Counters::Invalidate(self->session.get(), self->seeId);
 			self->deleted.insert(item.id);
 			const auto erase = [&](std::vector<Comment> &list) {
 				list.erase(std::remove_if(list.begin(), list.end(), [&](const Comment &other) {
@@ -326,6 +330,7 @@ public:
 
 	base::weak_ptr<Main::Session> session;
 	QString seeId;
+	bool giftTarget = false;
 	QSet<QString> deleted;
 	int generation = 0;
 	std::vector<Comment> items;
@@ -795,6 +800,13 @@ std::shared_ptr<Info::ContentMemento> Widget::doCreateMemento() {
 	return result;
 }
 
+object_ptr<Ui::RpWidget> ForGift(QWidget *parent,
+		not_null<Window::SessionController*> controller,
+		const QString &giftId, Fn<void()> scrollToComposer) {
+	return object_ptr<Inner>(parent, controller,
+		std::make_shared<State>(&controller->session(), giftId), std::move(scrollToComposer));
+}
+
 std::shared_ptr<Info::Memento> Make(not_null<PeerData*> peer) {
 	return std::make_shared<Info::Memento>(
 		std::vector<std::shared_ptr<Info::ContentMemento>>(1, std::make_shared<Memento>(peer)));
@@ -807,7 +819,7 @@ not_null<Ui::SettingsButton*> AddButton(
 		Ui::MultiSlideTracker &tracker) {
 	const auto wrap = parent->add(object_ptr<Ui::SlideWrap<Ui::SettingsButton>>(parent,
 		object_ptr<Ui::SettingsButton>(parent, Counters::Label(peer, Counters::Kind::Comments), st::infoSharedMediaButton)));
-	wrap->toggleOn(EnabledValue());
+	wrap->toggleOn(EnabledValue(Feature::Comments));
 	tracker.track(wrap);
 	const auto button = wrap->entity();
 	button->addClickHandler([=] {

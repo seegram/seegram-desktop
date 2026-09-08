@@ -17,6 +17,7 @@ class MultiSlideTracker;
 
 namespace Window {
 class SessionNavigation;
+class SessionController;
 } // namespace Window
 
 namespace Ui::Menu {
@@ -61,6 +62,10 @@ private:
 	Inner *_inner = nullptr;
 
 };
+
+[[nodiscard]] object_ptr<Ui::RpWidget> ForGift(QWidget *parent,
+	not_null<Window::SessionController*> controller,
+	const QString &giftId, Fn<void()> scrollToComposer);
 
 [[nodiscard]] std::shared_ptr<Info::Memento> Make(not_null<PeerData*> peer);
 not_null<Ui::SettingsButton*> AddButton(

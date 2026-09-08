@@ -25,6 +25,9 @@ struct CardData {
 	QString backdrop;
 	QString pattern;
 	int num = 0;
+	QString saleAmount;
+	QString saleCurrency;
+	QString saleMarket;
 
 	[[nodiscard]] bool unique() const {
 		return !model.isEmpty();
@@ -41,6 +44,8 @@ protected:
 private:
 	void paintPattern(QPainter &p, const QRect &inner);
 	void paintRibbon(QPainter &p, const QRect &inner);
+	void paintSale(QPainter &p, const QRect &inner);
+	bool showSale() const;
 
 	const CardData _data;
 	std::optional<Visuals::Backdrop> _backdrop;
@@ -48,6 +53,9 @@ private:
 	QImage _pattern;
 	QImage _patternTinted;
 	QImage _ribbon;
+	QString _salePrice;
+	QImage _saleLogo;
+	QImage _saleTon;
 
 };
 

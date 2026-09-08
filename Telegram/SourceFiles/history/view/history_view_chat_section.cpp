@@ -796,7 +796,7 @@ ChatWidget::ChatWidget(
 					cancelledSuggest = cancelSuggestPost();
 				}
 			}
-			if (action.options.scheduled) {
+			if (action.options.scheduled && !action.options.ghostScheduled) {
 				if (_topic) {
 					crl::on_main(this, [=, t = _topic] {
 						controller->showSection(

@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/settings_ghost.h"
 
 #include "fork/fork_lang.h"
+#include "fork/settings_rows.h"
 #include "fork/ghost_mode.h"
 #include "settings/settings_common_session.h"
 #include "ui/rp_widget.h"
@@ -31,25 +32,30 @@ using Lang::Key;
 void AddSwitch(
 		not_null<Ui::VerticalLayout*> container,
 		Key text,
-		bool Settings::*field) {
-	const auto button = container->add(object_ptr<Ui::SettingsButton>(
-		container,
-		Lang::Value(text),
-		st::settingsButtonNoIcon));
-
-	// Driven by the stored value rather than by the click, so that this
-	// switch and the one in the side menu cannot disagree while both exist.
-	button->toggleOn(Value() | rpl::map([=](const Settings &settings) {
+		bool Settings::*field,
+		std::optional<Key> description = std::nullopt) {
+	const auto value = Value() | rpl::map([=](const Settings &settings) {
 		return settings.*field;
-	}));
-	button->toggledChanges(
-	) | rpl::filter([=](bool toggled) {
-		return (toggled != Current().*field);
-	}) | rpl::on_next([=](bool toggled) {
-		auto settings = Current();
-		settings.*field = toggled;
-		Set(settings);
-	}, button->lifetime());
+	});
+	const auto bind = [=](auto button) {
+		button->toggledChanges(
+		) | rpl::filter([=](bool toggled) {
+			return (toggled != Current().*field);
+		}) | rpl::on_next([=](bool toggled) {
+			auto settings = Current();
+			settings.*field = toggled;
+			Set(settings);
+		}, button->lifetime());
+	};
+	if (description) {
+		bind(SettingsRows::AddToggle(container, Lang::Value(text),
+			Lang::Value(*description), rpl::duplicate(value)));
+	} else {
+		const auto button = container->add(object_ptr<Ui::SettingsButton>(
+			container, Lang::Value(text), st::settingsButtonNoIcon));
+		button->toggleOn(rpl::duplicate(value));
+		bind(button);
+	}
 }
 
 void BuildContent(not_null<Ui::VerticalLayout*> container) {
@@ -70,8 +76,11 @@ void BuildContent(not_null<Ui::VerticalLayout*> container) {
 		Key::DontSendUploadProgress,
 		&Settings::blockUploadProgress);
 
+	AddSwitch(container, Key::DontSendStoryViews, &Settings::blockStoryViews);
+	SettingsRows::AddDescription(container, Lang::Value(Key::GhostAbout));
 	Ui::AddSkip(container);
-	Ui::AddDividerText(container, Lang::Value(Key::GhostAbout));
+	AddSwitch(container, Key::UseScheduledMessages, &Settings::useScheduledMessages, Key::ScheduledMessagesAbout);
+	AddSwitch(container, Key::MuteScheduledNotifications, &Settings::muteScheduledNotifications, Key::MuteScheduledNotificationsAbout);
 }
 
 class GhostSection final : public ::Settings::Section<GhostSection> {

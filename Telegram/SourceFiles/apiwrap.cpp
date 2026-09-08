@@ -7,6 +7,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "apiwrap.h"
 
+#include "fork/scheduled_preview.h"
+
+#include "fork/ghost_mode.h"
+
+#include "fork/spy_mode.h"
+
 #include "api/api_authorizations.h"
 #include "api/api_attached_stickers.h"
 #include "api/api_blocked_peers.h"
@@ -1442,7 +1448,8 @@ void ApiWrap::markContentsRead(
 		QVector<MTPint>>();
 	markedIds.reserve(items.size());
 	for (const auto &item : items) {
-		if (!item->markContentsRead(true) || !item->isRegular()) {
+		if (Fork::Spy::PreviewSelfDestructMedia(item)
+			|| !item->markContentsRead(true) || !item->isRegular()) {
 			continue;
 		}
 		if (const auto channel = item->history()->peer->asChannel()) {
@@ -1467,6 +1474,9 @@ void ApiWrap::markContentsRead(
 }
 
 void ApiWrap::markContentsRead(not_null<HistoryItem*> item) {
+	if (Fork::Spy::PreviewSelfDestructMedia(item)) {
+		return;
+	}
 	if (!item->markContentsRead(true) || !item->isRegular()) {
 		return;
 	}
@@ -3895,6 +3905,7 @@ void ApiWrap::forwardMessages(
 		Data::ResolvedForwardDraft &&draft,
 		SendAction action,
 		FnMut<void()> &&successCallback) {
+	Fork::Ghost::ApplyScheduling(action);
 	Expects(!draft.items.empty());
 
 	auto &histories = _session->data().histories();
@@ -4075,6 +4086,7 @@ void ApiWrap::forwardMessages(
 			uint64(0),
 			std::move(buildMessage),
 			[=](const MTPUpdates &result, const MTP::Response &) {
+				Fork::ScheduledPreview::TrackResult(history, result, action.options);
 				if (!scheduled) {
 					_session->api().updates().checkForSentToScheduled(
 						result);
@@ -4135,6 +4147,7 @@ void ApiWrap::forwardMessages(
 					// forwarded messages don't have effects
 					//.effectId = action.options.effectId,
 				}, item);
+				Fork::ScheduledPreview::Track(history->owner().message(newId), action.options);
 				_session->data().registerMessageRandomId(randomId, newId);
 				if (!localIds) {
 					localIds = std::make_shared<base::flat_map<uint64, FullMsgId>>();
@@ -4198,8 +4211,10 @@ void ApiWrap::sendSharedContact(
 		const QString &firstName,
 		const QString &lastName,
 		UserId userId,
-		const SendAction &action,
+		const SendAction &originalAction,
 		Fn<void(bool)> done) {
+	auto action = originalAction;
+	Fork::Ghost::ApplyScheduling(action);
 	sendAction(action);
 
 	const auto history = action.history;
@@ -4236,6 +4251,7 @@ void ApiWrap::sendSharedContact(
 		MTP_string(lastName),
 		MTP_string(), // vcard
 		MTP_long(userId.bare)));
+	Fork::ScheduledPreview::Track(history->owner().message(newId), action.options);
 
 	const auto media = MTP_inputMediaContact(
 		MTP_string(phone),
@@ -4257,7 +4273,9 @@ void ApiWrap::sendVoiceMessage(
 		VoiceWaveform waveform,
 		crl::time duration,
 		bool video,
-		const SendAction &action) {
+		const SendAction &originalAction) {
+	auto action = originalAction;
+	Fork::Ghost::ApplyScheduling(action);
 	const auto caption = TextWithTags();
 	const auto to = FileLoadTaskOptions(action);
 	_fileLoader->addTask(
@@ -4335,6 +4353,9 @@ void ApiWrap::sendFiles(
 		SendMediaType type,
 		std::shared_ptr<SendingAlbum> album,
 		SendAction action) {
+	if (!ranges::any_of(list.files, &Ui::PreparedFile::ttlSeconds)) {
+		Fork::Ghost::ApplyScheduling(action);
+	}
 	const auto &ephemeral = _session->ephemeralMessages();
 	if (album && !ephemeral.isEphemeralBotReply(action.replyTo.messageId)) {
 		const auto peer = action.history->peer;
@@ -4421,7 +4442,9 @@ void ApiWrap::sendFiles(
 void ApiWrap::sendFile(
 		const QByteArray &fileContent,
 		SendMediaType type,
-		const SendAction &action) {
+		const SendAction &originalAction) {
+	auto action = originalAction;
+	Fork::Ghost::ApplyScheduling(action);
 	const auto to = FileLoadTaskOptions(action);
 	auto caption = TextWithTags();
 	const auto spoiler = false;
@@ -4503,6 +4526,7 @@ void ApiWrap::sendRichMessage(
 		std::shared_ptr<const Iv::RichPage> page,
 		const MTPInputRichMessage &richMessage,
 		SendAction action) {
+	Fork::Ghost::ApplyScheduling(action);
 	Expects(page != nullptr);
 
 	const auto history = action.history;
@@ -4548,7 +4572,9 @@ void ApiWrap::sendRichMessage(
 		.effectId = action.options.effectId,
 		.suggest = HistoryMessageSuggestInfo(action.options),
 	}, TextWithEntities(), MTP_messageMediaEmpty());
+	Fork::ScheduledPreview::Track(history->owner().message(newId), action.options);
 	item->applyLocalRichPage(std::move(page));
+	Fork::ScheduledPreview::Refresh(item);
 
 	sendRichMessage(item, richMessage, action);
 
@@ -4758,6 +4784,7 @@ void ApiWrap::sendRichMessage(
 void ApiWrap::sendMessage(
 		MessageToSend &&message,
 		std::optional<MsgId> localMessageId) {
+	Fork::Ghost::ApplyScheduling(message.action);
 	const auto history = message.action.history;
 	const auto peer = history->peer;
 	const auto &textWithTags = message.textWithTags;
@@ -4946,6 +4973,7 @@ void ApiWrap::sendMessage(
 			.effectId = action.options.effectId,
 			.suggest = HistoryMessageSuggestInfo(action.options),
 		}, sending, media);
+		Fork::ScheduledPreview::Track(history->owner().message(newId), action.options);
 		const auto done = [=](
 				const MTPUpdates &result,
 				const MTP::Response &response) {
@@ -5116,6 +5144,7 @@ void ApiWrap::sendInlineResult(
 		SendAction action,
 		std::optional<MsgId> localMessageId,
 		Fn<void(bool)> done) {
+	Fork::Ghost::ApplyScheduling(action);
 	StripEphemeralReply(_session, action.replyTo);
 	sendAction(action);
 
@@ -5183,6 +5212,7 @@ void ApiWrap::sendInlineResult(
 		.postAuthor = NewMessagePostAuthor(action),
 	});
 
+	Fork::ScheduledPreview::Track(history->owner().message(newId), action.options);
 	history->clearCloudDraft(topicRootId, monoforumPeerId);
 	history->startSavingCloudDraft(topicRootId, monoforumPeerId);
 
@@ -5345,6 +5375,7 @@ void ApiWrap::sendMediaWithRandomId(
 		Api::SendOptions options,
 		uint64 randomId,
 		Fn<void(bool)> done) {
+	Fork::Ghost::RefreshScheduling(options);
 	if (options.welcomeTemplate) {
 		const auto owned = _session->welcomeMessages().owns(item);
 		if (owned) {
@@ -5593,6 +5624,7 @@ void ApiWrap::sendAlbumIfReady(not_null<SendingAlbum*> album) {
 		_sendingAlbums.remove(groupId);
 		return;
 	}
+	Fork::Ghost::RefreshScheduling(album->options);
 	const auto replyTo = sample->replyTo();
 	if (const auto target = _session->data().message(replyTo.messageId)
 		; target && target->isEphemeral()) {

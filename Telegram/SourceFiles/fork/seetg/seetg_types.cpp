@@ -20,7 +20,7 @@ const char kQueryProfileNfts[] =
 	"searchGifts(filter: $f, first: $n, after: $a, sortBy: $by, "
 	"sortDir: $dir) { totalCount pageInfo { endCursor hasNextPage } "
 	"items { id giftId title slug num model { name } backdrop { name } "
-	"pattern { name } onSale saleInfo { amount currency } minted burned "
+	"pattern { name } onSale saleInfo { amount currency market } minted burned "
 	"transferredAt comment "
 	"sender { seeId telegramId telegramType name username } } } }";
 
@@ -102,6 +102,7 @@ Nft ParseNft(const QJsonObject &object) {
 		const auto first = sale.first().toObject();
 		result.saleAmount = first.value(u"amount"_q).toString();
 		result.saleCurrency = first.value(u"currency"_q).toString();
+		result.saleMarket = first.value(u"market"_q).toString();
 	}
 	result.minted = object.value(u"minted"_q).toBool();
 	result.burned = object.value(u"burned"_q).toBool();

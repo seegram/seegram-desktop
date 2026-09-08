@@ -11,7 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 // Ghost mode: stop the client telling the server things it does not have to.
 //
-// Four separate switches rather than one, because they are four different
+// Five separate switches rather than one, because they are five different
 // trades. Not sending read receipts is invisible to the other side; not
 // sending an online status changes what everyone sees about you; suppressing
 // typing notifications sits between the two. Bundling them would force a
@@ -27,6 +27,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 // hand-written binary serializer, so every upstream field addition would
 // collide. See fork/RULES.md.
 
+namespace Api { struct SendAction; struct SendOptions; }
+class History;
+
 namespace Fork::Ghost {
 
 struct Settings {
@@ -34,12 +37,16 @@ struct Settings {
 	bool blockTyping = false;
 	bool blockOnlineStatus = false;
 	bool blockUploadProgress = false;
+	bool blockStoryViews = false;
+	bool useScheduledMessages = false;
+	bool muteScheduledNotifications = true;
 
 	[[nodiscard]] bool anyEnabled() const {
 		return blockReadReceipts
 			|| blockTyping
 			|| blockOnlineStatus
-			|| blockUploadProgress;
+			|| blockUploadProgress
+			|| blockStoryViews;
 	}
 
 	// What the single switch in the side menu means: everything, or nothing.
@@ -49,7 +56,16 @@ struct Settings {
 		return blockReadReceipts
 			&& blockTyping
 			&& blockOnlineStatus
-			&& blockUploadProgress;
+			&& blockUploadProgress
+			&& blockStoryViews;
+	}
+
+	void setEnabled(bool enabled) {
+		blockReadReceipts = enabled;
+		blockTyping = enabled;
+		blockOnlineStatus = enabled;
+		blockUploadProgress = enabled;
+		blockStoryViews = enabled;
 	}
 
 	friend inline bool operator==(
@@ -73,7 +89,7 @@ void Start();
 [[nodiscard]] rpl::producer<Settings> Changes();
 [[nodiscard]] rpl::producer<Settings> Value();
 
-// The master switch: all four at once. Reads back as on only while all four
+// The master switch: all five privacy switches at once. Reads back as on only while all five
 // are, so flipping one part off in settings visibly turns ghost mode off.
 [[nodiscard]] bool Enabled();
 void SetEnabled(bool enabled);
@@ -83,5 +99,8 @@ void SetEnabled(bool enabled);
 [[nodiscard]] bool BlocksTyping();
 [[nodiscard]] bool BlocksOnlineStatus();
 [[nodiscard]] bool BlocksUploadProgress();
+[[nodiscard]] bool BlocksStoryViews();
+void ApplyScheduling(Api::SendAction &action);
+void RefreshScheduling(Api::SendOptions &options);
 
 } // namespace Fork::Ghost

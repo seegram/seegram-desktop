@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "info/peer_gifts/info_peer_gifts_widget.h"
 
 #include "fork/seetg/seetg_gifts.h"
+#include "fork/seetg/seetg_market_previews.h"
 
 #include "api/api_credits.h"
 #include "api/api_hash.h"
@@ -262,6 +263,7 @@ private:
 
 	rpl::variable<Descriptor> _descriptor;
 	Delegate _delegate;
+	Fork::SeeTg::MarketPreviews::Bind _marketPreviews;
 	std::unique_ptr<Ui::SubTabs> _collectionsTabs;
 	std::unique_ptr<Ui::RpWidget> _about;
 	rpl::event_stream<> _scrollToTop;
@@ -359,6 +361,7 @@ InnerWidget::InnerWidget(
 })
 , _api(&_peer->session().mtp())
 , _scrollAnimation([=] { updateScrollCallback(); }) {
+	_marketPreviews = Fork::SeeTg::MarketPreviews::Create(this, &_window->session());
 	_singleMin = _delegate.buttonSize();
 
 	if (peer->canManageGifts()) {
@@ -881,6 +884,8 @@ void InnerWidget::validateButtons() {
 				anim::type::instant);
 		}
 		view.button->setDescriptor(descriptor, _mode);
+		_marketPreviews(view.button.get(), (gift.info.unique && !gift.info.unique->starsForResale)
+			? gift.info.unique->slug : QString());
 		return true;
 	};
 	for (auto j = fromRow; j != tillRow; ++j) {
@@ -941,6 +946,8 @@ void InnerWidget::validateButtons() {
 				_draggedView->manageId = entry.gift.manageId;
 				_draggedView->giftId = entry.gift.info.id;
 				_draggedView->button->setDescriptor(entry.descriptor, _mode);
+				_marketPreviews(_draggedView->button.get(), (entry.gift.info.unique && !entry.gift.info.unique->starsForResale)
+					? entry.gift.info.unique->slug : QString());
 				if (_addingToCollectionId) {
 					_draggedView->button->toggleSelected(
 						_inCollection.contains(entry.gift.manageId),

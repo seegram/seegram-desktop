@@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/about_seegram.h"
 #include "fork/fork_lang.h"
 #include "fork/settings_ghost.h"
+#include "fork/gift_batch.h"
 #include "fork/settings_marks.h"
 #include "fork/settings_seetg.h"
 #include "fork/settings_spy.h"
@@ -149,22 +150,7 @@ void BuildContent(
 		not_null<Window::SessionController*> controller,
 		Fn<void(::Settings::Type)> showOther) {
 	Ui::AddSkip(container);
-	Ui::AddSkip(container);
-	container->add(
-		object_ptr<Ui::FlatLabel>(container, Text(kTitle), st::boxTitle),
-		style::al_top);
-	container->add(
-		object_ptr<Ui::FlatLabel>(
-			container,
-			VersionText(),
-			st::boxDividerLabel),
-		style::al_top);
-	Ui::AddSkip(container);
-	Ui::AddSkip(container);
-	Ui::AddDividerText(container, Lang::Value(Key::SeeGramAbout));
-
-	Ui::AddSkip(container);
-	Ui::AddSubsectionTitle(container, Lang::Value(Key::Categories));
+	Ui::AddSubsectionTitle(container, Lang::Value(Key::SettingsPrivacy));
 	AddCategory(
 		container,
 		Key::GhostMode,
@@ -177,6 +163,10 @@ void BuildContent(
 		st::menuIconGroupLog,
 		Spy::SectionId(),
 		showOther);
+	Ui::AddSkip(container);
+	Ui::AddDivider(container);
+	Ui::AddSkip(container);
+	Ui::AddSubsectionTitle(container, Lang::Value(Key::SettingsFeatures));
 	AddCategory(
 		container,
 		Key::Messages,
@@ -189,9 +179,14 @@ void BuildContent(
 		st::menuIconLinks,
 		SeeTg::SectionId(),
 		showOther);
-	AddCategory(container, Key::UpdatesTitle, st::menuIconDownload, Updates::SectionId(), showOther);
-	AddLanguage(container, controller);
+	AddCategory(container, Key::GiftSettings, st::menuIconGiftPremium, GiftBatch::SectionId(), showOther);
 	AddCategory(container, Key::StickersTitle, st::menuIconStickers, Stickers::SectionId(), showOther);
+	Ui::AddSkip(container);
+	Ui::AddDivider(container);
+	Ui::AddSkip(container);
+	Ui::AddSubsectionTitle(container, Lang::Value(Key::SettingsApplication));
+	AddLanguage(container, controller);
+	AddCategory(container, Key::UpdatesTitle, st::menuIconDownload, Updates::SectionId(), showOther);
 	Ui::AddSkip(container);
 	Ui::AddDivider(container);
 
@@ -205,6 +200,9 @@ void BuildContent(
 		st::menuIconLinks,
 		kSourceUrl);
 	Ui::AddSkip(container);
+	container->add(object_ptr<Ui::FlatLabel>(container,
+		u"SeeGram "_q + VersionText(), st::boxDividerLabel),
+		st::defaultBoxDividerLabelPadding);
 }
 
 class MainSection final : public ::Settings::Section<MainSection> {

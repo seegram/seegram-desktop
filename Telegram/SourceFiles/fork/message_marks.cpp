@@ -6,6 +6,9 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/message_marks.h"
+#include "fork/message_time_format.h"
+#include "ui/text/format_values.h"
+#include <QtCore/QDateTime>
 
 #include "core/application.h"
 #include "lang/lang_keys.h"
@@ -55,6 +58,7 @@ void Start() {
 		const auto value = object.value(QLatin1String(key));
 		return value.isBool() ? value.toBool() : fallback;
 	};
+	GlobalSettings.showSeconds = readBool("showSeconds", false);
 	GlobalSettings.deletedMark = readString("deletedMark");
 	GlobalSettings.editedMark = readString("editedMark");
 	GlobalSettings.translucentDeleted = readBool(
@@ -70,6 +74,7 @@ void Set(const Settings &settings) {
 	GlobalChanges.fire_copy(settings);
 
 	auto object = QJsonObject();
+	object.insert(u"showSeconds"_q, settings.showSeconds);
 	object.insert(u"deletedMark"_q, settings.deletedMark);
 	object.insert(u"editedMark"_q, settings.editedMark);
 	object.insert(u"translucentDeleted"_q, settings.translucentDeleted);
@@ -109,6 +114,19 @@ QString DefaultDeletedMark() {
 
 QString DefaultEditedMark() {
 	return tr::lng_edited(tr::now);
+}
+
+QString FormatTime(QTime time) {
+	return FormatMessageTime(time, QLocale(), GlobalSettings.showSeconds);
+}
+
+QString FormatSavedFrom(QDateTime date) {
+	auto text = Ui::FormatDateTimeSavedFrom(date);
+	if (GlobalSettings.showSeconds) {
+		text.replace(QLocale().toString(date.time(), QLocale::ShortFormat),
+			FormatTime(date.time()));
+	}
+	return text;
 }
 
 bool TranslucentDeleted() {

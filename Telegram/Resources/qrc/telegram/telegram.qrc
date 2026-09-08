@@ -89,4 +89,11 @@
     <file alias="default_shortcuts-custom.json">../../default_shortcuts-custom.json</file>
     <file alias="org.telegram.desktop.desktop">../../../../lib/xdg/org.telegram.desktop.desktop</file>
   </qresource>
+  <qresource prefix="/fork/gifts">
+    <file alias="ton.svg">../../fork/gifts/ton.svg</file>
+  </qresource>
+  <qresource prefix="/fork/reactions">
+    <file alias="heart.png">../../fork/reactions/heart.png</file>
+    <file alias="poop.png">../../fork/reactions/poop.png</file>
+  </qresource>
 </RCC>

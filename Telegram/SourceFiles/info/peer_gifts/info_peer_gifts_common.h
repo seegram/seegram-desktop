@@ -87,6 +87,7 @@ struct GiftTypeStars {
 	bool hidden : 1 = false;
 	bool resale : 1 = false;
 	bool mine : 1 = false;
+	bool hiddenPurchase : 1 = false;
 
 	[[nodiscard]] friend inline bool operator==(
 		const GiftTypeStars&,
@@ -186,6 +187,7 @@ public:
 
 	using Mode = GiftButtonMode;
 	void setDescriptor(const GiftDescriptor &descriptor, Mode mode);
+	void setExternalSale(const QString &price, const QImage &logo);
 	void setGeometry(QRect inner, QMargins extend);
 
 	void toggleSelected(
@@ -249,6 +251,9 @@ private:
 	std::optional<Ui::Premium::ColoredMiniStars> _stars;
 	Ui::Animations::Simple _selectedAnimation;
 	std::unique_ptr<Overview::Layout::Checkbox> _check;
+	QString _externalSale;
+	QImage _externalSaleLogo;
+	QImage _externalSaleTon;
 	int _resalePrice = 0;
 	GiftButtonMode _mode = GiftButtonMode::Full;
 	GiftSelectionMode _selectionMode = GiftSelectionMode::Border;
