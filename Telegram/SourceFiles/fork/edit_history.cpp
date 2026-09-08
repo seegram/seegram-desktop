@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/edit_history.h"
+#include "fork/disguise.h"
 
 #include "fork/message_store.h"
 #include "fork/spy_mode.h"
@@ -55,7 +56,7 @@ void Record(not_null<HistoryItem*> item, const MTPMessage &data) {
 }
 
 bool HasRevisions(not_null<HistoryItem*> item) {
-	return item->isRegular()
+	return Disguise::FeaturesEnabled() && item->isRegular()
 		&& (Store::For(&item->history()->session()).edits(item->fullId())
 			!= nullptr);
 }

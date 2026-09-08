@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "boxes/about_box.h"
+#include "fork/disguise.h"
 #include "fork/about_seegram.h"
 
 #include "base/platform/base_platform_info.h"
@@ -66,8 +67,8 @@ rpl::producer<TextWithEntities> Text3() {
 } // namespace
 
 void AboutBox(not_null<Ui::GenericBox*> box) {
-	return Fork::About::Fill(box);
-	box->setTitle(AppName.utf16());
+	if (Fork::Disguise::FeaturesEnabled()) return Fork::About::Fill(box);
+	box->setTitle(Fork::Disguise::FullName());
 
 	auto layout = box->verticalLayout();
 

@@ -1,0 +1,20 @@
+using "settings/settings.style";
+using "window/window.style";
+
+accountProfileBoxWidth: 420px;
+accountProfileRowHeight: 64px;
+accountProfileRowPadding: margins(22px, 11px, 22px, 11px);
+accountProfileTextLeft: 76px;
+accountProfileTextGap: 3px;
+accountProfileRightSkip: 50px;
+accountProfileUserpic: UserpicButton(chatSwitchUserpicSublist) {
+}
+accountProfileTitle: FlatLabel(defaultFlatLabel) {
+	minWidth: 1px;
+	style: TextStyle(defaultTextStyle) { font: font(14px); }
+}
+accountProfileSubtitle: FlatLabel(settingsExperimentalAbout) {
+	minWidth: 1px;
+}
+accountProfileFieldGap: 12px;
+accountProfileSectionGap: 20px;

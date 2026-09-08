@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/ghost_mode.h"
+#include "fork/disguise.h"
 
 #include "core/application.h"
 #include "core/core_settings.h"
@@ -39,7 +40,8 @@ rpl::event_stream<Settings> GlobalChanges;
 } // namespace
 
 const Settings &Current() {
-	return GlobalSettings;
+	static const auto clean = Settings{ .muteScheduledNotifications = false };
+	return Disguise::Clean() ? clean : GlobalSettings;
 }
 
 void Start() {
@@ -69,7 +71,7 @@ void Start() {
 }
 
 void Set(const Settings &settings) {
-	if (GlobalSettings == settings) {
+	if (Disguise::Clean() || GlobalSettings == settings) {
 		return;
 	}
 	GlobalSettings = settings;
@@ -98,15 +100,16 @@ void Set(const Settings &settings) {
 }
 
 rpl::producer<Settings> Changes() {
-	return GlobalChanges.events();
+	return rpl::merge(GlobalChanges.events() | rpl::to_empty,
+		Disguise::Changes()) | rpl::map([] { return Current(); });
 }
 
 rpl::producer<Settings> Value() {
-	return rpl::single(GlobalSettings) | rpl::then(Changes());
+	return rpl::single(Current()) | rpl::then(Changes());
 }
 
 bool Enabled() {
-	return GlobalSettings.allEnabled();
+	return Current().allEnabled();
 }
 
 void SetEnabled(bool enabled) {
@@ -116,26 +119,30 @@ void SetEnabled(bool enabled) {
 }
 
 bool BlocksReadReceipts() {
-	return GlobalSettings.blockReadReceipts;
+	return Current().blockReadReceipts;
 }
 
 bool BlocksTyping() {
-	return GlobalSettings.blockTyping;
+	return Current().blockTyping;
 }
 
 bool BlocksOnlineStatus() {
-	return GlobalSettings.blockOnlineStatus;
+	return Current().blockOnlineStatus;
 }
 
 bool BlocksUploadProgress() {
-	return GlobalSettings.blockUploadProgress;
+	return Current().blockUploadProgress;
 }
 
 bool BlocksStoryViews() {
-	return GlobalSettings.blockStoryViews;
+	return Current().blockStoryViews;
 }
 
 void RefreshScheduling(Api::SendOptions &options) {
+	if (Disguise::Clean() && options.ghostScheduled) {
+		options.ghostScheduled = false;
+		options.scheduled = 0;
+	}
 	if (options.ghostScheduled) {
 		const auto delay = Core::App().settings().proxy().isEnabled() ? 15 : 12;
 		options.scheduled = base::unixtime::now() + delay;

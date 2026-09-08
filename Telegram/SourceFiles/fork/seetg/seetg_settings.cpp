@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/seetg/seetg_settings.h"
+#include "fork/disguise.h"
 
 #include "core/application.h"
 
@@ -31,7 +32,8 @@ rpl::event_stream<Settings> GlobalChanges;
 } // namespace
 
 const Settings &Current() {
-	return GlobalSettings;
+	static const auto clean = Settings{ .enabled = false, .usernameFallback = false, .resolveAutomatically = false };
+	return Disguise::Clean() ? clean : GlobalSettings;
 }
 
 void Start() {
@@ -72,7 +74,7 @@ void Start() {
 }
 
 void Set(const Settings &settings) {
-	if (GlobalSettings == settings) {
+	if (Disguise::Clean() || GlobalSettings == settings) {
 		return;
 	}
 	GlobalSettings = settings;
@@ -107,11 +109,12 @@ void Set(const Settings &settings) {
 }
 
 rpl::producer<Settings> Changes() {
-	return GlobalChanges.events();
+	return rpl::merge(GlobalChanges.events() | rpl::to_empty,
+		Disguise::Changes()) | rpl::map([] { return Current(); });
 }
 
 rpl::producer<Settings> Value() {
-	return rpl::single(GlobalSettings) | rpl::then(Changes());
+	return rpl::single(Current()) | rpl::then(Changes());
 }
 
 bool Enabled(Feature feature) {
@@ -125,7 +128,7 @@ rpl::producer<bool> EnabledValue(Feature feature) {
 }
 
 bool Enabled() {
-	return GlobalSettings.enabled;
+	return Current().enabled;
 }
 
 rpl::producer<bool> EnabledValue() {

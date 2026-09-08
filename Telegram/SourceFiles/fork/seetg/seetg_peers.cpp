@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/seetg/seetg_peers.h"
+#include "fork/disguise.h"
 
 #include "fork/fork_lang.h"
 #include "fork/seetg/seetg_api.h"
@@ -282,7 +283,7 @@ object_ptr<Ui::RpWidget> MakeUnknownSenderValue(
 		std::shared_ptr<ChatHelpers::Show> show,
 		PeerId id) {
 	const auto session = &show->session();
-	if (!Unknown(session, id)) {
+	if (Disguise::Clean() || !Unknown(session, id)) {
 		return { nullptr };
 	}
 	const auto bare = QString::number(id.value & PeerId::kChatTypeMask);

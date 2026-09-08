@@ -4,6 +4,7 @@ For license and copyright information see:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/scheduled_preview.h"
+#include "fork/disguise.h"
 #include "fork/ghost_notifications.h"
 
 #include "api/api_common.h"
@@ -68,7 +69,7 @@ void Open(not_null<Window::SessionController*> controller, FullMsgId id) {
 } // namespace
 
 bool Is(const HistoryItem *item) {
-	return item && Sources.contains(item);
+	return Disguise::FeaturesEnabled() && item && Sources.contains(item);
 }
 
 TimeId Deadline(not_null<const HistoryItem*> item) {

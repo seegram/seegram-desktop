@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/fork_lang.h"
+#include "fork/disguise.h"
 
 #include "core/application.h"
 #include "lang/lang_instance.h"
@@ -351,6 +352,18 @@ constexpr auto Keys = std::array{
 	"ProfileLock",
 	"ProfileMismatch",
 	"ProfileMainAbout",
+	"ProfileClean",
+	"ProfileCleanAbout",
+	"DisguiseTitle",
+	"DisguiseAbout",
+	"DisguiseName",
+	"DisguiseNameAbout",
+	"DisguiseIcon",
+	"DisguiseCleanAbout",
+	"DisguiseTray",
+	"DisguiseTrayFollow",
+	"ProfilePasswordHint",
+	"ProfileAllAccounts",
 };
 static_assert(std::size(Keys) == int(Key::Count));
 
@@ -405,7 +418,9 @@ QString Text(Key key) {
 
 	const auto name = QLatin1String(Keys[int(key)]);
 	const auto text = Dictionary(Resolved()).value(name).toString();
-	return text.isEmpty() ? Dictionary(Language::English).value(name).toString() : text;
+	auto result = text.isEmpty()
+		? Dictionary(Language::English).value(name).toString() : text;
+	return result.replace(u"SeeGram"_q, Disguise::Name());
 }
 
 rpl::producer<QString> Value(Key key) {
@@ -454,7 +469,8 @@ QString ResolvedId() {
 rpl::producer<> Changes() {
 	return rpl::merge(
 		GlobalChosenChanges.events() | rpl::to_empty,
-		::Lang::GetInstance().idChanges() | rpl::to_empty);
+		::Lang::GetInstance().idChanges() | rpl::to_empty,
+		Disguise::Changes());
 }
 
 QString Name(Language language) {

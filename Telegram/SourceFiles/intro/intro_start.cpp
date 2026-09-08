@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "intro/intro_start.h"
+#include "fork/disguise.h"
 
 #include "core/version.h"
 #include "lang/lang_keys.h"
@@ -25,7 +26,7 @@ StartWidget::StartWidget(
 	not_null<Data*> data)
 : Step(parent, account, data, true) {
 	setMouseTracking(true);
-	setTitleText(rpl::single(AppName.utf16()));
+	setTitleText(rpl::single(Fork::Disguise::FullName()));
 	setDescriptionText(tr::lng_intro_about());
 	show();
 }

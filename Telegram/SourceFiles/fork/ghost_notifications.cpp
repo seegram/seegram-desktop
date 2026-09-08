@@ -4,6 +4,7 @@ For license and copyright information see:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/ghost_notifications.h"
+#include "fork/disguise.h"
 #include "fork/ghost_mode.h"
 #include "base/unixtime.h"
 #include "core/application.h"
@@ -34,6 +35,7 @@ QString Key(PeerId peer, MsgId id) {
 	return QString::number(peer.value) + ':' + QString::number(id.bare);
 }
 void Save(not_null<Main::Session*> session, const State &state) {
+	if (Disguise::Clean()) return;
 	auto file = QSaveFile(Path(session));
 	if (file.open(QIODevice::WriteOnly)) {
 		file.write(QJsonDocument(QJsonObject{
@@ -88,6 +90,7 @@ void Forget(not_null<const HistoryItem*> item) {
 }
 void Apply(not_null<Main::Session*> session,
 		const MTPDupdateDeleteScheduledMessages &update) {
+	if (Disguise::Clean()) return;
 	auto &state = Get(session);
 	const auto peer = peerFromMTP(update.vpeer());
 	const auto &ids = update.vmessages().v;
@@ -116,6 +119,7 @@ void Apply(not_null<Main::Session*> session,
 	}
 }
 void Prepare(not_null<Main::Session*> session, const MTPVector<MTPUpdate> &updates) {
+	if (Disguise::Clean()) return;
 	for (const auto &update : updates.v) {
 		if (update.type() == mtpc_updateDeleteScheduledMessages) {
 			Apply(session, update.c_updateDeleteScheduledMessages());

@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "fork/account_profile_keys.h"
 #include "fork/account_profile_policy.h"
+#include "fork/disguise.h"
 
 namespace MTP {
 class Config;
@@ -137,6 +138,7 @@ public:
 		Fork::AccountProfiles::Indices accounts;
 		QByteArray salt;
 		QByteArray encryptedKey;
+		bool clean = false;
 	};
 	[[nodiscard]] bool tryUnlockPasscode(PasscodeDerivation derived);
 	[[nodiscard]] bool applyPendingProfile();
@@ -147,8 +149,12 @@ public:
 		const QByteArray &id,
 		const QString &name,
 		const Fork::AccountProfiles::Indices &accounts,
-		const QByteArray &passcode);
+		const QByteArray &passcode,
+		std::optional<bool> clean = std::nullopt);
 	[[nodiscard]] bool removeAccountProfile(const QByteArray &id);
+	[[nodiscard]] bool cleanProfile() const;
+	[[nodiscard]] Fork::Disguise::Settings disguiseSettings() const;
+	[[nodiscard]] bool setDisguiseSettings(const Fork::Disguise::Settings &settings);
 	[[nodiscard]] bool accountIndexReserved(int index) const;
 	[[nodiscard]] rpl::producer<> accountProfilesChanged() const;
 
@@ -220,6 +226,9 @@ private:
 		const QByteArray &passcode,
 		std::unique_ptr<Main::Account> account);
 	void generateLocalKey();
+	[[nodiscard]] bool readDisguise(QDataStream &stream);
+	void writeDisguise(QDataStream &stream, bool includeProfiles = true) const;
+	void applyDisguise() const;
 	void installOpenWrap(KeyData &data) const;
 	void dropOpenWrap(KeyData &data) const;
 	void installLegacyWrap(KeyData &data, const QByteArray &passcode) const;
@@ -270,6 +279,7 @@ private:
 	QByteArray _activeProfile;
 	std::optional<QByteArray> _pendingProfile;
 	rpl::event_stream<> _accountProfilesChanged;
+	Fork::Disguise::Settings _disguise;
 
 };
 

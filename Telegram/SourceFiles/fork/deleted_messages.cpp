@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/deleted_messages.h"
+#include "fork/disguise.h"
 
 #include "fork/message_marks.h"
 #include "fork/message_store.h"
@@ -113,7 +114,7 @@ void Mark(not_null<HistoryItem*> item) {
 } // namespace
 
 bool Is(not_null<const HistoryItem*> item) {
-	return Marked.contains(item.get());
+	return Disguise::FeaturesEnabled() && Marked.contains(item.get());
 }
 
 bool Intercept(not_null<HistoryItem*> item) {
