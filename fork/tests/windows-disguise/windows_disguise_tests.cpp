@@ -6,6 +6,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <gsl/util>
+#include <propsys.h>
 #include <propkey.h>
 #include <propvarutil.h>
 #include <shellapi.h>
