@@ -7,6 +7,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/history_item.h"
 
+#include "fork/scheduled_preview.h"
+#include "fork/expired_media.h"
+#include "fork/ghost_notifications.h"
+
+#include "fork/spy_mode.h"
+
 #include "fork/deleted_messages.h"
 #include "api/api_premium.h"
 #include "api/api_sensitive_content.h"
@@ -439,8 +445,7 @@ std::unique_ptr<Data::Media> HistoryItem::CreateMedia(
 				item->history()->owner().processPhoto(photo),
 				Args{
 					.ttlSeconds = media.vttl_seconds().value_or_empty(),
-					.spoiler = (media.is_spoiler()
-						|| media.vttl_seconds().has_value()),
+					.spoiler = media.is_spoiler(),
 				});
 		}, [](const MTPDphotoEmpty &) -> Result {
 			return nullptr;
@@ -466,9 +471,7 @@ std::unique_ptr<Data::Media> HistoryItem::CreateMedia(
 				.videoTimestamp = media.vvideo_timestamp().value_or_empty(),
 				.hasQualitiesList = list && !list->v.isEmpty(),
 				.skipPremiumEffect = media.is_nopremium(),
-				.spoiler = (media.is_spoiler()
-					|| (media.vttl_seconds().has_value()
-						&& media.is_video())),
+				.spoiler = media.is_spoiler(),
 			});
 		}, [](const MTPDdocumentEmpty &) -> Result {
 			return nullptr;
@@ -618,6 +621,10 @@ HistoryItem::HistoryItem(
 			|| (checked == MediaCheckResult::Good
 				&& media
 				&& ShowTtlMediaAsExpired(this, *media))) {
+		if (checked == MediaCheckResult::Good) {
+			const auto available = CreateMedia(this, *media);
+			Fork::ExpiredMedia::Capture(this, available.get());
+		}
 		createServiceFromMtp(data);
 		setReactions(data.vreactions());
 		applyTTL(data);
@@ -764,10 +771,16 @@ HistoryItem::HistoryItem(
 	const auto dropForwardInfo = ignoreForwardFrom
 		|| original->computeDropForwardedInfo();
 	const auto topicRootId = fields.replyTo.topicRootId;
-	config.reply.messageId = config.reply.topMessageId = topicRootId;
+	config.reply.messageId = (fields.flags & MessageFlag::FakeHistoryItem)
+		? fields.replyTo.messageId.msg
+		: topicRootId;
+	config.reply.topMessageId = topicRootId;
 	config.reply.topicPost = (topicRootId != 0) ? 1 : 0;
 	config.reply.monoforumPeerId = fields.replyTo.monoforumPeerId;
 	if (const auto originalReply = original->Get<HistoryMessageReply>()) {
+		if (fields.flags & MessageFlag::FakeHistoryItem) {
+			config.reply = originalReply->fields().clone(this);
+		}
 		if (originalReply->external()) {
 			config.reply = originalReply->fields().clone(this);
 			if (!config.reply.externalPeerId) {
@@ -1057,6 +1070,8 @@ HistoryItem::HistoryItem(
 }
 
 HistoryItem::~HistoryItem() {
+	Fork::ExpiredMedia::Forget(this);
+	Fork::ScheduledPreview::Forget(this);
 	Fork::Deleted::Forget(this);
 	_media = nullptr;
 	clearSavedMedia();
@@ -1554,6 +1569,7 @@ void HistoryItem::setCommentsItemId(FullMsgId id) {
 }
 
 void HistoryItem::setServiceText(PreparedServiceText &&prepared) {
+	Fork::ExpiredMedia::Decorate(this, prepared);
 	AddComponents(HistoryServiceData::Bit());
 	_flags &= ~MessageFlag::HasTextLinks;
 	const auto data = Get<HistoryServiceData>();
@@ -1918,6 +1934,9 @@ bool HistoryItem::isIncomingUnreadMedia() const {
 }
 
 bool HistoryItem::isTtlCoveredMedia() const {
+	if (Fork::Spy::PreviewSelfDestructMedia(this)) {
+		return false;
+	}
 	const auto media = _media.get();
 	if (!media || !media->ttlSeconds()) {
 		return false;
@@ -2352,6 +2371,9 @@ bool HistoryItem::canLookupMessageAuthor() const {
 }
 
 bool HistoryItem::skipNotification() const {
+	if (Fork::GhostNotifications::Suppress(this)) {
+		return true;
+	}
 	if (isSilent() && (_flags & MessageFlag::IsContactSignUp)) {
 		return true;
 	} else if (const auto forwarded = Get<HistoryMessageForwarded>()) {
@@ -3119,16 +3141,19 @@ void HistoryItem::clearMediaAsExpired() {
 	if (!media || !media->ttlSeconds()) {
 		return;
 	}
+	const auto retained = Fork::ExpiredMedia::Capture(this, media);
 	unarmMediaDestroy();
 	auto &owner = _history->owner();
 	const auto wasServiceMessage = _isServiceMessage;
 	if (const auto document = media->document()) {
-		document->cancel();
-		if (const auto active = document->activeMediaView()) {
-			active->setBytes(QByteArray());
+		if (!retained) {
+			document->cancel();
+			if (const auto active = document->activeMediaView()) {
+				active->setBytes(QByteArray());
+			}
+			owner.cache().remove(document->cacheKey());
+			owner.cache().remove(document->goodThumbnailCacheKey());
 		}
-		owner.cache().remove(document->cacheKey());
-		owner.cache().remove(document->goodThumbnailCacheKey());
 
 		applyEditionToHistoryCleared();
 		_isServiceMessage = wasServiceMessage;
@@ -3144,7 +3169,9 @@ void HistoryItem::clearMediaAsExpired() {
 	} else if (const auto photo = media->photo()) {
 		applyEditionToHistoryCleared();
 		_isServiceMessage = wasServiceMessage;
-		photo->clearLocalCache();
+		if (!retained) {
+			photo->clearLocalCache();
+		}
 		updateServiceText({
 			tr::lng_ttl_photo_expired(tr::now, tr::marked)
 		});
@@ -3544,6 +3571,9 @@ bool HistoryItem::allowsMediaDownloadControls() const {
 }
 
 bool HistoryItem::canDelete() const {
+	if (Fork::ScheduledPreview::Is(this)) {
+		return false;
+	}
 	if (isSponsored()) {
 		return false;
 	} else if (isEphemeral()) {
@@ -4914,6 +4944,9 @@ void HistoryItem::highlightProcessDone() {
 }
 
 bool HistoryItem::showNotification() const {
+	if (Fork::GhostNotifications::Suppress(this)) {
+		return false;
+	}
 	const auto channel = _history->peer->asChannel();
 	if (channel && !channel->amIn()) {
 		return false;

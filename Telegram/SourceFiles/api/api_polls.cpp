@@ -7,6 +7,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "api/api_polls.h"
 
+#include "fork/ghost_mode.h"
+#include "fork/scheduled_preview.h"
+
 #include "api/api_common.h"
 #include "api/api_sending.h"
 #include "api/api_statistics_data_deserialize.h"
@@ -223,6 +226,7 @@ void Polls::create(
 		SendAction action,
 		Fn<void()> done,
 		Fn<void(bool fileReferenceExpired)> fail) {
+	Fork::Ghost::ApplyScheduling(action);
 	auto starsPaid = 0;
 	auto sendFlags = PrepareSendMedia(_session, action, starsPaid);
 	const auto history = action.history;
@@ -263,6 +267,7 @@ void Polls::create(
 			MTP_long(starsPaid),
 			SuggestToMTP(action.options.suggest)
 		), [=](const MTPUpdates &result, const MTP::Response &response) {
+		Fork::ScheduledPreview::TrackResult(history, result, action.options);
 		if (clearCloudDraft) {
 			history->finishSavingCloudDraft(
 				topicRootId,

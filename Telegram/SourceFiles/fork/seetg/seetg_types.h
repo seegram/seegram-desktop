@@ -43,6 +43,7 @@ struct Nft {
 	bool onSale = false;
 	QString saleAmount;
 	QString saleCurrency;
+	QString saleMarket;
 	bool minted = false;
 	bool burned = false;
 	Owner sender;

@@ -7,6 +7,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "api/api_sending.h"
 
+#include "fork/scheduled_preview.h"
+
+#include "fork/ghost_mode.h"
+
 #include "api/api_text_entities.h"
 #include "base/random.h"
 #include "base/unixtime.h"
@@ -106,6 +110,7 @@ void InnerFillMessagePostFlags(
 }
 
 void SendSimpleMedia(SendAction action, MTPInputMedia inputMedia) {
+	Fork::Ghost::ApplyScheduling(action);
 	const auto history = action.history;
 	const auto peer = history->peer;
 	const auto session = &history->session();
@@ -185,6 +190,7 @@ void SendSimpleMedia(SendAction action, MTPInputMedia inputMedia) {
 			MTP_long(starsPaid),
 			SuggestToMTP(action.options.suggest)
 		), [=](const MTPUpdates &result, const MTP::Response &response) {
+		Fork::ScheduledPreview::TrackResult(history, result, action.options);
 	}, [=](const MTP::Error &error, const MTP::Response &response) {
 		api->sendMessageFail(error, peer, randomId);
 	});
@@ -199,6 +205,7 @@ void SendExistingMedia(
 		Fn<MTPInputMedia()> inputMedia,
 		Data::FileOrigin origin,
 		std::optional<MsgId> localMessageId) {
+	Fork::Ghost::ApplyScheduling(message.action);
 	const auto history = message.action.history;
 	const auto peer = history->peer;
 	const auto session = &history->session();
@@ -286,6 +293,7 @@ void SendExistingMedia(
 		.suggest = HistoryMessageSuggestInfo(action.options),
 		.mediaSpoiler = action.options.mediaSpoiler,
 	}, media, caption);
+	Fork::ScheduledPreview::Track(history->owner().message(newId), action.options);
 
 	if (welcomeTemplate) {
 		auto &welcome = session->welcomeMessages();
@@ -477,6 +485,7 @@ void SendMusicSelectionBatch(
 			.suggest = HistoryMessageSuggestInfo(action.options),
 			.mediaSpoiler = action.options.mediaSpoiler,
 		}, items[i].document, itemCaption);
+		Fork::ScheduledPreview::Track(history->owner().message(newId), action.options);
 		requests.push_back({
 			.item = std::move(items[i]),
 			.localItem = localItem,
@@ -719,6 +728,7 @@ void SendExistingDocument(
 void SendMusicSelection(
 		MessageToSend &&message,
 		std::vector<MusicSelectionItem> items) {
+	Fork::Ghost::ApplyScheduling(message.action);
 	if (items.empty()) {
 		return;
 	}
@@ -791,6 +801,7 @@ void SendExistingPhoto(
 }
 
 bool SendDice(MessageToSend &message) {
+	Fork::Ghost::ApplyScheduling(message.action);
 	const auto full = QStringView(message.textWithTags.text).trimmed();
 	auto length = 0;
 	if (!Ui::Emoji::Find(full.data(), full.data() + full.size(), &length)
@@ -905,6 +916,7 @@ bool SendDice(MessageToSend &message) {
 			MTP_bytes(seed),
 			MTP_long(stake),
 			MTP_long(0))));
+	Fork::ScheduledPreview::Track(history->owner().message(newId), action.options);
 	histories.sendPreparedMessage(
 		history,
 		action.replyTo,
@@ -1270,6 +1282,7 @@ void AddConfirmedLocalPlaceholder(const ConfirmedLocalFile &local) {
 		.effectId = local.file->to.options.effectId,
 		.suggest = HistoryMessageSuggestInfo(local.file->to.options),
 	}, local.caption, local.media);
+	Fork::ScheduledPreview::Track(local.history->owner().message(local.newId), local.file->to.options);
 	if (welcomeTemplate) {
 		local.history->session().welcomeMessages().appendSending(item);
 	}

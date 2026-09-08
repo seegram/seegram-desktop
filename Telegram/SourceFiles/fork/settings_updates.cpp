@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "fork/about_seegram.h"
 #include "fork/fork_lang.h"
+#include "fork/settings_rows.h"
 #include "core/application.h"
 #include "core/core_settings.h"
 #include "core/click_handler_types.h"
@@ -50,15 +51,15 @@ Section::Section(QWidget *parent, not_null<Window::SessionController*> controlle
 	Ui::AddDivider(content);
 	Ui::AddSkip(content);
 	if (::Settings::HasUpdate()) {
-		const auto startup = content->add(object_ptr<Ui::SettingsButton>(
-			content, Lang::Value(Lang::Key::UpdatesOnStartup), st::settingsButtonNoIcon));
-		startup->toggleOn(rpl::single(CheckOnStartup()));
+		const auto startup = SettingsRows::AddToggle(
+			content, Lang::Value(Lang::Key::UpdatesOnStartup),
+			Lang::Value(Lang::Key::UpdatesStartupAbout),
+			rpl::single(CheckOnStartup()));
 		startup->toggledChanges() | rpl::on_next([](bool enabled) {
 			Core::App().settings().writePref<bool>(kStartupKey, enabled);
 			Core::App().saveSettingsDelayed();
 		}, startup->lifetime());
 		Ui::AddSkip(content);
-		Ui::AddDividerText(content, Lang::Value(Lang::Key::UpdatesStartupAbout));
 		Ui::AddSkip(content);
 	}
 	const auto releases = content->add(object_ptr<Ui::SettingsButton>(

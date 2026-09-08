@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "api/api_updates.h"
 
+#include "fork/ghost_notifications.h"
+
 #include "api/api_authorizations.h"
 #include "api/api_user_names.h"
 #include "api/api_chat_participants.h"
@@ -306,6 +308,9 @@ void Updates::checkLastUpdate(bool afterSleep) {
 void Updates::feedUpdateVector(
 		const MTPVector<MTPUpdate> &updates,
 		SkipUpdatePolicy policy) {
+	if (policy != SkipUpdatePolicy::SkipExceptGroupCallParticipants) {
+		Fork::GhostNotifications::Prepare(&session(), updates);
+	}
 	auto list = updates.v;
 	const auto hasGroupCallParticipantUpdates = ranges::contains(
 		list,
@@ -457,6 +462,7 @@ void Updates::feedChannelDifference(
 	session().data().processChats(data.vchats());
 
 	_handlingChannelDifference = true;
+	Fork::GhostNotifications::Prepare(&session(), data.vother_updates());
 	applyConvertToScheduledOnSend(data.vother_updates());
 	feedMessageIds(data.vother_updates());
 	session().data().processMessages(
@@ -622,6 +628,7 @@ void Updates::feedDifference(
 	Core::App().checkAutoLock();
 	session().data().processUsers(users);
 	session().data().processChats(chats);
+	Fork::GhostNotifications::Prepare(&session(), other);
 	applyConvertToScheduledOnSend(other);
 	feedMessageIds(other);
 	session().data().processMessages(msgs, NewMessageType::Unread);
@@ -1959,6 +1966,7 @@ void Updates::feedUpdate(const MTPUpdate &update) {
 
 	case mtpc_updateDeleteScheduledMessages: {
 		const auto &d = update.c_updateDeleteScheduledMessages();
+		Fork::GhostNotifications::Apply(&session(), d);
 		session().scheduledMessages().apply(d);
 	} break;
 

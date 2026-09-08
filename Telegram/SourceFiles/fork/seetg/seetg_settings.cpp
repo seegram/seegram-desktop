@@ -51,6 +51,12 @@ void Start() {
 	GlobalSettings.enabled = enabled.isBool()
 		? enabled.toBool()
 		: defaults.enabled;
+	GlobalSettings.gifts = object.value(u"gifts"_q).toBool(true);
+	GlobalSettings.transfers = object.value(u"transfers"_q).toBool(true);
+	GlobalSettings.comments = object.value(u"comments"_q).toBool(true);
+	GlobalSettings.marketPreviews = object.value(u"marketPreviews"_q).toBool(true);
+	GlobalSettings.giftDetails = object.value(u"giftDetails"_q).toBool(true);
+	GlobalSettings.reactions = object.value(u"reactions"_q).toBool(true);
 	GlobalSettings.resolve = (object.value(u"resolve"_q).toString()
 		== u"username"_q)
 		? ResolveMode::ByUsername
@@ -74,6 +80,13 @@ void Set(const Settings &settings) {
 
 	auto object = QJsonObject();
 	object.insert(u"enabled"_q, settings.enabled);
+	object.insert(u"gifts"_q, settings.gifts);
+	object.insert(u"transfers"_q, settings.transfers);
+	object.insert(u"comments"_q, settings.comments);
+	object.insert(u"reactions"_q, settings.reactions);
+	object.insert(u"giftDetails"_q, settings.giftDetails);
+	object.insert(u"marketPreviews"_q, settings.marketPreviews);
+
 	object.insert(
 		u"resolve"_q,
 		(settings.resolve == ResolveMode::ByUsername)
@@ -99,6 +112,16 @@ rpl::producer<Settings> Changes() {
 
 rpl::producer<Settings> Value() {
 	return rpl::single(GlobalSettings) | rpl::then(Changes());
+}
+
+bool Enabled(Feature feature) {
+	return Current().featureEnabled(feature);
+}
+
+rpl::producer<bool> EnabledValue(Feature feature) {
+	return Value() | rpl::map([=](const Settings &settings) {
+		return settings.featureEnabled(feature);
+	}) | rpl::distinct_until_changed();
 }
 
 bool Enabled() {

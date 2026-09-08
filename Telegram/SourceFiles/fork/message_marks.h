@@ -9,6 +9,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <rpl/producer.h>
 
+class QTime;
+class QDateTime;
+
 // How a kept message announces itself: the mark drawn before the time of a
 // deleted message, the word drawn before the time of an edited one, and
 // whether deleted messages are painted translucent. Following AyuGram, the
@@ -22,6 +25,7 @@ struct Settings {
 	QString deletedMark;
 	QString editedMark;
 	bool translucentDeleted = false;
+	bool showSeconds = false;
 
 	friend inline bool operator==(
 		const Settings &,
@@ -46,5 +50,7 @@ void Start();
 [[nodiscard]] QString DefaultEditedMark();
 
 [[nodiscard]] bool TranslucentDeleted();
+[[nodiscard]] QString FormatTime(QTime time);
+[[nodiscard]] QString FormatSavedFrom(QDateTime date);
 
 } // namespace Fork::Marks
