@@ -55,6 +55,15 @@ then preserves an existing custom Finder icon and verifies the signature again.
 A read-only app bundle can only change the running icon. Package identifiers,
 executable names, signatures and local data paths are not renamed.
 
+Windows updates the native window/taskbar icon and exports the selected artwork
+as a persistent ICO with sizes from 16 to 256 pixels. Existing desktop, Start
+menu and pinned taskbar shortcuts are updated only when their target has the
+same file identity as this executable. Shortcut arguments, names and targets
+are preserved. Explorer is notified after each successful update. The signed
+EXE itself is unchanged; its own file icon remains the packaged artwork.
+Window titles and icons subscribe to appearance changes, including the first
+successful load of encrypted profile settings.
+
 `python3 fork/build-dev-mac.py --build-only` compiles without replacing the
 user's dev app or touching its profile. Use this for intermediate native tests
 in disposable app copies with a distinct bundle identifier. The ordinary command
