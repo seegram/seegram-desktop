@@ -23,8 +23,12 @@ void WriteIco(const QString &path, std::vector<QImage> images);
 namespace Fork::Disguise {
 namespace {
 
-std::atomic<uint64> ShortcutRevision = 0;
-std::mutex ShortcutMutex;
+struct ShortcutState {
+	std::atomic<uint64> revision = 0;
+	std::mutex mutex;
+};
+
+const auto Shortcuts = std::make_shared<ShortcutState>();
 
 QString ShellIconPath() {
 	static auto cachedKey = qint64(0);
@@ -117,9 +121,10 @@ bool UpdateShortcut(
 void UpdateShortcuts(
 		const QString &iconPath,
 		Platform::AppUserModelId::UniqueFileId executableId,
+		const std::shared_ptr<ShortcutState> &state,
 		uint64 revision) {
-	const auto lock = std::lock_guard(ShortcutMutex);
-	if (ShortcutRevision != revision || !executableId
+	const auto lock = std::lock_guard(state->mutex);
+	if (state->revision != revision || !executableId
 		|| FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))) {
 		return;
 	}
@@ -143,7 +148,7 @@ void UpdateShortcuts(
 		auto entries = QDirIterator(root, { u"*.lnk"_q }, QDir::Files,
 			QDirIterator::Subdirectories);
 		while (entries.hasNext()) {
-			if (ShortcutRevision != revision) {
+			if (state->revision != revision) {
 				return;
 			}
 			changed = UpdateShortcut(entries.next(), icon, executableId) || changed;
@@ -180,9 +185,10 @@ void RefreshNativeIcon(not_null<Window::MainWindow*> window) {
 		return;
 	}
 	previous = path;
-	const auto revision = ++ShortcutRevision;
+	const auto state = Shortcuts;
+	const auto revision = ++state->revision;
 	const auto executableId = Platform::AppUserModelId::MyExecutablePathId();
-	crl::async([=] { UpdateShortcuts(path, executableId, revision); });
+	crl::async([=] { UpdateShortcuts(path, executableId, state, revision); });
 }
 
 } // namespace Fork::Disguise
