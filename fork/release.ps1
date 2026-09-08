@@ -38,6 +38,17 @@ $sshKey  = $env:SEEGRAM_SSH_KEY
 if ($keysDir -and -not [System.IO.Path]::IsPathRooted($keysDir)) { $keysDir = Join-Path $HOME $keysDir }
 if ($sshKey  -and -not [System.IO.Path]::IsPathRooted($sshKey))  { $sshKey  = Join-Path $HOME $sshKey }
 
+# Use only the deployment key, independent of the runner's SSH agent.
+$sshOptions = @(
+    "-o", "BatchMode=yes",
+    "-o", "IdentitiesOnly=yes",
+    "-o", "IdentityAgent=none",
+    "-o", "ConnectTimeout=15",
+    "-o", "ServerAliveInterval=15",
+    "-o", "ServerAliveCountMax=3",
+    "-i", $sshKey
+)
+
 # Deliberately without a default: where the update server lives and which
 # account reaches it are not facts a public repository should carry.
 $server     = $env:SEEGRAM_UPDATE_SERVER
@@ -58,6 +69,9 @@ if (-not (Test-Path "$keysDir\$keyFile")) {
     Fail "signing key missing from the configured directory"
 }
 if (-not $NoPublish) {
+    if (-not $sshKey -or -not (Test-Path -LiteralPath $sshKey -PathType Leaf)) {
+        Fail "configured deployment SSH key is missing"
+    }
     if (-not $server)     { Fail "set SEEGRAM_UPDATE_SERVER, e.g. user@host" }
     if (-not $serverRoot) { Fail "set SEEGRAM_UPDATE_ROOT, the served directory" }
 }
@@ -186,7 +200,7 @@ try {
 
     $remoteName = "seegram-$version-$platformKey.tdup"
     Write-Host "==> uploading $remoteName"
-    & scp -q -i $sshKey $package.FullName "${server}:$serverRoot/packages/$remoteName.upload"
+    & scp -q @sshOptions $package.FullName "${server}:$serverRoot/packages/$remoteName.upload"
     if ($LASTEXITCODE -ne 0) { Fail "upload failed" }
 
     # The feed is edited one platform at a time on purpose: rewriting the whole
@@ -206,7 +220,7 @@ try {
         "SEEGRAM_PLATFORM='$platformKey' " +
         "SEEGRAM_VERSION='$version' " +
         "SEEGRAM_ROOT_PUBLIC='$rootPublic' python3 -"
-    & ssh -i $sshKey $server $remote
+    & ssh -q @sshOptions $server $remote
     if ($LASTEXITCODE -ne 0) { Fail "feed update failed" }
 
     Write-Host "==> verifying what clients will actually see"
