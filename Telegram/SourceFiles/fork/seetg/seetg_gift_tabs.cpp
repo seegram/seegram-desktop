@@ -43,7 +43,15 @@ QString Money(const QString &amount, QString currency) {
 	const auto value = amount.toDouble() / divisor;
 	if (!std::isfinite(value) || value < 0) return {};
 	auto number = QLocale().toString(value, 'f', currency == u"xtr" ? 0 : 2);
-	if (currency != u"xtr") { while (number.endsWith('0')) number.chop(1); if (number.endsWith(QLocale().decimalPoint())) number.chop(QLocale().decimalPoint().size()); }
+	if (currency != u"xtr") {
+		while (number.endsWith('0')) {
+			number.chop(1);
+		}
+		const auto decimalPoint = QString(QLocale().decimalPoint());
+		if (number.endsWith(decimalPoint)) {
+			number.chop(decimalPoint.size());
+		}
+	}
 	return number + ' '
 		+ ((currency == u"gram" || currency == u"ton") ? u"TON"_q : currency == u"xtr" ? u"★"_q : currency.toUpper());
 }
