@@ -859,6 +859,10 @@ bool Instance::inGroupCall() const {
 		&& (state != GroupCall::State::Failed);
 }
 
+void Instance::endForAccountSwitch() {
+	destroyCurrentCall();
+}
+
 void Instance::destroyCurrentCall(
 		Data::GroupCall *migrateCall,
 		const QString &migrateSlug) {

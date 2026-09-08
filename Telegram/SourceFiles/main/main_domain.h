@@ -105,6 +105,9 @@ public:
 	// Interface for Storage::Domain.
 	void accountAddedInStorage(AccountWithIndex accountWithIndex);
 	void activateFromStorage(int index);
+	void applyAccountProfile(
+		const std::vector<int> &selected,
+		std::vector<AccountWithIndex> added);
 	[[nodiscard]] int activeForStorage() const;
 
 private:
@@ -151,6 +154,7 @@ private:
 	int _accountToActivate = -1;
 	int _lastActiveIndex = -1;
 	bool _writeAccountsScheduled = false;
+	bool _switchingProfiles = false;
 
 	rpl::event_stream<Session*> _activeSessions;
 

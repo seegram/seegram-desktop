@@ -341,6 +341,24 @@ enum class Key {
 	UpdatesOnStartup,
 	UpdatesStartupAbout,
 
+	DoubleBottom,
+	DoubleBottomAbout,
+	ProfileMainPassword,
+	ProfileCreate,
+	ProfileName,
+	ProfilePassword,
+	ProfilePasswordOptional,
+	ProfileRepeat,
+	ProfileAccounts,
+	ProfileDrag,
+	ProfileDelete,
+	ProfileDeleteAbout,
+	ProfileError,
+	ProfilePasswordNeeded,
+	ProfileLock,
+	ProfileMismatch,
+	ProfileMainAbout,
+
 	Count,
 };
 
