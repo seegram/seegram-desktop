@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/settings_ghost.h"
+#include "fork/disguise.h"
 
 #include "fork/fork_lang.h"
 #include "fork/settings_rows.h"
@@ -113,6 +114,7 @@ rpl::producer<QString> GhostSection::title() {
 }
 
 void SetupMainMenuToggle(not_null<Ui::VerticalLayout*> container) {
+	if (Disguise::Clean()) return;
 	const auto button = ::Settings::AddButtonWithIcon(
 		container,
 		Lang::Value(Key::GhostMode),

@@ -6,6 +6,8 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/settings_seegram.h"
+#include "fork/disguise.h"
+#include "fork/settings_disguise.h"
 
 #include "fork/build_counter.h"
 #include "fork/about_seegram.h"
@@ -45,7 +47,6 @@ namespace {
 
 // The strings are in fork/fork_lang.cpp. These few are names, not words,
 // and stay the same in every language.
-constexpr auto kTitle = "SeeGram";
 constexpr auto kSourceLabel = "GitHub";
 constexpr auto kSourceUrl = "https://github.com/seegram/seegram-desktop";
 constexpr auto kNewsUsername = "seeclient";
@@ -153,11 +154,14 @@ void BuildContent(
 		not_null<Ui::VerticalLayout*> container,
 		not_null<Window::SessionController*> controller,
 		Fn<void(::Settings::Type)> showOther) {
+	if (Disguise::Clean()) return;
 	Ui::AddSkip(container);
 	Ui::AddSubsectionTitle(container, Lang::Value(Key::SettingsPrivacy));
 	if (!Core::App().domain().local().restrictedProfile()) {
 		AddCategory(container, Key::DoubleBottom, st::menuIconLock,
 			AccountProfiles::SectionId(), showOther);
+		AddCategory(container, Key::DisguiseTitle, st::menuIconPhoto,
+			Disguise::SectionId(), showOther);
 	}
 	AddCategory(
 		container,
@@ -209,7 +213,7 @@ void BuildContent(
 		kSourceUrl);
 	Ui::AddSkip(container);
 	container->add(object_ptr<Ui::FlatLabel>(container,
-		u"SeeGram "_q + VersionText(), st::boxDividerLabel),
+		Disguise::Name() + QChar(' ') + VersionText(), st::boxDividerLabel),
 		st::defaultBoxDividerLabelPadding);
 }
 
@@ -233,7 +237,7 @@ MainSection::MainSection(
 }
 
 rpl::producer<QString> MainSection::title() {
-	return Text(kTitle);
+	return Disguise::NameValue();
 }
 
 } // namespace
@@ -243,8 +247,9 @@ rpl::producer<QString> MainSection::title() {
 }
 
 void AddSettingsButton(::Settings::Builder::SectionBuilder &builder) {
+	if (Disguise::Clean()) return;
 	builder.addSectionButton({
-		.title = Text(kTitle),
+		.title = Disguise::NameValue(),
 		.targetSection = SectionId(),
 		.icon = { &st::menuIconStealth },
 	});

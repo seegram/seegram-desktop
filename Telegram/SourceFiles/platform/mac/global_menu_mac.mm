@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "platform/mac/global_menu_mac.h"
+#include "fork/disguise.h"
 
 #include "core/version.h"
 #include "core/application.h"
@@ -176,6 +177,7 @@ bool Manager::clipboardHasText() {
 }
 
 void Manager::retranslate() {
+	Fork::Disguise::RefreshNativeMenu();
 	if (_logout) {
 		_logout->setText(tr::lng_mac_menu_logout(tr::now));
 	}
@@ -195,7 +197,8 @@ void Manager::retranslate() {
 		_newChannel->setText(tr::lng_mac_menu_new_channel(tr::now));
 	}
 	if (_showTelegram) {
-		_showTelegram->setText(tr::lng_mac_menu_show(tr::now));
+		_showTelegram->setText(tr::lng_mac_menu_show(tr::now).replace(
+			u"Telegram"_q, Fork::Disguise::Name()));
 	}
 	if (_fullScreen) {
 		_fullScreen->setText(tr::lng_mac_menu_fullscreen(tr::now));
@@ -234,7 +237,7 @@ void Manager::ensureLanguageBound() {
 	}
 	_languageBound = true;
 	retranslate();
-	Lang::Updated() | rpl::on_next([this] {
+	rpl::merge(Lang::Updated(), Fork::Disguise::Changes()) | rpl::on_next([this] {
 		retranslate();
 	}, _lifetime);
 }
@@ -356,9 +359,12 @@ void Manager::buildAppleMenu(QMenu *main) {
 			});
 		};
 		const auto about = main->addAction(
-			u"About "_q + AppFile.utf16(),
+			u"About "_q + Fork::Disguise::Name(),
 			std::move(callback));
 		about->setMenuRole(QAction::AboutQtRole);
+		Fork::Disguise::NameValue() | rpl::on_next([=](const QString &name) {
+			about->setText(u"About "_q + name);
+		}, _lifetime);
 	}
 
 	main->addSeparator();
@@ -590,7 +596,7 @@ void Manager::buildWindowMenu(QMenu *window) {
 	}
 	window->addSeparator();
 	_showTelegram = window->addAction(
-		u"Show Telegram"_q,
+		u"Show "_q + Fork::Disguise::Name(),
 		receiver,
 		[this] {
 			if (const auto w = resolveActiveWindow()) {

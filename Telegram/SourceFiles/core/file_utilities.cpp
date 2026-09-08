@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "core/file_utilities.h"
+#include "fork/disguise.h"
 
 #include "core/click_handler_types.h"
 #include "core/version.h"
@@ -171,7 +172,7 @@ QString DefaultDownloadPathFolder(not_null<Main::Session*> session) {
 #if OS_MAC_STORE
 	return u"Telegram Lite"_q;
 #else // OS_MAC_STORE
-	return session->supportMode() ? u"Tsupport Desktop"_q : AppName.utf16();
+	return session->supportMode() ? u"Tsupport Desktop"_q : Fork::Disguise::FullName();
 #endif // OS_MAC_STORE
 }
 

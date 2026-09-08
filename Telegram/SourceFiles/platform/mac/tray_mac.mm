@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "platform/mac/tray_mac.h"
+#include "fork/disguise.h"
 
 #include "base/platform/mac/base_utilities_mac.h"
 #include "core/application.h"
@@ -95,6 +96,13 @@ namespace {
 }
 
 [[nodiscard]] QImage TrayIconBack(bool darkMode) {
+	if (Fork::Disguise::TrayChoice() == Fork::Disguise::Icon::SeeGram) {
+		const auto size = st::macTrayIcon.size() * style::DevicePixelRatio();
+		auto image = Fork::Disguise::TrayMonochrome(size,
+			darkMode ? QColor(255, 255, 255) : QColor(0, 0, 0, 180));
+		image.setDevicePixelRatio(style::DevicePixelRatio());
+		return image;
+	}
 	static const auto WithColor = [](QColor color) {
 		return st::macTrayIcon.instance(color, 100);
 	};
@@ -309,7 +317,7 @@ NativeIcon::NativeIcon()
 
 	_status.button.target = buttonCallback;
 	_status.button.action = @selector(invoke);
-	_status.button.toolTip = Q2NSString(AppName.utf16());
+	_status.button.toolTip = Q2NSString(Fork::Disguise::FullName());
 }
 
 NativeIcon::~NativeIcon() {
@@ -324,6 +332,7 @@ NativeIcon::~NativeIcon() {
 }
 
 void NativeIcon::updateIcon() {
+	_status.button.toolTip = Q2NSString(Fork::Disguise::FullName());
 	UpdateIcon(_status);
 }
 

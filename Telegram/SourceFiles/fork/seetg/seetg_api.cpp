@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/seetg/seetg_api.h"
+#include "fork/disguise.h"
 
 #include "fork/seetg/seetg_auth.h"
 #include "fork/seetg/seetg_http.h"
@@ -246,6 +247,10 @@ void Query(
 		const QJsonObject &variables,
 		Done done,
 		Fail fail) {
+	if (Disguise::Clean()) {
+		fail({ Error::Kind::Other, u"integration disabled"_q });
+		return;
+	}
 	Watch(session);
 	const auto key = CacheKey(session, document, variables);
 	if (const auto i = Cache.find(key); i != end(Cache)) {
@@ -268,6 +273,10 @@ void FreshQuery(
 		const QJsonObject &variables,
 		Done done,
 		Fail fail) {
+	if (Disguise::Clean()) {
+		fail({ Error::Kind::Other, u"integration disabled"_q });
+		return;
+	}
 	Watch(session);
 	static auto nextRequest = uint64(0);
 	const auto key = QString::number(session->uniqueId())

@@ -7,6 +7,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "platform/linux/notifications_manager_linux.h"
+#include "fork/disguise.h"
 
 #include "base/options.h"
 #include "base/platform/base_platform_info.h"
@@ -816,7 +817,7 @@ void Manager::Private::showNotification(
 
 				xdg_notifications_notifications_call_notify(
 					_interface.gobj_(),
-					AppName.data(),
+					Fork::Disguise::FullName().toStdString().c_str(),
 					0,
 					(!hasImage
 						? ApplicationIconName().toStdString()

@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/about_seegram.h"
+#include "fork/disguise.h"
 
 #include "fork/build_counter.h"
 #include "fork/fork_lang.h"
@@ -34,7 +35,7 @@ constexpr auto kSource = "https://github.com/seegram/seegram-desktop";
 constexpr auto kReleases = "https://github.com/seegram/seegram-desktop/releases";
 
 [[nodiscard]] QString SeeGramVersion() {
-	return u"SeeGram "_q + VersionText();
+	return Disguise::Name() + QChar(' ') + VersionText();
 }
 
 [[nodiscard]] QString TelegramVersion() {
@@ -66,13 +67,13 @@ void Fill(not_null<Ui::GenericBox*> box) {
 	const auto logo = Ui::CreateChild<Ui::RpWidget>(header);
 	logo->resize(st::seegramAboutLogo, st::seegramAboutLogo);
 	logo->paintRequest() | rpl::on_next([=] {
-		static const auto image = QImage(u":/seegram/icon.png"_q);
+		const auto &image = Disguise::Image();
 		auto p = QPainter(logo);
 		auto hq = PainterHighQualityEnabler(p);
 		p.drawImage(logo->rect(), image);
 	}, logo->lifetime());
 	const auto title = Ui::CreateChild<Ui::FlatLabel>(header,
-		rpl::single(u"SeeGram Desktop"_q), st::boxTitle);
+		Disguise::NameValue(), st::boxTitle);
 	const auto version = Ui::CreateChild<Ui::LinkButton>(header,
 		VersionText(), st::aboutVersionLink);
 	version->addClickHandler([] { UrlClickHandler::Open(QString::fromLatin1(kReleases)); });
@@ -113,6 +114,7 @@ void Fill(not_null<Ui::GenericBox*> box) {
 void SetupFooter(not_null<Ui::FlatLabel*> seegram,
 		not_null<Ui::FlatLabel*> telegram,
 		not_null<Window::SessionController*> controller) {
+	if (Disguise::Clean()) return;
 	const auto update = [=] {
 		seegram->setMarkedText(tr::link(SeeGramVersion(), QString::fromLatin1(kReleases)));
 		seegram->setLinksTrusted();
@@ -124,7 +126,8 @@ void SetupFooter(not_null<Ui::FlatLabel*> seegram,
 		}));
 	};
 	update();
-	Lang::Changes() | rpl::on_next(update, telegram->lifetime());
+	rpl::merge(Lang::Changes(), Disguise::Changes())
+		| rpl::on_next(update, telegram->lifetime());
 }
 
 } // namespace Fork::About

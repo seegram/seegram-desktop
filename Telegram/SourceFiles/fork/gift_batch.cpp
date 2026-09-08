@@ -1,4 +1,5 @@
 #include "fork/gift_batch.h"
+#include "fork/disguise.h"
 #include "fork/gift_grid.h"
 #include "fork/gift_batch_policy.h"
 #include "fork/fork_lang.h"
@@ -125,7 +126,7 @@ struct Run : Progress, std::enable_shared_from_this<Run> {
 	}
 	void next() {
 		if (finished) return;
-		if (!canSend() || !show->valid()) {
+		if (Disguise::Clean() || !canSend() || !show->valid()) {
 			finish();
 			return;
 		}
@@ -276,8 +277,9 @@ public:
 };
 } // namespace
 
-bool HiddenEnabled() { return HiddenEnabledState().current(); }
-rpl::producer<bool> HiddenEnabledValue() { return HiddenEnabledState().value(); }
+bool HiddenEnabled() { return Disguise::FeaturesEnabled() && HiddenEnabledState().current(); }
+rpl::producer<bool> HiddenEnabledValue() { return rpl::combine(HiddenEnabledState().value(), Disguise::FeaturesValue())
+	| rpl::map([](bool enabled, bool allowed) { return enabled && allowed; }); }
 
 Fn<void()> SendSequence(not_null<PeerData*> peer,
 	std::shared_ptr<Main::SessionShow> show, std::vector<GiftSendDetails> gifts,
@@ -316,6 +318,7 @@ void AddButton(not_null<Ui::VerticalLayout*> container,
 		not_null<PeerData*> peer,
 		Fn<GiftSendDetails()> details,
 		Fn<bool()> messageAllowed) {
+	if (Disguise::Clean()) return;
 	const auto initial = details();
 	const auto gift = std::get_if<GiftTypeStars>(&initial.descriptor);
 	if (!gift || gift->resale || gift->info.unique || gift->info.auction() || gift->info.soldOut || gift->info.stars <= 0) return;

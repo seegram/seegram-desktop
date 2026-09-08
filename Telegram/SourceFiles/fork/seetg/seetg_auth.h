@@ -32,5 +32,6 @@ void Request(
 
 // Forget the cached data, so the next Request mints new one.
 void Invalidate(not_null<Main::Session*> session);
+void CancelAll();
 
 } // namespace Fork::SeeTg::Auth
