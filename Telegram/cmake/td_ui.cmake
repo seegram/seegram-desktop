@@ -15,6 +15,7 @@ set(style_files
     fork/seetg/seetg_verifications.style
     fork/seetg/seetg_comments.style
     fork/about_seegram.style
+    fork/gift_grid.style
     ui/td_common.style
     ui/filter_icons.style
     ui/menu_icons.style
@@ -200,6 +201,8 @@ PRIVATE
     editor/scene/scene_item_text.h
     editor/scene/scene_emoji_document.cpp
     editor/scene/scene_emoji_document.h
+    editor/scene/scene_text_editing.cpp
+    editor/scene/scene_text_editing.h
 
     ui/boxes/about_cocoon_box.h
     ui/boxes/about_cocoon_box.cpp
@@ -471,6 +474,8 @@ PRIVATE
     ui/chat/torn_edge.h
     ui/chat/unsupported_notice.cpp
     ui/chat/unsupported_notice.h
+    ui/controls/button_context_menu.cpp
+    ui/controls/button_context_menu.h
     ui/controls/button_labels.cpp
     ui/controls/button_labels.h
     ui/controls/call_button.cpp

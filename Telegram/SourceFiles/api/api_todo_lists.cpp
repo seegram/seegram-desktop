@@ -7,6 +7,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "api/api_todo_lists.h"
 
+#include "fork/ghost_mode.h"
+#include "fork/scheduled_preview.h"
+
 #include "api/api_editing.h"
 #include "apiwrap.h"
 #include "base/random.h"
@@ -38,6 +41,7 @@ void TodoLists::create(
 		SendAction action,
 		Fn<void()> done,
 		Fn<void(QString)> fail) {
+	Fork::Ghost::ApplyScheduling(action);
 	StripEphemeralReply(_session, action.replyTo);
 	_session->api().sendAction(action);
 
@@ -111,6 +115,7 @@ void TodoLists::create(
 			MTP_long(starsPaid),
 			SuggestToMTP(action.options.suggest)
 		), [=](const MTPUpdates &result, const MTP::Response &response) {
+		Fork::ScheduledPreview::TrackResult(history, result, action.options);
 		if (clearCloudDraft) {
 			history->finishSavingCloudDraft(
 				topicRootId,

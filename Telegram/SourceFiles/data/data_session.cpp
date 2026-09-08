@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "data/data_session.h"
 
+#include "fork/spy_mode.h"
+
 #include "main/main_session.h"
 #include "main/main_session_settings.h"
 #include "main/main_app_config.h"
@@ -57,6 +59,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_group_call.h"
 #include "data/data_folder.h"
 #include "fork/deleted_messages.h"
+#include "fork/message_marks.h"
 #include "fork/edit_history.h"
 #include "data/data_channel.h"
 #include "data/data_chat.h"
@@ -363,6 +366,43 @@ Session::Session(not_null<Main::Session*> session)
 			_cache->clearByTag(Data::kImageCacheTag);
 		}
 	}
+
+	Fork::Spy::Value(
+	) | rpl::map([](const Fork::Spy::Settings &settings) {
+		return settings.previewSelfDestructMedia;
+	}) | rpl::distinct_until_changed(
+	) | rpl::skip(1) | rpl::on_next([=] {
+		crl::on_main(_session, [=] {
+			auto ids = std::vector<FullMsgId>();
+			for (const auto &[peerId, messages] : _messages) {
+				for (const auto &[msgId, item] : messages) {
+					const auto media = item->media();
+					if (!item->out() && media && media->ttlSeconds()) {
+						ids.push_back(item->fullId());
+					}
+				}
+			}
+			for (const auto id : ids) {
+				if (const auto item = message(id)) {
+					requestItemViewRefresh(item);
+				}
+			}
+		});
+	}, _lifetime);
+
+	Fork::Marks::Value()
+	| rpl::map([](const Fork::Marks::Settings &settings) { return settings.showSeconds; })
+	| rpl::distinct_until_changed() | rpl::skip(1) | rpl::on_next([=] {
+		crl::on_main(_session, [=] {
+			auto ids = std::vector<FullMsgId>();
+			for (const auto &[item, views] : _views) {
+				ids.push_back(item->fullId());
+			}
+			for (const auto id : ids) {
+				if (const auto item = message(id)) requestItemViewRefresh(item);
+			}
+		});
+	}, _lifetime);
 
 	setupMigrationViewer();
 	setupChannelLeavingViewer();

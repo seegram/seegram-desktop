@@ -6,6 +6,9 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "boxes/star_gift_box.h"
+#include "fork/gift_batch.h"
+#include "fork/fork_lang.h"
+#include "fork/seetg/seetg_hidden_shop.h"
 
 #include "boxes/star_gift_cover_box.h"
 
@@ -137,6 +140,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace Ui {
 namespace {
 
+constexpr auto kPriceTabHidden = -3;
 constexpr auto kPriceTabAll = 0;
 constexpr auto kPriceTabMy = -1;
 constexpr auto kPriceTabCollectibles = -2;
@@ -928,6 +932,8 @@ void PreviewWrap::paintEvent(QPaintEvent *e) {
 	};
 	if (price == kPriceTabAll) {
 		return simple(tr::lng_gift_stars_tabs_all(tr::now));
+	} else if (price == kPriceTabHidden) {
+		return simple(Fork::Lang::Text(Fork::Lang::Key::GiftHiddenTab));
 	} else if (price == kPriceTabMy) {
 		return simple(tr::lng_gift_stars_tabs_my(tr::now));
 	} else if (price == kPriceTabCollectibles) {
@@ -981,11 +987,11 @@ struct GiftPriceTabs {
 			- QPoint(state->tabsShift, 0);
 	};
 
-	state->prices = std::move(
-		gifts
-	) | rpl::map([=](const std::vector<GiftTypeStars> &gifts) {
+	state->prices = rpl::combine(std::move(gifts), Fork::GiftBatch::HiddenEnabledValue())
+	| rpl::map([=](const std::vector<GiftTypeStars> &gifts, bool hidden) {
 		auto result = std::vector<int>();
 		result.push_back(kPriceTabAll);
+		if (hidden) result.push_back(kPriceTabHidden);
 		auto hasCollectibles = false;
 		if (!(disallowed & Api::DisallowedGiftType::Unique)) {
 			for (const auto &gift : gifts) {
@@ -1039,6 +1045,7 @@ struct GiftPriceTabs {
 		auto currentPrice = state->priceTab.current();
 		if (!ranges::contains(prices, currentPrice)) {
 			currentPrice = kPriceTabAll;
+			state->priceTab = currentPrice;
 		}
 		state->active = -1;
 		for (auto i = 0, count = int(prices.size()); i != count; ++i) {
@@ -1224,6 +1231,10 @@ void SendGift(
 			Payments::CheckoutProcess::Start(std::move(invoice), done);
 		}
 	}, [&](const GiftTypeStars &gift) {
+		if (gift.hiddenPurchase) {
+			Fork::SeeTg::HiddenShop::Send(window, peer, details, done);
+			return;
+		}
 		Payments::CheckoutProcess::Start(Payments::InvoiceStarGift{
 			.giftId = gift.info.id,
 			.randomId = details.randomId,
@@ -1631,6 +1642,7 @@ void AddBlock(
 }
 
 [[nodiscard]] object_ptr<RpWidget> MakeStarsGifts(
+		not_null<GenericBox*> box,
 		not_null<Window::SessionController*> window,
 		not_null<PeerData*> peer,
 		MyGiftsDescriptor my,
@@ -1639,6 +1651,9 @@ void AddBlock(
 
 	struct State {
 		rpl::variable<std::vector<GiftTypeStars>> gifts;
+		rpl::variable<std::vector<GiftTypeStars>> hidden;
+		rpl::variable<QString> hiddenStatus;
+		bool hiddenRequested = false;
 		rpl::variable<int> priceTab = kPriceTabAll;
 		rpl::event_stream<> myUpdated;
 		MyGiftsDescriptor my;
@@ -1653,18 +1668,37 @@ void AddBlock(
 		peer,
 		state->gifts.value(),
 		!state->my.list.empty() && !peer->isSelf());
+	const auto guardWidget = result.data();
 	state->priceTab = std::move(tabs.priceTab);
 	state->priceTab.changes() | rpl::on_next([=](int tab) {
+		if (tab == kPriceTabHidden) box->setMinHeight(box->height());
+		if (tab == kPriceTabHidden && !state->hiddenRequested) {
+			state->hiddenRequested = true;
+			state->hiddenStatus = Fork::Lang::Text(Fork::Lang::Key::SeeTgLoading);
+			Fork::SeeTg::HiddenShop::Load(peer, crl::guard(guardWidget, [=](std::vector<GiftTypeStars> list) {
+				state->hiddenStatus = list.empty() ? Fork::Lang::Text(Fork::Lang::Key::GiftHiddenEmpty) : QString();
+				state->hidden = std::move(list);
+			}), crl::guard(guardWidget, [=](QString error) {
+				state->hiddenStatus = error;
+				state->hiddenRequested = false;
+			}));
+		}
 		tabSelected(tab);
 	}, tabs.widget->lifetime());
 	result->add(std::move(tabs.widget));
+	Fork::GiftBatch::HiddenEnabledValue() | rpl::on_next([=](bool enabled) {
+		if (!enabled && state->priceTab.current() == kPriceTabHidden) state->priceTab = kPriceTabAll;
+	}, result->lifetime());
 
 	auto gifts = rpl::combine(
 		state->gifts.value(),
+		state->hidden.value(),
 		state->priceTab.value(),
 		rpl::single(rpl::empty) | rpl::then(state->myUpdated.events())
-	) | rpl::map([=](std::vector<GiftTypeStars> &&gifts, int price, auto) {
-		if (price == kPriceTabMy) {
+	) | rpl::map([=](std::vector<GiftTypeStars> gifts, const std::vector<GiftTypeStars> &hidden, int price, auto) {
+		if (price == kPriceTabHidden) {
+			gifts = hidden;
+		} else if (price == kPriceTabMy) {
 			gifts.clear();
 			for (const auto &gift : state->my.list) {
 				gifts.push_back({
@@ -1731,6 +1765,8 @@ void AddBlock(
 		.window = window,
 		.peer = peer,
 		.gifts = std::move(gifts),
+		.placeholder = rpl::combine(state->priceTab.value(), state->hiddenStatus.value())
+			| rpl::map([](int tab, const QString &text) { return tab == kPriceTabHidden ? text : QString(); }),
 		.loadMore = loadMore,
 	}));
 
@@ -1849,6 +1885,7 @@ void GiftBox(
 						tr::marked))),
 			.aboutFilter = starsClickHandlerFilter,
 			.content = MakeStarsGifts(
+				box,
 				window,
 				peer,
 				std::move(my),
@@ -2399,6 +2436,15 @@ not_null<InputField*> AddStarGiftMessageField(
 		{ .suggestCustomEmoji = true, .allowCustomWithoutPremium = allow });
 
 	return field;
+}
+
+object_ptr<RpWidget> MakeCatalogGiftPreview(
+		not_null<QWidget*> parent,
+		not_null<PeerData*> recipient,
+		const GiftSendDetails &details) {
+	return object_ptr<PreviewWrap>(parent,
+		recipient->owner().history(recipient->session().userPeerId()),
+		rpl::single(GiftPreviewContent(recipient, details)));
 }
 
 object_ptr<RpWidget> MakeUniqueGiftPreview(
@@ -4789,6 +4835,8 @@ object_ptr<RpWidget> MakeGiftsList(GiftsListArgs &&args) {
 		std::vector<std::unique_ptr<GiftButton>> buttons;
 		rpl::variable<VisibleRange> visibleRange;
 		bool sending = false;
+		QString placeholder;
+		bool hasList = false;
 		int perRow = 1;
 	};
 	const auto buttonMode = (mode == GiftsListMode::Craft)
@@ -4804,6 +4852,30 @@ object_ptr<RpWidget> MakeGiftsList(GiftsListArgs &&args) {
 		},
 	});
 	const auto single = state->delegate.buttonSize();
+	// The status occupies the list's existing area, never a separate layout row.
+	const auto preserveCards = bool(args.placeholder);
+	if (args.placeholder) {
+		const auto cover = Ui::CreateChild<RpWidget>(raw);
+		const auto label = Ui::CreateChild<FlatLabel>(cover, rpl::single(QString()), st::boxLabel);
+		cover->paintRequest() | rpl::on_next([=] {
+			auto p = Painter(cover); p.fillRect(cover->rect(), st::boxBg);
+		}, cover->lifetime());
+		raw->sizeValue() | rpl::on_next([=](QSize size) {
+			cover->setGeometry(QRect(QPoint(), size));
+			label->resizeToWidth(std::max(1, size.width() - st::boxRowPadding.left() - st::boxRowPadding.right()));
+			label->moveToLeft(st::boxRowPadding.left(), st::giftBoxPadding.top());
+		}, cover->lifetime());
+		std::move(args.placeholder) | rpl::on_next([=](const QString &text) {
+			state->placeholder = text;
+			label->setText(text);
+			cover->setVisible(!text.isEmpty());
+			if (!text.isEmpty()) {
+				raw->resize(raw->width(), std::max(raw->height(), single.height() + st::giftBoxPadding.top() + st::giftBoxPadding.bottom()));
+				cover->raise();
+			}
+		}, cover->lifetime());
+	}
+
 	const auto shadow = st::defaultDropdownMenu.wrap.shadow;
 	const auto extend = shadow.extend;
 
@@ -4940,6 +5012,9 @@ object_ptr<RpWidget> MakeGiftsList(GiftsListArgs &&args) {
 	std::move(
 		args.gifts
 	) | rpl::on_next([=](const GiftsDescriptor &gifts) {
+		// A background refresh of another tab must not restart these cards.
+		if (preserveCards && state->hasList && state->list == gifts.list && state->handlerState.api == gifts.api) return;
+		state->hasList = true;
 		const auto width = st::boxWideWidth;
 		const auto padding = st::giftBoxPadding;
 		const auto available = width - padding.left() - padding.right();
@@ -4966,20 +5041,23 @@ object_ptr<RpWidget> MakeGiftsList(GiftsListArgs &&args) {
 			+ (rows * single.height())
 			+ ((rows - 1) * st::giftBoxGiftSkip.y())
 			+ padding.bottom();
-		raw->resize(raw->width(), height);
+		raw->resize(raw->width(), state->placeholder.isEmpty() ? height
+			: std::max(height, single.height() + padding.top() + padding.bottom()));
 		rebuild();
 	}, raw->lifetime());
 
 	return result;
 }
 
-void SendGiftBox(
+void GiftDetailsBox(
 		not_null<GenericBox*> box,
 		not_null<Window::SessionController*> window,
 		not_null<PeerData*> peer,
 		std::shared_ptr<Api::PremiumGiftCodeOptions> api,
 		const GiftDescriptor &descriptor,
-		rpl::producer<Data::GiftAuctionState> auctionState) {
+		rpl::producer<Data::GiftAuctionState> auctionState,
+		std::optional<GiftSendDetails> initial,
+		Fn<void(GiftSendDetails)> save) {
 	const auto stars = std::get_if<GiftTypeStars>(&descriptor);
 	const auto auction = !!auctionState;
 	const auto limited = stars
@@ -5019,6 +5097,7 @@ void SendGiftBox(
 		.randomId = base::RandomValue<uint64>(),
 		.upgraded = disallowLimited && (costToUpgrade > 0) && !disallowUnique,
 	};
+	if (initial) state->details = *initial;
 	state->messageAllowed = StarGiftMessageAllowedValue(peer);
 
 	auto cost = state->details.value(
@@ -5069,7 +5148,9 @@ void SendGiftBox(
 		messageInner,
 		box->getDelegate()->outerContainer(),
 		tr::lng_gift_send_message(),
-		QString());
+		state->details.current().text.text);
+	text->setTextWithTags({ state->details.current().text.text,
+		TextUtilities::ConvertEntitiesToTextTags(state->details.current().text.entities) });
 	text->changes() | rpl::on_next([=] {
 		auto now = state->details.current();
 		auto textWithTags = text->getTextWithAppliedMarkdown();
@@ -5083,6 +5164,9 @@ void SendGiftBox(
 	box->setFocusCallback([=] {
 		text->setFocusFast();
 	});
+	if (!auction && !save) Fork::GiftBatch::AddButton(container, box, window, peer,
+		[=] { return state->details.current(); }, [=] { return state->messageAllowed.current(); });
+
 	if (stars) {
 		if (costToUpgrade > 0 && !peer->isSelf() && !disallowLimited && !disallowUnique) {
 			const auto stargiftInfo = stars->info;
@@ -5115,7 +5199,7 @@ void SendGiftBox(
 				container,
 				tr::lng_gift_send_anonymous(),
 				st::settingsButtonNoIcon)
-		)->toggleOn(rpl::single(peer->isSelf()))->toggledValue(
+		)->toggleOn(rpl::single(peer->isSelf() || state->details.current().anonymous))->toggledValue(
 		) | rpl::on_next([=](bool toggled) {
 			auto now = state->details.current();
 			now.anonymous = toggled;
@@ -5200,6 +5284,7 @@ void SendGiftBox(
 		if (!state->messageAllowed.current()) {
 			details.text = {};
 		}
+		if (save) { save(std::move(details)); box->closeBox(); return; }
 		const auto stars = std::get_if<GiftTypeStars>(&details.descriptor);
 		if (stars && stars->info.auction()) {
 			const auto bidBox = window->show(MakeAuctionBidBox({
@@ -5278,7 +5363,9 @@ void SendGiftBox(
 			AddSoldLeftSlider(button, *stars);
 		}
 	}
-	if (stars && stars->info.auction()) {
+	if (save) {
+		button->setText(Fork::Lang::Value(Fork::Lang::Key::GiftGridSave));
+	} else if (stars && stars->info.auction()) {
 		SetAuctionButtonCountdownText(
 			button,
 			AuctionButtonCountdownType::Place,
@@ -5296,6 +5383,20 @@ void SendGiftBox(
 			st::creditsBoxButtonLabel,
 			&st::giftBox.button.textFg);
 	}
+}
+
+void SendGiftBox(not_null<GenericBox*> box,
+	not_null<Window::SessionController*> window, not_null<PeerData*> peer,
+	std::shared_ptr<Api::PremiumGiftCodeOptions> api,
+	const GiftDescriptor &descriptor, rpl::producer<Data::GiftAuctionState> auctionState) {
+	GiftDetailsBox(box, window, peer, std::move(api), descriptor, std::move(auctionState), std::nullopt, nullptr);
+}
+
+void EditCatalogGiftBox(not_null<GenericBox*> box,
+	not_null<Window::SessionController*> window, not_null<PeerData*> peer,
+	GiftSendDetails details, Fn<void(GiftSendDetails)> save) {
+	const auto descriptor = details.descriptor;
+	GiftDetailsBox(box, window, peer, nullptr, descriptor, {}, std::move(details), std::move(save));
 }
 
 std::shared_ptr<Data::GiftUpgradeResult> FindUniqueGift(

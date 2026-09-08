@@ -88,7 +88,6 @@ PRIVATE
     desktop-app::lib_webview
     desktop-app::lib_ffmpeg
     desktop-app::lib_stripe
-    desktop-app::external_rlottie
     desktop-app::external_zlib
     desktop-app::external_minizip
     desktop-app::external_kcoreaddons
@@ -479,6 +478,8 @@ PRIVATE
     calls/calls_panel.h
     calls/calls_panel_background.cpp
     calls/calls_panel_background.h
+    calls/calls_rate_call.cpp
+    calls/calls_rate_call.h
     calls/calls_signal_bars.cpp
     calls/calls_signal_bars.h
     calls/calls_top_bar.cpp
@@ -615,12 +616,32 @@ PRIVATE
     fork/fork_lang.h
     fork/ghost_mode.cpp
     fork/ghost_mode.h
+    fork/ghost_notifications.cpp
+    fork/ghost_notifications.h
+    fork/scheduled_preview.cpp
+    fork/scheduled_preview.h
     fork/message_marks.cpp
     fork/message_marks.h
+    fork/message_time_format.h
     fork/message_store.cpp
     fork/message_store.h
     fork/settings_ghost.cpp
     fork/settings_ghost.h
+    fork/settings_rows.h
+    fork/seetg/seetg_market_previews.cpp
+    fork/seetg/seetg_market_previews.h
+    fork/seetg/seetg_gift_tabs.cpp
+    fork/seetg/seetg_gift_tabs.h
+    fork/seetg/seetg_gift_details.cpp
+    fork/seetg/seetg_gift_details.h
+    fork/seetg/seetg_hidden_shop.cpp
+    fork/seetg/seetg_hidden_shop.h
+    fork/gift_grid.cpp
+    fork/gift_grid.h
+    fork/gift_batch.cpp
+    fork/gift_batch.h
+    fork/gift_batch_policy.h
+    fork/account_limits.h
     fork/settings_marks.cpp
     fork/settings_marks.h
     fork/settings_seegram.cpp
@@ -639,6 +660,10 @@ PRIVATE
     fork/spy_mode.h
     fork/spy_ui.cpp
     fork/spy_ui.h
+    fork/expired_media.cpp
+    fork/expired_media.h
+    fork/self_destruct_badge.cpp
+    fork/self_destruct_badge.h
     fork/update_feed.h
     fork/seetg/seetg_badge_icons.cpp
     fork/seetg/seetg_badge_icons.h
@@ -648,6 +673,8 @@ PRIVATE
     fork/seetg/seetg_verification_icon.h
     fork/seetg/seetg_api.cpp
     fork/seetg/seetg_api.h
+    fork/seetg/seetg_reactions.cpp
+    fork/seetg/seetg_reactions.h
     fork/seetg/seetg_auth.cpp
     fork/seetg/seetg_auth.h
     fork/seetg/seetg_gifts.cpp
@@ -2003,6 +2030,8 @@ PRIVATE
     storage/storage_domain.h
     storage/storage_facade.cpp
     storage/storage_facade.h
+    storage/storage_folder_archive.cpp
+    storage/storage_folder_archive.h
     storage/storage_media_prepare.cpp
     storage/storage_media_prepare.h
     storage/storage_shared_media.cpp
@@ -2025,12 +2054,18 @@ PRIVATE
     support/support_templates.h
     tde2e/tde2e_integration.cpp
     tde2e/tde2e_integration.h
+    test/test_activation.cpp
+    test/test_activation.h
     test/test_agent.cpp
     test/test_agent.h
+    test/test_box_button.cpp
+    test/test_box_button.h
     test/test_capture.cpp
     test/test_capture.h
     test/test_custom_emoji.cpp
     test/test_custom_emoji.h
+    test/test_gated_stage.cpp
+    test/test_gated_stage.h
     test/test_history_fixtures.cpp
     test/test_history_fixtures.h
     test/test_hover.cpp
@@ -2043,6 +2078,8 @@ PRIVATE
     test/test_layer_root.h
     test/test_log.cpp
     test/test_log.h
+    test/test_log_lines.cpp
+    test/test_log_lines.h
     test/test_menu.cpp
     test/test_menu.h
     test/test_messages.cpp
@@ -2053,13 +2090,19 @@ PRIVATE
     test/test_panel.h
     test/test_probe.cpp
     test/test_probe.h
+    test/test_rpc_retry.cpp
+    test/test_rpc_retry.h
     test/test_runner.cpp
     test/test_runner.h
     test/test_scenario.cpp
     test/test_style.cpp
     test/test_style.h
+    test/test_text_reads.cpp
+    test/test_text_reads.h
     test/test_transfer.cpp
     test/test_transfer.h
+    test/test_via_window.cpp
+    test/test_via_window.h
     test/test_widgets.cpp
     test/test_widgets.h
     ui/boxes/edit_invite_link_session.cpp

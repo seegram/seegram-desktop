@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/settings_spy.h"
 
 #include "fork/fork_lang.h"
+#include "fork/settings_rows.h"
 #include "fork/spy_mode.h"
 #include "settings/settings_common_session.h"
 #include "ui/rp_widget.h"
@@ -27,22 +28,30 @@ using Lang::Key;
 void AddSwitch(
 		not_null<Ui::VerticalLayout*> container,
 		Key text,
-		bool Settings::*field) {
-	const auto button = container->add(object_ptr<Ui::SettingsButton>(
-		container,
-		Lang::Value(text),
-		st::settingsButtonNoIcon));
-	button->toggleOn(Value() | rpl::map([=](const Settings &settings) {
+		bool Settings::*field,
+		std::optional<Key> description = std::nullopt) {
+	const auto value = Value() | rpl::map([=](const Settings &settings) {
 		return settings.*field;
-	}));
-	button->toggledChanges(
-	) | rpl::filter([=](bool toggled) {
-		return (toggled != Current().*field);
-	}) | rpl::on_next([=](bool toggled) {
-		auto settings = Current();
-		settings.*field = toggled;
-		Set(settings);
-	}, button->lifetime());
+	});
+	const auto bind = [=](auto button) {
+		button->toggledChanges(
+		) | rpl::filter([=](bool toggled) {
+			return (toggled != Current().*field);
+		}) | rpl::on_next([=](bool toggled) {
+			auto settings = Current();
+			settings.*field = toggled;
+			Set(settings);
+		}, button->lifetime());
+	};
+	if (description) {
+		bind(SettingsRows::AddToggle(container, Lang::Value(text),
+			Lang::Value(*description), rpl::duplicate(value)));
+	} else {
+		const auto button = container->add(object_ptr<Ui::SettingsButton>(
+			container, Lang::Value(text), st::settingsButtonNoIcon));
+		button->toggleOn(rpl::duplicate(value));
+		bind(button);
+	}
 }
 
 void BuildContent(not_null<Ui::VerticalLayout*> container) {
@@ -54,12 +63,12 @@ void BuildContent(not_null<Ui::VerticalLayout*> container) {
 		&Settings::saveDeletedMessages);
 	AddSwitch(container, Key::SaveEditsHistory, &Settings::saveEditsHistory);
 	Ui::AddSkip(container);
-	Ui::AddDividerText(container, Lang::Value(Key::SpyAboutSaving));
+	SettingsRows::AddDescription(container, Lang::Value(Key::SpyAboutSaving));
 
 	Ui::AddSkip(container);
-	AddSwitch(container, Key::SaveForBots, &Settings::saveForBots);
+	AddSwitch(container, Key::SaveForBots, &Settings::saveForBots, Key::SpyAboutBots);
 	Ui::AddSkip(container);
-	Ui::AddDividerText(container, Lang::Value(Key::SpyAboutBots));
+	AddSwitch(container, Key::PreviewSelfDestructMedia, &Settings::previewSelfDestructMedia, Key::SelfDestructMediaAbout);
 }
 
 class SpySection final : public ::Settings::Section<SpySection> {

@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/media/history_view_document.h"
 
+#include "fork/spy_mode.h"
+
 #include "base/random.h"
 #include "lang/lang_keys.h"
 #include "lottie/lottie_icon.h"
@@ -384,7 +386,7 @@ Document::Document(
 	const auto media = _parent->data()->media();
 	if ((_data->isVoiceMessage() || isRound)
 		&& media
-		&& media->ttlSeconds()) {
+		&& (media->ttlSeconds() && !Fork::Spy::PreviewSelfDestructMedia(media->parent()))) {
 		const auto fullId = _realParent->fullId();
 		if (_parent->delegate()->elementContext() == Context::TTLViewer) {
 			auto lifetime = std::make_shared<rpl::lifetime>();
@@ -475,7 +477,7 @@ void Document::createComponents() {
 	}
 	if (const auto voice = Get<HistoryDocumentVoice>()) {
 		const auto media = _parent->data()->media();
-		voice->seekl = (!media || !media->ttlSeconds())
+		voice->seekl = (!media || !(media->ttlSeconds() && !Fork::Spy::PreviewSelfDestructMedia(media->parent())))
 			? std::make_shared<VoiceSeekClickHandler>(_data, [](FullMsgId) {})
 			: nullptr;
 		if (_transcribedRound) {
@@ -499,7 +501,7 @@ QSize Document::countOptimalSize() {
 		const auto session = &history->session();
 		const auto transcribes = &session->api().transcribes();
 		const auto media = _parent->data()->media();
-		if ((media && media->ttlSeconds())
+		if ((media && (media->ttlSeconds() && !Fork::Spy::PreviewSelfDestructMedia(media->parent())))
 			|| IsHostedInstantViewMedia(_parent)
 			|| _realParent->isScheduled()
 			|| _realParent->isAdminLogEntry()
@@ -817,6 +819,7 @@ void Document::draw(
 
 		const auto hasTtlBadge = _parent->data()->media()
 			&& _parent->data()->media()->ttlSeconds()
+			&& !Fork::Spy::PreviewSelfDestructMedia(_parent->data())
 			&& _openl;
 		const auto ttlRect = hasTtlBadge ? TTLRectFromInner(inner) : QRect();
 
@@ -1710,6 +1713,15 @@ bool Document::updateStatusText() const {
 
 	if (statusSize != _statusSize) {
 		setStatusSize(statusSize, realDuration);
+	}
+	if (_data->uploading() && _data->uploadingData->preparing) {
+		const auto percent = int(base::SafeRound(
+			_data->uploadingData->prepareProgress * 100));
+		_statusText = tr::lng_send_video_preparing(
+			tr::now,
+			lt_progress,
+			QString::number(percent));
+		_statusSize = Ui::FileStatusSizeReady;
 	}
 	return showPause;
 }

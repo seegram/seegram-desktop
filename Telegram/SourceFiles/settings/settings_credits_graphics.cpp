@@ -1,3 +1,6 @@
+#include "fork/seetg/seetg_gift_details.h"
+#include "fork/seetg/seetg_gift_tabs.h"
+#include "fork/seetg/seetg_settings.h"
 /*
 This file is part of Telegram Desktop,
 the official desktop application for the Telegram messaging service.
@@ -1669,7 +1672,7 @@ void GenericCreditsEntryBody(
 
 	const auto content = box->verticalLayout();
 	if (uniqueGift) {
-		AddSkip(content, st::defaultVerticalListSkip * 2);
+		AddSkip(content, Fork::SeeTg::Enabled() ? st::defaultVerticalListSkip : st::defaultVerticalListSkip * 2);
 
 		const auto canCraft = CanCraftGift(session, e);
 		const auto craft = canCraft ? [=] {
@@ -2044,10 +2047,14 @@ void GenericCreditsEntryBody(
 			style::al_top);
 	}
 
-	Ui::AddSkip(content);
+	if (!uniqueGift || !Fork::SeeTg::Enabled()) Ui::AddSkip(content);
 
+	const auto hasGiftTabs = uniqueGift && !upgradeSpinner
+		&& Fork::SeeTg::Enabled() && show->resolveWindow();
+	auto giftInfoContent = content;
+	auto tonLinkAdded = false;
 	const auto addGiftLinkTON = [&] {
-		if (!uniqueGift) {
+		if (!uniqueGift || tonLinkAdded) {
 			return;
 		}
 		const auto address = !uniqueGift->giftAddress.isEmpty()
@@ -2056,9 +2063,10 @@ void GenericCreditsEntryBody(
 		if (address.isEmpty()) {
 			return;
 		}
-		const auto label = box->addRow(
+		tonLinkAdded = true;
+		const auto label = giftInfoContent->add(
 			object_ptr<Ui::FlatLabel>(
-				box,
+				giftInfoContent,
 				tr::lng_gift_in_blockchain(
 					lt_link,
 					tr::lng_gift_in_blockchain_link_arrow(
@@ -2067,18 +2075,18 @@ void GenericCreditsEntryBody(
 						tr::link),
 					tr::marked),
 				st::creditsBoxAboutDivider),
-			style::al_top);
+			st::boxRowPadding, style::al_top);
 		label->setClickHandlerFilter([=](const auto &...) {
 			UrlClickHandler::Open(TonAddressUrl(session, address));
 			return false;
 		});
 	};
 
-	if (starGiftCanManage) {
+	if (starGiftCanManage && !hasGiftTabs) {
 		addGiftLinkTON();
 	}
 
-	Ui::AddSkip(content);
+	if (!uniqueGift || !Fork::SeeTg::Enabled()) Ui::AddSkip(content);
 
 	struct State final {
 		rpl::variable<bool> confirmButtonBusy;
@@ -2208,15 +2216,22 @@ void GenericCreditsEntryBody(
 				}
 			});
 		};
+		if (hasGiftTabs) {
+			giftInfoContent = Fork::SeeTg::GiftTabs::Add(box, content, show, *e.uniqueGift);
+		}
 		AddStarGiftTable(
 			show,
-			content,
+			giftInfoContent,
 			st,
 			e,
 			upgradeSpinner,
 			canConvert ? convert : Fn<void()>(),
 			canUpgrade,
 			canRemoveDetails ? removeDetails : Fn<void(Fn<void()>)>());
+		if (hasGiftTabs) {
+			Ui::AddSkip(giftInfoContent);
+			addGiftLinkTON();
+		}
 	} else {
 		AddCreditsHistoryEntryTable(show, content, st, e);
 		AddSubscriptionEntryTable(show, content, st, s);
@@ -2423,6 +2438,21 @@ void GenericCreditsEntryBody(
 		}, content->lifetime());
 	}
 
+	const auto externalReplacesFooter = uniqueGift && !canBuyResold && !willBusy
+		&& !canUpgrade && !canGiftUpgrade && !showNextToUpgrade
+		&& !e.craftAnotherCallback && !(canToggle && !e.savedToProfile);
+	if (uniqueGift && !externalReplacesFooter) {
+		const auto market = box->addRow(object_ptr<Ui::SlideWrap<Ui::RoundButton>>(
+			box, object_ptr<Ui::RoundButton>(box, rpl::single(QString()),
+				st::giveawayGiftCodeBox.button)));
+		market->toggle(false, anim::type::instant);
+		market->widthValue() | rpl::on_next([=](int width) {
+			market->entity()->setFullWidth(width);
+		}, market->lifetime());
+		Fork::SeeTg::GiftDetails::BuyButton(market->entity(), show,
+			uniqueGift->slug, [=] { market->toggle(true, anim::type::instant); });
+	}
+
 	const auto initButtons = [=] {
 		box->clearButtons();
 		const auto button = box->addButton(std::move(confirmText), [=] {
@@ -2462,6 +2492,9 @@ void GenericCreditsEntryBody(
 		}, showNextToUpgrade
 			? st::giveawayGiftCodeBoxUpgradeNext
 			: st::giveawayGiftCodeBox.button);
+		if (externalReplacesFooter) {
+			Fork::SeeTg::GiftDetails::BuyButton(button, show, uniqueGift->slug);
+		}
 		if (canBuyResold) {
 			if (uniqueGift->onlyAcceptTon || e.giftResaleForceTon) {
 				button->setText(rpl::single(QString()));

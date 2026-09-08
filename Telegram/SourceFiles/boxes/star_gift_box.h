@@ -32,6 +32,7 @@ struct GiftAuctionState;
 
 namespace Info::PeerGifts {
 struct GiftDescriptor;
+struct GiftSendDetails;
 } // namespace Info::PeerGifts
 
 namespace Main {
@@ -78,6 +79,11 @@ class VerticalLayout;
 	not_null<QWidget*> outer,
 	rpl::producer<QString> placeholder,
 	QString current);
+
+[[nodiscard]] object_ptr<RpWidget> MakeCatalogGiftPreview(
+	not_null<QWidget*> parent,
+	not_null<PeerData*> recipient,
+	const Info::PeerGifts::GiftSendDetails &details);
 
 [[nodiscard]] object_ptr<RpWidget> MakeUniqueGiftPreview(
 	not_null<QWidget*> parent,
@@ -205,11 +211,17 @@ struct GiftsListArgs {
 	GiftsListMode mode = GiftsListMode::Send;
 	not_null<PeerData*> peer;
 	rpl::producer<GiftsDescriptor> gifts;
+	rpl::producer<QString> placeholder;
 	std::vector<std::shared_ptr<Data::UniqueGift>> selected;
 	Fn<void()> loadMore;
 	Fn<void(Info::PeerGifts::GiftDescriptor)> handler;
 };
 [[nodiscard]] object_ptr<RpWidget> MakeGiftsList(GiftsListArgs &&args);
+
+void EditCatalogGiftBox(not_null<GenericBox*> box,
+	not_null<Window::SessionController*> window, not_null<PeerData*> peer,
+	Info::PeerGifts::GiftSendDetails details,
+	Fn<void(Info::PeerGifts::GiftSendDetails)> save);
 
 void SendGiftBox(
 	not_null<GenericBox*> box,

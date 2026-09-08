@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/history_inner_widget.h"
 
+#include "fork/scheduled_preview.h"
+
 #include "fork/spy_ui.h"
 
 #include "api/api_polls.h"
@@ -1709,15 +1711,14 @@ void HistoryInner::paintEvent(QPaintEvent *e) {
 			const auto hasTranslation = context.gestureHorizontal.translation
 				&& (context.gestureHorizontal.msgBareId
 					== item->fullId().msg.bare);
+			const auto shift = context.gestureHorizontal.visualTranslation();
 			if (hasTranslation) {
-				p.translate(context.gestureHorizontal.translation, 0);
+				p.translate(shift, 0);
 				update(
 					QRect(
-						st::historyPhotoLeft
-							+ context.gestureHorizontal.translation,
+						st::historyPhotoLeft + std::min(shift, 0),
 						userpicTop,
-						st::msgPhotoSize
-							- context.gestureHorizontal.translation,
+						st::msgPhotoSize + std::abs(shift),
 						st::msgPhotoSize));
 			}
 			if (const auto from = item->displayFrom()) {
@@ -1756,7 +1757,7 @@ void HistoryInner::paintEvent(QPaintEvent *e) {
 				Unexpected("Corrupt forwarded information in message.");
 			}
 			if (hasTranslation) {
-				p.translate(-_gestureHorizontal.translation, 0);
+				p.translate(-shift, 0);
 			}
 		}
 		return true;
@@ -2894,6 +2895,11 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 		return;
 	}
 	_menu = base::make_unique_q<Ui::PopupMenu>(this, st::popupMenuWithIcons);
+	if (Fork::ScheduledPreview::FillMenu(_menu.get(), _dragStateItem, _controller)) {
+		_menu->popup(e->globalPos());
+		e->accept();
+		return;
+	}
 	if (linkUserpicPeerId) {
 		_widget->fillSenderUserpicMenu(
 			_menu.get(),
@@ -3009,6 +3015,7 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 			}, &st::menuIconEdit);
 		}
 		Fork::SpyUi::AddHistoryAction(_menu.get(), item, controller);
+		Fork::SpyUi::AddViewSelfDestructAction(_menu.get(), item, controller);
 		if (session->factchecks().canEdit(item)) {
 			const auto text = item->factcheckText();
 			const auto phrase = text.empty()

@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_bottom_info.h"
 
+#include "fork/scheduled_preview.h"
+
 #include "fork/deleted_messages.h"
 #include "fork/message_marks.h"
 #include "ui/chat/message_bubble.h"
@@ -73,7 +75,7 @@ namespace {
 
 [[nodiscard]] QString FormatEditedDate(QDateTime sent, QDateTime edited) {
 	const auto today = QDateTime::currentDateTime().date();
-	const auto time = QLocale().toString(edited.time(), QLocale::ShortFormat);
+	const auto time = Fork::Marks::FormatTime(edited.time());
 	if (sent.date() == today && edited.date() == today) {
 		return tr::lng_edited_at(tr::now, lt_time, time);
 	}
@@ -167,6 +169,12 @@ TextState BottomInfo::textState(
 		QPoint position) const {
 	const auto item = view->data();
 	auto result = TextState(item);
+	if (QRect(QPoint(), currentSize()).contains(position)) {
+		if (const auto link = Fork::ScheduledPreview::Link(item)) {
+			result.link = link;
+			return result;
+		}
+	}
 	if (const auto link = replayEffectLink(view, position)) {
 		result.link = link;
 		return result;
@@ -502,11 +510,13 @@ void BottomInfo::layoutDateText() {
 		: QString();
 	const auto author = _data.author;
 	const auto prefix = !author.isEmpty() ? u", "_q : QString();
-	const auto date = editedPrimary
+	const auto date = (_data.flags & Data::Flag::ForkScheduled)
+		? Fork::ScheduledPreview::CountdownText(_data.date.toSecsSinceEpoch())
+		: editedPrimary
 		? FormatEditedDate(_data.date, _data.editedDate)
 		: edited + ((_data.flags & Data::Flag::ForwardedDate)
-		? Ui::FormatDateTimeSavedFrom(_data.date)
-		: QLocale().toString(_data.date.time(), QLocale::ShortFormat));
+		? Fork::Marks::FormatSavedFrom(_data.date)
+		: Fork::Marks::FormatTime(_data.date.time()));
 	const auto afterAuthor = prefix + date;
 	const auto afterAuthorWidth = st::msgDateFont->width(afterAuthor);
 	const auto authorWidth = st::msgDateFont->width(author);
@@ -717,7 +727,7 @@ BottomInfo::Data BottomInfoDataFromMessage(not_null<Message*> message) {
 			result.forwardsCount = views->forwardsCount;
 		}
 	}
-	if (item->isSending() || item->hasFailed()) {
+	if (item->isSending() || item->hasFailed() || Fork::ScheduledPreview::Is(item)) {
 		result.flags |= Flag::Sending;
 	}
 	if (item->isEphemeral()
@@ -754,6 +764,11 @@ BottomInfo::Data BottomInfoDataFromMessage(not_null<Message*> message) {
 		if (item->isSilent()) {
 			result.flags |= Flag::Silent;
 		}
+	}
+	if (Fork::ScheduledPreview::Is(item)) {
+		result.flags |= Flag::ForkScheduled;
+		result.date = QDateTime::fromSecsSinceEpoch(Fork::ScheduledPreview::Deadline(item));
+		return result;
 	}
 	if (!forwarded) {
 		return result;

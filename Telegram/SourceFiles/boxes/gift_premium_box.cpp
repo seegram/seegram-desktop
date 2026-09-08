@@ -1,3 +1,5 @@
+#include "fork/seetg/seetg_gift_details.h"
+#include "fork/seetg/seetg_settings.h"
 /*
 This file is part of Telegram Desktop,
 the official desktop application for the Telegram messaging service.
@@ -1727,11 +1729,12 @@ void AddStarGiftTable(
 			tr::lng_gift_unique_status_non(tr::marked));
 	}
 	if (unique) {
-		if (unique->value) {
+		if (unique->value || Fork::SeeTg::Enabled(Fork::SeeTg::Feature::GiftDetails)) {
 			AddTableRow(
 				table,
 				tr::lng_gift_unique_value(),
-				MakeUniqueGiftValueValue(table, show, entry, st));
+				Fork::SeeTg::GiftDetails::Value(table, show, unique->slug,
+					unique->value ? MakeUniqueGiftValueValue(table, show, entry, st) : object_ptr<Ui::RpWidget>(nullptr)));
 		}
 		const auto &original = unique->originalDetails;
 		if (original.recipientId) {
