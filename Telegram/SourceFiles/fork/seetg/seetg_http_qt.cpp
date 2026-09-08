@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/seetg/seetg_http.h"
+#include "fork/disguise.h"
 
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
@@ -19,8 +20,12 @@ namespace {
 	return manager;
 }
 
-void Finish(not_null<QNetworkReply*> reply, const Callback &done) {
+void Finish(not_null<QNetworkReply*> reply, const Callback &done, uint64 generation) {
 	reply->deleteLater();
+	if (generation != Disguise::ScopeGeneration()) {
+		done({ .error = u"integration disabled"_q });
+		return;
+	}
 	auto result = Response();
 	result.status = reply->attribute(
 		QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -34,12 +39,24 @@ void Finish(not_null<QNetworkReply*> reply, const Callback &done) {
 
 } // namespace
 
+void CancelAll() {
+	const auto replies = Manager().findChildren<QNetworkReply*>();
+	for (const auto reply : replies) {
+		reply->abort();
+	}
+}
+
 void Post(
 		const QString &url,
 		const std::vector<Header> &headers,
 		const QByteArray &body,
 		crl::time timeout,
 		Callback done) {
+	if (Disguise::Clean()) {
+		done({ .error = u"integration disabled"_q });
+		return;
+	}
+	const auto generation = Disguise::ScopeGeneration();
 	auto request = QNetworkRequest(QUrl(url));
 	for (const auto &header : headers) {
 		request.setRawHeader(header.name, header.value);
@@ -47,7 +64,7 @@ void Post(
 	request.setTransferTimeout(timeout);
 	const auto reply = Manager().post(request, body);
 	QObject::connect(reply, &QNetworkReply::finished, [=] {
-		Finish(reply, done);
+		Finish(reply, done, generation);
 	});
 }
 
@@ -56,6 +73,11 @@ void Get(const QString &url, crl::time timeout, Callback done) {
 }
 
 void Get(const QString &url, const std::vector<Header> &headers, crl::time timeout, Callback done) {
+	if (Disguise::Clean()) {
+		done({ .error = u"integration disabled"_q });
+		return;
+	}
+	const auto generation = Disguise::ScopeGeneration();
 	auto request = QNetworkRequest(QUrl(url));
 	// Qt 5 defaults to manual redirects; Telegram userpics redirect to a CDN.
 	request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
@@ -66,7 +88,7 @@ void Get(const QString &url, const std::vector<Header> &headers, crl::time timeo
 	}
 	const auto reply = Manager().get(request);
 	QObject::connect(reply, &QNetworkReply::finished, [=] {
-		Finish(reply, done);
+		Finish(reply, done, generation);
 	});
 }
 

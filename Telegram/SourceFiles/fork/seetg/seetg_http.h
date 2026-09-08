@@ -35,6 +35,8 @@ struct Response {
 
 using Callback = Fn<void(Response)>;
 
+void CancelAll();
+
 void Post(
 	const QString &url,
 	const std::vector<Header> &headers,
