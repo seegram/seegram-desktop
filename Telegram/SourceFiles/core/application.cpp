@@ -1349,6 +1349,9 @@ void Application::maybeLockByPasscode() {
 }
 
 void Application::unlockPasscode() {
+	if (!_domain->local().applyPendingProfile()) {
+		return;
+	}
 	clearPasscodeLock();
 	enumerateWindows([&](not_null<Window::Controller*> w) {
 		w->clearPasscodeLock();

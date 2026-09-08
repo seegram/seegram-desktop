@@ -714,7 +714,12 @@ void PasscodeBox::save(bool force) {
 		closeReplacedBy();
 		const auto weak = base::make_weak(this);
 		cSetPasscodeBadTries(0);
-		_session->domain().local().setPasscode(pwd.toUtf8());
+		if (!_session->domain().local().setPasscode(pwd.toUtf8())) {
+			_newPasscode->showError();
+			_newError = tr::lng_passcode_is_same(tr::now);
+			update();
+			return;
+		}
 		Core::App().localPasscodeChanged();
 		if (weak) {
 			closeBox();
