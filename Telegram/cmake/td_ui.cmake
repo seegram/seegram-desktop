@@ -16,6 +16,7 @@ set(style_files
     fork/seetg/seetg_comments.style
     fork/account_profiles.style
     fork/about_seegram.style
+    fork/disguise.style
     fork/gift_grid.style
     ui/td_common.style
     ui/filter_icons.style
