@@ -37,6 +37,7 @@ struct Settings {
 [[nodiscard]] Icon TrayChoice();
 [[nodiscard]] const QImage &TrayImage();
 [[nodiscard]] QImage TrayMonochrome(QSize size, QColor color);
+[[nodiscard]] QImage TrayMonochrome(Icon icon, QSize size, QColor color);
 [[nodiscard]] bool ValidName(const QString &name);
 void Apply(bool clean, const Settings &settings);
 void BindWindow(not_null<Window::MainWindow*> window);
