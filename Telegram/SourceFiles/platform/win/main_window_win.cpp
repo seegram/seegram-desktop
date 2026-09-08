@@ -800,6 +800,7 @@ void MainWindow::destroyCachedIcons() {
 }
 
 MainWindow::~MainWindow() {
+	Fork::Disguise::ClearNativeIcon(this);
 	WTSUnRegisterSessionNotification(_hWnd);
 	_private->viewSettings.Reset();
 	destroyCachedIcons();
