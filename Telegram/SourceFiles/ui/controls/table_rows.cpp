@@ -91,7 +91,8 @@ ValueWithSmallButton MakeValueWithSmallButton(
 		not_null<RpWidget*> value,
 		rpl::producer<QString> buttonText,
 		Fn<void(not_null<RpWidget*> button)> handler,
-		int topSkip) {
+		int topSkip,
+		bool wrapButton) {
 	class MarginedWidget final : public RpWidget {
 	public:
 		using RpWidget::RpWidget;
@@ -115,6 +116,32 @@ ValueWithSmallButton MakeValueWithSmallButton(
 		});
 	} else {
 		button->setAttribute(Qt::WA_TransparentForMouseEvents);
+	}
+	if (wrapButton) {
+		const auto updating = raw->lifetime().make_state<bool>(false);
+		rpl::combine(
+			raw->widthValue(),
+			button->naturalWidthValue(),
+			value->naturalWidthValue(),
+			value->heightValue()
+		) | rpl::on_next([=](int width, int buttonWidth, int valueWidth, int) {
+			if (*updating) return;
+			*updating = true;
+			const auto gap = st::normalFont->spacew;
+			const auto stacked = valueWidth + gap + buttonWidth > width;
+			value->resizeToNaturalWidth(std::max(width, 1));
+			button->resizeToNaturalWidth(std::max(width, 1));
+			value->moveToLeft(0, 0, width);
+			button->moveToLeft(stacked ? 0 : rect::right(value) + gap,
+				stacked ? value->height() + gap : topSkip
+					+ table->st().defaultValue.style.font->ascent
+					- table->st().smallButton.style.font->ascent, width);
+			raw->resize(width, std::max(value->height(),
+				button->y() + button->height())
+				+ st::giveawayGiftCodePeerMargin.bottom());
+			*updating = false;
+		}, raw->lifetime());
+		return { .widget = std::move(result), .button = button };
 	}
 	rpl::combine(
 		raw->widthValue(),

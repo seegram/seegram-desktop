@@ -692,7 +692,7 @@ void AddUniqueGiftPropertyRows(
 		table,
 		label,
 		tr::lng_gift_unique_value_learn_more(),
-		handler).widget;
+		handler, 0, true).widget;
 }
 
 void AddTable(
