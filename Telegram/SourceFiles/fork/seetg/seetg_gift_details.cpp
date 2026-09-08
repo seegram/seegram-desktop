@@ -231,7 +231,7 @@ object_ptr<Ui::RpWidget> Value(not_null<Ui::TableLayout*> parent, std::shared_pt
 		const auto price = Ui::CreateChild<TonAmount>(parent, u"~"_q + Amount(amount), parent->st().defaultValue);
 		auto value = Ui::MakeValueWithSmallButton(parent, price,
 			Lang::Value(Key::SeeTgEstimateHow) | rpl::map([](const QString &text) { return text.toLower(); }),
-			[=](not_null<Ui::RpWidget*>) { Explain(show, estimate); });
+			[=](not_null<Ui::RpWidget*>) { Explain(show, estimate); }, 0, true);
 		body->add(Branded(body, std::move(value.widget), u"seetgbot"_q));
 		wrap->toggle(true, anim::type::instant);
 	}));
