@@ -14,7 +14,7 @@ jobs:
   windows:
     name: Check Windows deployment connection
     runs-on: [self-hosted, Windows, X64, seegram]
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - name: Diagnose SSH without exposing connection details
         shell: pwsh
@@ -64,3 +64,64 @@ jobs:
             else { 'connection_closed' }
           Write-Host ('SSH_RESULT=' + $reason)
           if ($code -ne 0) { exit 1 }
+
+      - name: Compare file transfer clients in the release environment
+        shell: pwsh
+        env:
+          SEEGRAM_SSH_KEY: ${{ secrets.SEEGRAM_SSH_KEY }}
+          SEEGRAM_UPDATE_SERVER: ${{ secrets.SEEGRAM_UPDATE_SERVER }}
+          SEEGRAM_UPDATE_ROOT: ${{ secrets.SEEGRAM_UPDATE_ROOT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          $key = $env:SEEGRAM_SSH_KEY
+          if (-not [IO.Path]::IsPathRooted($key)) { $key = Join-Path $HOME $key }
+          $server = $env:SEEGRAM_UPDATE_SERVER
+          $destination = $env:SEEGRAM_UPDATE_ROOT.TrimEnd('/')
+          $before = (Get-Command ssh.exe).Source
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          Import-Module (Join-Path $vs 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
+          $ssh = (Get-Command ssh.exe).Source
+          $scp = (Get-Command scp.exe).Source
+          Write-Host ('SSH_PATH_CHANGED_BY_VS=' + ($before -ne $ssh))
+          Write-Host ('SSH_SCP_SAME_DIRECTORY=' + ((Split-Path $ssh) -eq (Split-Path $scp)))
+          $options = @('-o','BatchMode=yes','-o','IdentitiesOnly=yes','-o','IdentityAgent=none','-o','ConnectTimeout=15','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=3','-i',$key)
+          $id = [guid]::NewGuid().ToString('N')
+          $source = Join-Path $env:TEMP ('seegram-transfer-probe-' + $id)
+          [IO.File]::WriteAllBytes($source, [byte[]]::new(1MB))
+          $probes = @(
+            @{ Name = 'default'; Extra = @() },
+            @{ Name = 'pinned'; Extra = @('-S',$ssh) },
+            @{ Name = 'legacy'; Extra = @('-O','-S',$ssh) }
+          )
+          try {
+            foreach ($probe in $probes) {
+              $remote = "$destination/packages/.seegram-probe-$id-$($probe.Name)"
+              $extra = $probe.Extra
+              $started = Get-Date
+              $output = @(& $scp -vv @extra @options $source "${server}:$remote" 2>&1)
+              $code = $LASTEXITCODE
+              $detail = ($output | ForEach-Object { $_.ToString() }) -join "`n"
+              $reason = if ($code -eq 0) { 'ok' }
+                elseif ($detail -match 'Host key verification failed|REMOTE HOST IDENTIFICATION') { 'host_key_rejected' }
+                elseif ($detail -match 'No such file or directory') { 'path_missing' }
+                elseif ($detail -match 'Permission denied|No more authentication methods') { 'permission_denied' }
+                elseif ($detail -match 'subsystem request failed') { 'sftp_subsystem_failed' }
+                elseif ($detail -match 'Connection timed out|Operation timed out') { 'timeout' }
+                elseif ($detail -match 'CreateProcess|posix_spawn|spawn.*failed') { 'ssh_process_start_failed' }
+                else { 'connection_closed' }
+              Write-Host ("TRANSFER_{0}={1}; milliseconds={2}; authenticated={3}; sftp_requested={4}; key_offered={5}" -f $probe.Name,$reason,[int]((Get-Date)-$started).TotalMilliseconds,[bool]($detail -match 'Authenticated to'),[bool]($detail -match 'Sending subsystem: sftp'),[bool]($detail -match 'Offering public key'))
+              $markers = @('Bad configuration option','unknown option','invalid argument','Could not resolve','No such identity','invalid format','UNPROTECTED PRIVATE KEY','Connection refused','Connection reset','kex_exchange_identification','read_passphrase','Bad owner or permissions')
+              foreach ($marker in $markers) { if ($detail -match [regex]::Escape($marker)) { Write-Host ("TRANSFER_{0}_DETAIL={1}" -f $probe.Name,$marker) } }
+            }
+          } finally {
+            Remove-Item -LiteralPath $source -Force -ErrorAction SilentlyContinue
+            $paths = @($probes | ForEach-Object { "$destination/packages/.seegram-probe-$id-$($_.Name)" })
+            $json = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -Compress -InputObject $paths)))
+            $program = "import base64,json,pathlib; [pathlib.Path(p).unlink(missing_ok=True) for p in json.loads(base64.b64decode('$json'))]"
+            $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($program))
+            $discard = @(& $ssh -T @options $server "echo $encoded | base64 -d | python3 -" 2>&1)
+            Write-Host ('PROBE_CLEANUP_OK=' + ($LASTEXITCODE -eq 0))
+          }
