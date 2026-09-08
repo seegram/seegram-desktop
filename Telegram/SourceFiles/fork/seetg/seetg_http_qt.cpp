@@ -57,6 +57,9 @@ void Get(const QString &url, crl::time timeout, Callback done) {
 
 void Get(const QString &url, const std::vector<Header> &headers, crl::time timeout, Callback done) {
 	auto request = QNetworkRequest(QUrl(url));
+	// Qt 5 defaults to manual redirects; Telegram userpics redirect to a CDN.
+	request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+		QNetworkRequest::NoLessSafeRedirectPolicy);
 	request.setTransferTimeout(timeout);
 	for (const auto &header : headers) {
 		request.setRawHeader(header.name, header.value);

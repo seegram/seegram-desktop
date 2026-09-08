@@ -172,6 +172,39 @@ void PlaceSmallButtonAfterText(
 		width);
 }
 
+// Puts the button after the value while both fit, below it otherwise.
+// Subscribed after WrapValueWithSmallButton's height tracking, so the
+// height set here, which includes a stacked button, is the one that stays.
+void PlaceSmallButtonWrapping(
+		not_null<TableLayout*> table,
+		not_null<RpWidget*> raw,
+		not_null<RpWidget*> value,
+		not_null<RoundButton*> button,
+		int topSkip) {
+	const auto updating = raw->lifetime().make_state<bool>(false);
+	rpl::combine(
+		raw->widthValue(),
+		button->naturalWidthValue(),
+		value->naturalWidthValue(),
+		value->heightValue()
+	) | rpl::on_next([=](int width, int buttonWidth, int valueWidth, int) {
+		if (*updating) return;
+		*updating = true;
+		const auto gap = st::normalFont->spacew;
+		const auto stacked = valueWidth + gap + buttonWidth > width;
+		value->resizeToNaturalWidth(std::max(width, 1));
+		button->resizeToNaturalWidth(std::max(width, 1));
+		value->moveToLeft(0, 0, width);
+		button->moveToLeft(stacked ? 0 : rect::right(value) + gap,
+			stacked ? value->height() + gap : SmallButtonTop(table, topSkip),
+			width);
+		raw->resize(width, std::max(value->height(),
+			button->y() + button->height())
+			+ st::giveawayGiftCodePeerMargin.bottom());
+		*updating = false;
+	}, raw->lifetime());
+}
+
 } // namespace
 
 ValueWithSmallButton MakeValueWithSmallButton(
@@ -179,7 +212,8 @@ ValueWithSmallButton MakeValueWithSmallButton(
 		not_null<RpWidget*> value,
 		rpl::producer<QString> buttonText,
 		Fn<void(not_null<RpWidget*> button)> handler,
-		int topSkip) {
+		int topSkip,
+		bool wrapButton) {
 	auto result = WrapValueWithSmallButton(
 		table,
 		value,
@@ -187,6 +221,10 @@ ValueWithSmallButton MakeValueWithSmallButton(
 		std::move(handler));
 	const auto raw = result.widget.data();
 	const auto button = result.button;
+	if (wrapButton) {
+		PlaceSmallButtonWrapping(table, raw, value, button, topSkip);
+		return result;
+	}
 	rpl::combine(
 		raw->widthValue(),
 		button->widthValue(),
