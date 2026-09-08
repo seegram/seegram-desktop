@@ -248,7 +248,7 @@ void BatchBox(not_null<Ui::GenericBox*> box,
 				}
 			});
 	});
-	draft->pay = pay.get();
+	draft->pay = pay.data();
 	box->addButton(tr::lng_cancel(), [=] { box->closeBox(); });
 	box->boxClosing() | rpl::on_next([=] {
 		if (draft->run) draft->run->cancelled = true;
