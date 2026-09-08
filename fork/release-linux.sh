@@ -101,6 +101,21 @@ fi
 # -u so that everything the build writes into the tree stays owned by the
 # invoking user; a root-owned out/ is a mess to clear afterwards and would
 # break the next run's git status check.
+# Library paths cached by CMake belong to one dependency image.
+# Keep object files, but rediscover dependencies whenever the image changes.
+IMAGE_ID="$(docker image inspect "$IMAGE" --format '{{.Id}}')"
+IMAGE_STAMP="out/.seegram-linux-image"
+mkdir -p out
+if [ ! -f "$IMAGE_STAMP" ] || [ "$(cat "$IMAGE_STAMP")" != "$IMAGE_ID" ]; then
+	if [ -f out/CMakeCache.txt ]; then
+		echo "==> dependency image changed; refreshing CMake cache"
+		CACHE_BACKUP="$(mktemp out/CMakeCache.previous.XXXXXX)"
+		cp out/CMakeCache.txt "$CACHE_BACKUP"
+		rm out/CMakeCache.txt
+	fi
+	printf '%s\n' "$IMAGE_ID" > "$IMAGE_STAMP"
+fi
+
 echo "==> building in $IMAGE"
 BUILD_LOG="$(mktemp)"
 if ! docker run --rm \
