@@ -1,25 +1,15 @@
 #include "fork/disguise.h"
 
-#include "base/platform/win/base_windows_winrt.h"
+#include "fork/disguise_shell_win.h"
 #include "platform/win/windows_app_user_model_id.h"
 #include "window/main_window.h"
 
 #include <crl/crl_async.h>
-#include <QtCore/QBuffer>
-#include <QtCore/QCryptographicHash>
 #include <QtCore/QDirIterator>
-#include <QtGui/QImage>
-#include <array>
+#include <QtCore/QSaveFile>
 #include <atomic>
 #include <mutex>
-#include <propkey.h>
-#include <propvarutil.h>
-#include <shellapi.h>
 #include <shlobj.h>
-
-namespace Platform {
-void WriteIco(const QString &path, std::vector<QImage> images);
-} // namespace Platform
 
 namespace Fork::Disguise {
 namespace {
@@ -32,37 +22,36 @@ struct ShortcutState {
 const auto Shortcuts = std::make_shared<ShortcutState>();
 
 QString ShellIconPath() {
-	static auto cachedKey = qint64(0);
+	static auto prepared = std::optional<Icon>();
 	static auto cachedPath = QString();
-	const auto &image = Image();
-	if (image.isNull()) {
-		return {};
-	} else if (cachedKey == image.cacheKey() && QFile::exists(cachedPath)) {
+	const auto choice = AppChoice();
+	if (prepared == choice && QFile::exists(cachedPath)) {
 		return cachedPath;
 	}
-	auto bytes = QByteArray();
-	auto buffer = QBuffer(&bytes);
-	if (!image.save(&buffer, "PNG")) {
+	const auto name = choice == Icon::Telegram ? u"telegram"_q : u"seegram"_q;
+	auto resource = QFile(u":/seegram/"_q + name + u".ico"_q);
+	if (!resource.open(QIODevice::ReadOnly)) {
 		return {};
 	}
-	const auto hash = QCryptographicHash::hash(
-		bytes, QCryptographicHash::Sha256).toHex();
-	const auto path = cWorkingDir() + u"tdata/icons/"_q
-		+ QString::fromLatin1(hash) + u".ico"_q;
-	if (!QFile::exists(path)) {
-		auto images = std::vector<QImage>();
-		for (const auto size : { 16, 24, 32, 48, 64, 128, 256 }) {
-			images.push_back(image.scaled(size, size,
-				Qt::KeepAspectRatio, Qt::SmoothTransformation));
-		}
-		const auto staging = path + u".new"_q;
-		Platform::WriteIco(staging, std::move(images));
-		if (!QFileInfo(staging).size() || !QFile::rename(staging, path)) {
-			QFile::remove(staging);
+	const auto bytes = resource.readAll();
+	if (bytes.isEmpty()) {
+		return {};
+	}
+	const auto path = cWorkingDir() + u"tdata/SeeGram-"_q + name + u".ico"_q;
+	auto existing = QFile(path);
+	const auto matches = existing.open(QIODevice::ReadOnly)
+		&& existing.readAll() == bytes;
+	existing.close();
+	if (!matches) {
+		auto output = QSaveFile(path);
+		if (!QDir().mkpath(QFileInfo(path).absolutePath())
+			|| !output.open(QIODevice::WriteOnly)
+			|| output.write(bytes) != bytes.size()
+			|| !output.commit()) {
 			return {};
 		}
 	}
-	cachedKey = image.cacheKey();
+	prepared = choice;
 	cachedPath = path;
 	return path;
 }
@@ -74,54 +63,9 @@ QString KnownFolder(REFKNOWNFOLDERID id) {
 	return SUCCEEDED(result) ? QString::fromWCharArray(path) : QString();
 }
 
-bool SetProperty(
-		not_null<IPropertyStore*> store,
-		const PROPERTYKEY &key,
-		const std::wstring &text) {
-	auto value = PROPVARIANT();
-	if (FAILED(InitPropVariantFromString(text.c_str(), &value))) {
-		return false;
-	}
-	const auto guard = gsl::finally([&] { PropVariantClear(&value); });
-	return SUCCEEDED(store->SetValue(key, value));
-}
-
-bool UpdateShortcut(
-		const QString &path,
-		const std::wstring &icon,
-		Platform::AppUserModelId::UniqueFileId executableId) {
-	const auto link = base::WinRT::TryCreateInstance<IShellLinkW>(CLSID_ShellLink);
-	if (!link) {
-		return false;
-	}
-	const auto file = link.try_as<IPersistFile>();
-	const auto nativePath = QDir::toNativeSeparators(path).toStdWString();
-	if (!file || FAILED(file->Load(nativePath.c_str(), STGM_READWRITE))) {
-		return false;
-	}
-	auto target = std::array<wchar_t, 32768>();
-	if (FAILED(link->GetPath(target.data(), int(target.size()), nullptr, SLGP_RAWPATH))
-		|| Platform::AppUserModelId::GetUniqueFileId(target.data()) != executableId) {
-		return false;
-	}
-	auto current = std::array<wchar_t, 32768>();
-	auto index = 0;
-	if (SUCCEEDED(link->GetIconLocation(current.data(), int(current.size()), &index))
-		&& !index && icon == current.data()) {
-		return false;
-	}
-	if (FAILED(link->SetIconLocation(icon.c_str(), 0))
-		|| FAILED(file->Save(nativePath.c_str(), TRUE))) {
-		return false;
-	}
-	SHChangeNotify(SHCNE_UPDATEITEM, SHCNF_PATHW | SHCNF_FLUSHNOWAIT,
-		nativePath.c_str(), nullptr);
-	return true;
-}
-
 void UpdateShortcuts(
 		const QString &iconPath,
-		Platform::AppUserModelId::UniqueFileId executableId,
+		Shell::FileIdentity executableId,
 		const std::shared_ptr<ShortcutState> &state,
 		uint64 revision) {
 	const auto lock = std::lock_guard(state->mutex);
@@ -144,7 +88,6 @@ void UpdateShortcuts(
 		roots.push_back(appData
 			+ u"/Microsoft/Internet Explorer/Quick Launch/User Pinned/TaskBar"_q);
 	}
-	auto changed = false;
 	for (const auto &root : roots) {
 		auto entries = QDirIterator(root, { u"*.lnk"_q }, QDir::Files,
 			QDirIterator::Subdirectories);
@@ -152,13 +95,12 @@ void UpdateShortcuts(
 			if (state->revision != revision) {
 				return;
 			}
-			changed = UpdateShortcut(entries.next(), icon, executableId) || changed;
+			const auto path = QDir::toNativeSeparators(entries.next()).toStdWString();
+			Shell::UpdateShortcutIcon(path, icon, executableId);
 		}
 	}
-	if (changed) {
-		SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST | SHCNF_FLUSHNOWAIT,
-			nullptr, nullptr);
-	}
+	SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST | SHCNF_FLUSHNOWAIT,
+		nullptr, nullptr);
 }
 
 } // namespace
@@ -172,37 +114,24 @@ void RefreshNativeIcon(not_null<Window::MainWindow*> window) {
 		return;
 	}
 	const auto hwnd = reinterpret_cast<HWND>(window->winId());
-	auto store = winrt::com_ptr<IPropertyStore>();
-	if (SUCCEEDED(SHGetPropertyStoreForWindow(hwnd, IID_PPV_ARGS(store.put())))) {
-		if (SetProperty(store.get(), PKEY_AppUserModel_RelaunchIconResource,
-				QDir::toNativeSeparators(path).toStdWString() + L",0")
-			&& SetProperty(store.get(), PKEY_AppUserModel_ID,
-				Platform::AppUserModelId::Id())) {
-			store->Commit();
-		}
-	}
-	static auto previous = QString();
-	if (previous == path) {
+	if (!Shell::UpdateTaskbarIcon(hwnd, Platform::AppUserModelId::Id(),
+		QDir::toNativeSeparators(path).toStdWString())) {
 		return;
 	}
-	previous = path;
+	static auto previous = uint64(0);
+	if (previous == Generation()) {
+		return;
+	}
+	previous = Generation();
 	const auto state = Shortcuts;
 	const auto revision = ++state->revision;
-	const auto executableId = Platform::AppUserModelId::MyExecutablePathId();
+	const auto executableId = Shell::IdentifyFile(
+		Platform::AppUserModelId::MyExecutablePath());
 	crl::async([=] { UpdateShortcuts(path, executableId, state, revision); });
 }
 
 void ClearNativeIcon(not_null<Window::MainWindow*> window) {
-	const auto hwnd = reinterpret_cast<HWND>(window->internalWinId());
-	if (!hwnd) {
-		return;
-	}
-	auto store = winrt::com_ptr<IPropertyStore>();
-	if (SUCCEEDED(SHGetPropertyStoreForWindow(hwnd, IID_PPV_ARGS(store.put())))) {
-		const auto empty = PROPVARIANT();
-		store->SetValue(PKEY_AppUserModel_RelaunchIconResource, empty);
-		store->SetValue(PKEY_AppUserModel_ID, empty);
-	}
+	Shell::ClearTaskbarIcon(reinterpret_cast<HWND>(window->internalWinId()));
 }
 
 } // namespace Fork::Disguise

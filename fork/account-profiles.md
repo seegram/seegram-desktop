@@ -55,14 +55,27 @@ then preserves an existing custom Finder icon and verifies the signature again.
 A read-only app bundle can only change the running icon. Package identifiers,
 executable names, signatures and local data paths are not renamed.
 
-Windows updates the native window/taskbar icon and exports the selected artwork
-as a persistent ICO with sizes from 16 to 256 pixels. Existing desktop, Start
-menu and pinned taskbar shortcuts are updated only when their target has the
-same file identity as this executable. Shortcut arguments, names and targets
-are preserved. Explorer is notified after each successful update. The signed
-EXE itself is unchanged; its own file icon remains the packaged artwork.
+Windows follows AyuGram Desktop's icon application flow: each choice has a
+bundled, persistent ICO, taskbar relaunch properties are set before `WM_SETICON`,
+matching shortcuts are saved again on selection, and Explorer's icon cache is
+refreshed even when no matching shortcut was found. Existing desktop, Start
+menu and pinned taskbar shortcuts are selected by the executable's file identity;
+shortcut arguments, names and targets are preserved. ICO files are copied
+atomically into `tdata/SeeGram-seegram.ico` and `tdata/SeeGram-telegram.ico`.
+The signed EXE itself is unchanged; its file icon remains the packaged artwork.
 Window titles and icons subscribe to appearance changes, including the first
 successful load of encrypted profile settings.
+
+AyuGram reference: Radolyn, 2026, GPL-3.0-or-later, revision
+`db3b9891cb0b04ebb7d8c0e71ada3bcc669b910a`:
+[icon application](https://github.com/AyuGram/AyuGramDesktop/blob/db3b9891cb0b04ebb7d8c0e71ada3bcc669b910a/Telegram/SourceFiles/ayu/ui/components/icon_picker.cpp),
+[ICO assets](https://github.com/AyuGram/AyuGramDesktop/blob/db3b9891cb0b04ebb7d8c0e71ada3bcc669b910a/Telegram/SourceFiles/ayu/ui/ayu_logo.cpp),
+[shortcut refresh](https://github.com/AyuGram/AyuGramDesktop/blob/db3b9891cb0b04ebb7d8c0e71ada3bcc669b910a/Telegram/SourceFiles/ayu/utils/windows_utils.cpp),
+[taskbar relaunch properties](https://github.com/AyuGram/AyuGramDesktop/blob/db3b9891cb0b04ebb7d8c0e71ada3bcc669b910a/Telegram/SourceFiles/platform/win/main_window_win.cpp).
+The Windows Build Check workflow also compiles the actual Shell helper into a
+standalone native test: Windows decodes both ICOs at every supported size;
+renamed shortcuts switch in both directions while preserving launch parameters;
+foreign targets are rejected; taskbar properties are updated and cleared.
 
 `python3 fork/build-dev-mac.py --build-only` compiles without replacing the
 user's dev app or touching its profile. Use this for intermediate native tests
