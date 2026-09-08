@@ -116,8 +116,25 @@ jobs:
           git fetch --quiet \
             "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" \
             "${{ github.sha }}"
-          git reset --quiet --hard "${{ github.sha }}"
-          git submodule update --quiet --init --recursive
+          python3 - "${{ github.sha }}" <<'PY'
+          import subprocess, sys, time
+          commands = [
+              ['git', 'reset', '--quiet', '--hard', sys.argv[1]],
+              ['git', 'submodule', 'update', '--quiet', '--init', '--recursive'],
+          ]
+          for command in commands:
+              for attempt in range(60):
+                  result = subprocess.run(command, capture_output=True, text=True)
+                  if result.returncode == 0:
+                      break
+                  busy = 'index.lock' in result.stderr and 'File exists' in result.stderr
+                  if not busy or attempt == 59:
+                      sys.stderr.write(result.stderr)
+                      raise SystemExit(result.returncode)
+                  if attempt == 0:
+                      print('Git index is busy; waiting for the current operation.', flush=True)
+                  time.sleep(0.5)
+          PY
           echo "building $(git log -1 --format='%h %s')"
 
       - name: Build, sign and publish
