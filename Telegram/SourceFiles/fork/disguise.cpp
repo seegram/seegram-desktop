@@ -80,8 +80,12 @@ const QImage &Image(Icon icon) {
 	return (icon == Icon::Telegram) ? telegram : seegram;
 }
 
+Icon AppChoice() {
+	return Clean() ? Icon::Telegram : Appearance.icon;
+}
+
 const QImage &Image() {
-	return Image(Clean() ? Icon::Telegram : Appearance.icon);
+	return Image(AppChoice());
 }
 
 Icon TrayChoice() {
