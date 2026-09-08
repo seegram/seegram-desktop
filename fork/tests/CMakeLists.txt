@@ -44,6 +44,10 @@ add_executable(account_limits_tests account_limits_tests.cpp)
 target_include_directories(account_limits_tests PRIVATE "${telegram}/SourceFiles")
 add_test(NAME account_storage_limits COMMAND account_limits_tests)
 
+add_executable(account_profile_policy_tests account_profile_policy_tests.cpp)
+target_include_directories(account_profile_policy_tests PRIVATE "${telegram}/SourceFiles")
+add_test(NAME account_profile_isolation_policy COMMAND account_profile_policy_tests)
+
 add_executable(message_time_tests message_time_tests.cpp)
 target_include_directories(message_time_tests PRIVATE "${telegram}/SourceFiles")
 target_link_libraries(message_time_tests PRIVATE Qt6::Core)
