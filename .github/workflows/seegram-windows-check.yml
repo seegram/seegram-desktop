@@ -51,8 +51,8 @@ jobs:
           cmake --build out --config Release --target Telegram *> $log
           if ($LASTEXITCODE -ne 0) {
             $errors = Select-String -Path $log -Pattern '(?:fatal )?error (?:C|LNK|MSB)\d+:[^\r\n]*'
-            foreach ($error in ($errors | Select-Object -First 15)) {
-              $message = $error.Matches[0].Value -replace '\s*\[.*\]\s*$', ''
+            foreach ($compilerError in ($errors | Select-Object -First 15)) {
+              $message = $compilerError.Matches[0].Value -replace '\s*\[.*\]\s*$', ''
               $message = $message -replace '[A-Za-z]:\\[^\s"'']+', '<local path>'
               Write-Host $message
             }
