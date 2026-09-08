@@ -272,5 +272,22 @@
   "GiftEventNew": "Подарок улучшен",
   "GiftEventUnknown": "Событие подарка",
   "GiftHistoryPriceLabel": "Цена",
-  "GiftHistoryMarketLabel": "Маркет"
+  "GiftHistoryMarketLabel": "Маркет",
+  "DoubleBottom": "Двойное дно",
+  "DoubleBottomAbout": "Основной пароль открывает все аккаунты и эти настройки. Другие пароли открывают только назначенные им аккаунты.",
+  "ProfileMainPassword": "Основной пароль",
+  "ProfileCreate": "Создать группу с паролем",
+  "ProfileName": "Название группы",
+  "ProfilePassword": "Пароль группы",
+  "ProfilePasswordOptional": "Новый пароль (пусто — оставить текущий)",
+  "ProfileRepeat": "Повторите пароль",
+  "ProfileAccounts": "Аккаунты в группе",
+  "ProfileDrag": "Перетащите аккаунт на группу или откройте группу и выберите аккаунты.",
+  "ProfileDelete": "Удалить группу",
+  "ProfileDeleteAbout": "Удалить группу и её пароль? Аккаунты останутся доступны по основному паролю.",
+  "ProfileError": "Выберите хотя бы один аккаунт и укажите пароль, отличающийся от остальных.",
+  "ProfilePasswordNeeded": "Перед созданием групп установите основной локальный пароль.",
+  "ProfileLock": "Заблокировать SeeGram",
+  "ProfileMismatch": "Пароли не совпадают.",
+  "ProfileMainAbout": "Открывает все аккаунты. Введите его на экране блокировки, чтобы управлять группами."
 }

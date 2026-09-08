@@ -11,6 +11,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/about_seegram.h"
 #include "fork/fork_lang.h"
 #include "fork/settings_ghost.h"
+#include "fork/settings_account_profiles.h"
+#include "core/application.h"
+#include "main/main_domain.h"
+#include "storage/storage_domain.h"
 #include "fork/gift_batch.h"
 #include "fork/settings_marks.h"
 #include "fork/settings_seetg.h"
@@ -151,6 +155,10 @@ void BuildContent(
 		Fn<void(::Settings::Type)> showOther) {
 	Ui::AddSkip(container);
 	Ui::AddSubsectionTitle(container, Lang::Value(Key::SettingsPrivacy));
+	if (!Core::App().domain().local().restrictedProfile()) {
+		AddCategory(container, Key::DoubleBottom, st::menuIconLock,
+			AccountProfiles::SectionId(), showOther);
+	}
 	AddCategory(
 		container,
 		Key::GhostMode,

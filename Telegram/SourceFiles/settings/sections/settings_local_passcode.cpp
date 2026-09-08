@@ -40,12 +40,15 @@ namespace {
 
 using namespace Builder;
 
-void SetPasscode(
+bool SetPasscode(
 		not_null<Window::SessionController*> controller,
 		const QString &pass) {
 	cSetPasscodeBadTries(0);
-	controller->session().domain().local().setPasscode(pass.toUtf8());
+	if (!controller->session().domain().local().setPasscode(pass.toUtf8())) {
+		return false;
+	}
 	Core::App().localPasscodeChanged();
+	return true;
 }
 
 } // namespace
@@ -218,7 +221,12 @@ void LocalPasscodeEnter::setupContent() {
 						return;
 					}
 				}
-				SetPasscode(controller(), newText);
+				if (!SetPasscode(controller(), newText)) {
+					newPasscode->showError();
+					error->show();
+					error->setText(tr::lng_passcode_is_same(tr::now));
+					return;
+				}
 				if (isCreate) {
 					if (Platform::IsWindows() || _systemUnlockWithBiometric) {
 						Core::App().settings().setSystemUnlockEnabled(true);
@@ -455,6 +463,9 @@ void BuildManageContent(SectionBuilder &builder) {
 	});
 
 	builder.add([](const WidgetContext &ctx) {
+		if (Core::App().domain().local().hasAccountProfiles()) {
+			return SectionBuilder::WidgetToAdd{};
+		}
 		const auto systemUnlockWrap = ctx.container->add(
 			object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
 				ctx.container,
@@ -657,7 +668,10 @@ base::weak_qptr<Ui::RpWidget> LocalPasscodeManage::createPinnedToBottom(
 			Ui::MakeConfirmBox({
 				.text = tr::lng_settings_passcode_disable_sure(),
 				.confirmed = [=](Fn<void()> &&close) {
-					SetPasscode(controller(), QString());
+					if (!SetPasscode(controller(), QString())) {
+						close();
+						return;
+					}
 					Core::App().settings().setSystemUnlockEnabled(false);
 					Core::App().saveSettingsDelayed();
 

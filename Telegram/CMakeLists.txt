@@ -625,6 +625,10 @@ PRIVATE
     fork/message_time_format.h
     fork/message_store.cpp
     fork/message_store.h
+    fork/settings_account_profiles.cpp
+    fork/settings_account_profiles.h
+    fork/account_profile_policy.h
+    fork/account_profiles.cpp
     fork/settings_ghost.cpp
     fork/settings_ghost.h
     fork/settings_rows.h

@@ -294,7 +294,8 @@ not_null<Main::Account*> Domain::add(MTP::Environment environment) {
 			: std::make_unique<MTP::Config>(environment);
 	}();
 	auto index = 0;
-	while (ranges::contains(_accounts, index, &AccountWithIndex::index)) {
+	while (_local->accountIndexReserved(index)
+		|| ranges::contains(_accounts, index, &AccountWithIndex::index)) {
 		++index;
 	}
 	_accounts.push_back(AccountWithIndex{
@@ -361,6 +362,9 @@ void Domain::watchSession(not_null<Account*> account) {
 	) | rpl::filter([=](Session *session) {
 		return !session;
 	}) | rpl::on_next([=] {
+		if (_switchingProfiles) {
+			return;
+		}
 		scheduleUpdateUnreadBadge();
 		closeAccountWindows(account);
 		if (!Core::Quitting()) {
@@ -393,6 +397,9 @@ void Domain::closeAccountWindows(not_null<Main::Account*> account) {
 }
 
 bool Domain::removePasscodeIfEmpty() {
+	if (_local->hasAccountProfiles() || _switchingProfiles) {
+		return false;
+	}
 	if (_accounts.size() != 1 || _active.current()->sessionExists()) {
 		return false;
 	}
@@ -412,6 +419,9 @@ bool Domain::removePasscodeIfEmpty() {
 }
 
 void Domain::removeRedundantAccounts() {
+	if (_switchingProfiles) {
+		return;
+	}
 	Expects(started());
 
 	for (const auto &one : _accounts) {
@@ -506,7 +516,7 @@ void Domain::activate(not_null<Main::Account*> account) {
 }
 
 void Domain::scheduleWriteAccounts() {
-	if (_writeAccountsScheduled) {
+	if (_writeAccountsScheduled || _switchingProfiles) {
 		return;
 	}
 	_writeAccountsScheduled = true;

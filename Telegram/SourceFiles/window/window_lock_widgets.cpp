@@ -47,7 +47,7 @@ PasscodeAttempt TryPasscode(const QString &passcode) {
 	const auto utf8 = passcode.toUtf8();
 	auto &domain = Core::App().domain();
 	const auto correct = domain.started()
-		? domain.local().checkPasscode(utf8)
+		? domain.local().tryUnlockPasscode(utf8)
 		: (domain.start(utf8) == Storage::StartResult::Success);
 	if (!correct) {
 		cSetPasscodeBadTries(cPasscodeBadTries() + 1);
@@ -128,7 +128,8 @@ PasscodeLockWidget::PasscodeLockWidget(
 	});
 
 	using namespace rpl::mappers;
-	if (Core::App().settings().systemUnlockEnabled()) {
+	if (Core::App().settings().systemUnlockEnabled()
+		&& !Core::App().domain().local().hasAccountProfiles()) {
 		_systemUnlockAvailable = base::SystemUnlockStatus(
 			true
 		) | rpl::map([](base::SystemUnlockAvailability status) {
