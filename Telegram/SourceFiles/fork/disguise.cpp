@@ -19,6 +19,7 @@ namespace Fork::Disguise {
 namespace {
 
 bool CleanMode = true;
+bool AppearanceLoaded = false;
 Settings Appearance;
 uint64 Revision = 0;
 uint64 ScopeRevision = 0;
@@ -123,9 +124,10 @@ bool ValidName(const QString &name) {
 }
 
 void Apply(bool clean, const Settings &settings) {
-	if (CleanMode == clean && Appearance == settings) {
+	if (AppearanceLoaded && CleanMode == clean && Appearance == settings) {
 		return;
 	}
+	AppearanceLoaded = true;
 	if (CleanMode != clean) ++ScopeRevision;
 	CleanMode = clean;
 	Appearance = settings;
@@ -136,6 +138,13 @@ void Apply(bool clean, const Settings &settings) {
 	}
 	QGuiApplication::setApplicationDisplayName(FullName());
 	Updated.fire({});
+}
+
+void BindWindow(not_null<Window::MainWindow*> window) {
+	rpl::single(rpl::empty) | rpl::then(Changes()) | rpl::on_next([=] {
+		window->updateTitle();
+		window->updateWindowIcon();
+	}, window->lifetime());
 }
 
 void RefreshApplication() {
