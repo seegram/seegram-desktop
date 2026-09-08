@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/seetg/seetg_auth.h"
+#include "fork/disguise.h"
 
 #include "apiwrap.h"
 #include "base/unixtime.h"
@@ -190,6 +191,10 @@ void Request(
 		not_null<Main::Session*> session,
 		Fn<void(QString)> done,
 		Fn<void(QString)> fail) {
+	if (Disguise::Clean()) {
+		fail(u"integration disabled"_q);
+		return;
+	}
 	auto &state = StateFor(session);
 	if (!state.loaded) {
 		Load(session, state);
@@ -215,6 +220,22 @@ void Invalidate(not_null<Main::Session*> session) {
 	state.obtainedAt = 0;
 	state.loaded = true;
 	QFile::remove(FilePath(session));
+}
+
+void CancelAll() {
+	auto waiting = std::vector<Waiter>();
+	for (const auto &[session, state] : States) {
+		if (const auto id = base::take(state->requestId)) {
+			session->api().request(id).cancel();
+		}
+		for (auto &waiter : state->waiting) {
+			waiting.push_back(std::move(waiter));
+		}
+		state->waiting.clear();
+	}
+	for (const auto &waiter : waiting) {
+		waiter.fail(u"integration disabled"_q);
+	}
 }
 
 } // namespace Fork::SeeTg::Auth

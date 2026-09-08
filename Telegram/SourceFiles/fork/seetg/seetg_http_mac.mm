@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/seetg/seetg_http.h"
+#include "fork/disguise.h"
 
 #include <crl/crl_on_main.h>
 
@@ -14,7 +15,14 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace Fork::SeeTg::Http {
 namespace {
 
+NSURLSession *Session = nil;
+
 void Send(NSMutableURLRequest *request, Callback done) {
+	if (Disguise::Clean()) {
+		done({ .error = u"integration disabled"_q });
+		return;
+	}
+	const auto generation = Disguise::ScopeGeneration();
 	const auto callback = std::make_shared<Callback>(std::move(done));
 	const auto handler = ^(NSData *data, NSURLResponse *response, NSError *error) {
 		auto result = Response();
@@ -35,10 +43,15 @@ void Send(NSMutableURLRequest *request, Callback done) {
 			result.error = QString::fromNSString(error.localizedDescription);
 		}
 		crl::on_main([=] {
-			(*callback)(result);
+			(*callback)((generation == Disguise::ScopeGeneration()) ? result
+				: Response{ .error = u"integration disabled"_q });
 		});
 	};
-	[[[NSURLSession sharedSession]
+	if (!Session) {
+		Session = [[NSURLSession sessionWithConfiguration:
+			[NSURLSessionConfiguration ephemeralSessionConfiguration]] retain];
+	}
+	[[Session
 		dataTaskWithRequest:request
 		completionHandler:handler] resume];
 }
@@ -54,6 +67,12 @@ void Send(NSMutableURLRequest *request, Callback done) {
 }
 
 } // namespace
+
+void CancelAll() {
+	[Session invalidateAndCancel];
+	[Session release];
+	Session = nil;
+}
 
 void Post(
 		const QString &url,

@@ -359,6 +359,20 @@ enum class Key {
 	ProfileMismatch,
 	ProfileMainAbout,
 
+	ProfileClean,
+	ProfileCleanAbout,
+	DisguiseTitle,
+	DisguiseAbout,
+	DisguiseName,
+	DisguiseNameAbout,
+	DisguiseIcon,
+	DisguiseCleanAbout,
+
+	DisguiseTray,
+	DisguiseTrayFollow,
+
+	ProfilePasswordHint,
+	ProfileAllAccounts,
 	Count,
 };
 

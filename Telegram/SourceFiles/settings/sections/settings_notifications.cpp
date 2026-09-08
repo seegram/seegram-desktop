@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "settings/sections/settings_notifications.h"
+#include "fork/disguise.h"
 
 #include "settings/settings_common_session.h"
 
@@ -495,7 +496,7 @@ void NotificationsCount::prepareNotificationSampleLarge() {
 		p.setPen(st::dialogsNameFg);
 		p.setFont(st::msgNameFont);
 
-		auto notifyTitle = st::msgNameFont->elided(AppName.utf16(), rectForName.width());
+		auto notifyTitle = st::msgNameFont->elided(Fork::Disguise::FullName(), rectForName.width());
 		p.drawText(rectForName.left(), rectForName.top() + st::msgNameFont->ascent, notifyTitle);
 
 		st::notifyClose.icon.paint(p, w - st::notifyClosePos.x() - st::notifyClose.width + st::notifyClose.iconPosition.x(), st::notifyClosePos.y() + st::notifyClose.iconPosition.y(), w);
@@ -733,7 +734,7 @@ NotifyPreview::NotifyPreview(bool nameShown, bool previewShown)
 	_name.setText(
 		st::defaultSubsectionTitle.style,
 		tr::lng_notification_preview_title(tr::now));
-	_title.setText(st::defaultSubsectionTitle.style, AppName.utf16());
+	_title.setText(st::defaultSubsectionTitle.style, Fork::Disguise::FullName());
 
 	_text.setText(
 		st::boxTextStyle,
