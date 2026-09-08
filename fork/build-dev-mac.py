@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build an isolated macOS developer app without touching release outputs."""
+import argparse
 import os
 from pathlib import Path
 import platform
@@ -10,6 +11,9 @@ import tempfile
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--build-only", action="store_true", help="Compile without replacing the user's dev app; for disposable test runs.")
+    options = parser.parse_args()
     if platform.system() != "Darwin":
         raise SystemExit("This script requires macOS")
     root = Path(__file__).resolve().parents[1]
@@ -51,6 +55,9 @@ def main():
     source = build / "Debug/SeeGram.app"
     if not (source / "Contents/MacOS/SeeGram").is_file():
         raise SystemExit("Developer app was not produced")
+    if options.build_only:
+        print(f"Test build: {source}")
+        return
     destination.parent.mkdir(parents=True, exist_ok=True)
     profile.mkdir(parents=True, exist_ok=True)
     # The native portable-mode check also covers restarts without CLI arguments.
@@ -76,6 +83,21 @@ def main():
             plistlib.dump(metadata, f)
         subprocess.run(["codesign", "--force", "--deep", "--sign", "-", str(app)], check=True)
         subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], check=True)
+        # Preserve the user's Finder icon across replacement of the dev bundle.
+        # Add this metadata only after signing and strict packaging validation.
+        custom_icon = destination / "Icon\r"
+        if custom_icon.is_file():
+            finder_info = subprocess.run(
+                ["xattr", "-px", "com.apple.FinderInfo", str(destination)],
+                capture_output=True, text=True,
+            )
+            if finder_info.returncode == 0:
+                subprocess.run(["ditto", str(custom_icon), str(app / "Icon\r")], check=True)
+                subprocess.run([
+                    "xattr", "-wx", "com.apple.FinderInfo",
+                    finder_info.stdout.strip(), str(app),
+                ], check=True)
+                subprocess.run(["codesign", "--verify", "--deep", str(app)], check=True)
         if destination.exists():
             shutil.rmtree(destination)
         app.rename(destination)
