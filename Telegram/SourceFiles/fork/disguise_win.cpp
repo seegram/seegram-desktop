@@ -192,4 +192,17 @@ void RefreshNativeIcon(not_null<Window::MainWindow*> window) {
 	crl::async([=] { UpdateShortcuts(path, executableId, state, revision); });
 }
 
+void ClearNativeIcon(not_null<Window::MainWindow*> window) {
+	const auto hwnd = reinterpret_cast<HWND>(window->internalWinId());
+	if (!hwnd) {
+		return;
+	}
+	auto store = winrt::com_ptr<IPropertyStore>();
+	if (SUCCEEDED(SHGetPropertyStoreForWindow(hwnd, IID_PPV_ARGS(store.put())))) {
+		const auto empty = PROPVARIANT();
+		store->SetValue(PKEY_AppUserModel_RelaunchIconResource, empty);
+		store->SetValue(PKEY_AppUserModel_ID, empty);
+	}
+}
+
 } // namespace Fork::Disguise
