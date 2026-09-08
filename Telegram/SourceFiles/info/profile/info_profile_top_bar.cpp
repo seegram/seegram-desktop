@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/info_profile_top_bar.h"
+#include "fork/seetg/seetg_reactions.h"
 
 #include "fork/seetg/seetg_verifications.h"
 #include "styles/style_seetg_verifications.h"
@@ -528,6 +529,13 @@ TopBar::TopBar(
 
 	setupUniqueBadgeTooltip();
 	setupButtons(controller, descriptor.source);
+	if (!_savedMessages && !_topic && descriptor.source == Source::Profile) {
+		Fork::SeeTg::Reactions::Setup(this, controller, _peer,
+			rpl::combine(_wrap.value(), _progress.value())
+			| rpl::map([](Wrap wrap, float64 progress) {
+				return (wrap == Wrap::Layer || wrap == Wrap::Side) && progress > 0.95;
+			}), _backToggles.value());
+	}
 	setupSwipeBack(controller);
 	setupUserpicButton(controller);
 	if (_hasActions) {

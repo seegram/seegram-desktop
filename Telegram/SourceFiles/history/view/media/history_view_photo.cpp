@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/media/history_view_photo.h"
 
+#include "fork/self_destruct_badge.h"
+
 #include "boxes/send_credits_box.h"
 #include "history/history_item_components.h"
 #include "history/history_item.h"
@@ -468,6 +470,7 @@ void Photo::draw(Painter &p, const PaintContext &context) const {
 			_realParent,
 			context);
 	}
+	Fork::SpyUi::PaintSelfDestructBadge(p, QPoint(paintx, painty), width(), _realParent, context);
 	if (showEnlarge) {
 		auto hq = PainterHighQualityEnabler(p);
 		const auto rect = enlargeRect();
@@ -948,6 +951,7 @@ void Photo::drawGrouped(
 			_realParent,
 			context);
 	}
+	Fork::SpyUi::PaintSelfDestructBadge(p, geometry.topLeft(), width(), _realParent, context);
 }
 
 TextState Photo::getStateGrouped(

@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "storage/storage_domain.h"
+#include "fork/account_limits.h"
 
 #include "core/version.h"
 #include "storage/details/storage_file_utilities.h"
@@ -161,7 +162,7 @@ Domain::StartModernResult Domain::startModern(
 	LOG(("App Info: reading encrypted info..."));
 	auto count = qint32();
 	info.stream >> count;
-	if (count <= 0 || count > Main::Domain::kPremiumMaxAccounts) {
+	if (!Fork::Accounts::ValidStoredCount(count, info.stream.device()->bytesAvailable())) {
 		LOG(("App Error: bad accounts count: %1").arg(count));
 		return StartModernResult::Failed;
 	}
@@ -175,7 +176,7 @@ Domain::StartModernResult Domain::startModern(
 		auto index = qint32();
 		info.stream >> index;
 		if (index >= 0
-			&& index < Main::Domain::kPremiumMaxAccounts
+			&& index < Fork::Accounts::kNoLimit
 			&& tried.emplace(index).second) {
 			auto account = std::make_unique<Main::Account>(
 				_owner,

@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/settings_seetg.h"
 
 #include "fork/fork_lang.h"
+#include "fork/settings_rows.h"
 #include "fork/seetg/seetg_api.h"
 #include "fork/seetg/seetg_auth.h"
 #include "fork/seetg/seetg_settings.h"
@@ -30,43 +31,11 @@ namespace {
 
 using Lang::Key;
 
-void BuildContent(
+void BuildResolveContent(
 		not_null<Ui::VerticalLayout*> container,
 		not_null<Window::SessionController*> controller) {
 	Ui::AddSkip(container);
-	Ui::AddSubsectionTitle(container, Lang::Value(Key::SeeTgTitle));
-
-	const auto toggle = container->add(object_ptr<Ui::SettingsButton>(
-		container,
-		Lang::Value(Key::SeeTgEnabled),
-		st::settingsButtonNoIcon));
-	toggle->toggleOn(EnabledValue());
-	toggle->toggledChanges(
-	) | rpl::filter([](bool toggled) {
-		return (toggled != Enabled());
-	}) | rpl::on_next([](bool toggled) {
-		auto settings = Current();
-		settings.enabled = toggled;
-		Set(settings);
-	}, toggle->lifetime());
-
-	const auto again = container->add(object_ptr<Ui::SettingsButton>(
-		container,
-		Lang::Value(Key::SeeTgSignInAgain),
-		st::settingsButtonNoIcon));
-	again->addClickHandler([=] {
-		const auto session = &controller->session();
-		Auth::Invalidate(session);
-		Api::ClearCache(session);
-		controller->showToast(Lang::Text(Key::SeeTgSignedOut));
-	});
-
-	Ui::AddSkip(container);
-	Ui::AddDividerText(container, Lang::Value(Key::SeeTgAbout));
-
-	Ui::AddSkip(container);
-	Ui::AddSubsectionTitle(container, Lang::Value(Key::SeeTgResolveTitle));
-	Ui::AddDividerText(container, Lang::Value(Key::SeeTgResolveAdvanced));
+	SettingsRows::AddDescription(container, Lang::Value(Key::SeeTgResolveAdvanced));
 	auto modeLabel = Value() | rpl::map([](const Settings &settings) {
 		return (settings.resolve == ResolveMode::ByUsername)
 			? Lang::Text(Key::SeeTgResolveByUsername)
@@ -141,7 +110,71 @@ void BuildContent(
 	}));
 
 	Ui::AddSkip(container);
-	Ui::AddDividerText(container, Lang::Value(Key::SeeTgResolveAbout));
+	SettingsRows::AddDescription(container, Lang::Value(Key::SeeTgResolveAbout));
+}
+
+class ResolveSection final : public ::Settings::Section<ResolveSection> {
+public:
+	ResolveSection(QWidget *parent, not_null<Window::SessionController*> controller)
+	: Section(parent, controller) {
+		const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
+		BuildResolveContent(content, controller);
+		Ui::ResizeFitChild(this, content);
+	}
+	rpl::producer<QString> title() override { return Lang::Value(Key::SeeTgResolveTitle); }
+};
+
+void AddFeature(not_null<Ui::VerticalLayout*> container, Key title, Key description, bool Settings::*field) {
+	const auto button = SettingsRows::AddToggle(container,
+		Lang::Value(title), Lang::Value(description),
+		Value() | rpl::map([=](const Settings &settings) { return settings.*field; }));
+	button->toggledChanges() | rpl::on_next([=](bool enabled) {
+		auto settings = Current();
+		settings.*field = enabled;
+		Set(settings);
+	}, button->lifetime());
+}
+
+void BuildContent(
+		not_null<Ui::VerticalLayout*> container,
+		not_null<Window::SessionController*> controller,
+		Fn<void(::Settings::Type)> showOther) {
+	Ui::AddSkip(container);
+	AddFeature(container, Key::SeeTgEnabled, Key::SeeTgFeaturesAbout, &Settings::enabled);
+	Ui::AddSkip(container);
+	Ui::AddDivider(container);
+	Ui::AddSkip(container);
+	const auto features = container->add(object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
+		container, object_ptr<Ui::VerticalLayout>(container)));
+	Ui::AddSubsectionTitle(features->entity(), Lang::Value(Key::SeeTgProfileGroup));
+	AddFeature(features->entity(), Key::SeeTgGiftFeature, Key::SeeTgGiftsAbout, &Settings::gifts);
+	AddFeature(features->entity(), Key::SeeTgHistoryButton, Key::SeeTgTransfersAbout, &Settings::transfers);
+	AddFeature(features->entity(), Key::SeeTgCommentsTab, Key::SeeTgCommentsAbout, &Settings::comments);
+	AddFeature(features->entity(), Key::SeeTgReactionFeature, Key::SeeTgReactionsAbout, &Settings::reactions);
+	Ui::AddSkip(features->entity());
+	Ui::AddDivider(features->entity());
+	Ui::AddSkip(features->entity());
+	Ui::AddSubsectionTitle(features->entity(), Lang::Value(Key::GiftSettings));
+	AddFeature(features->entity(), Key::SeeTgGiftDetails, Key::SeeTgGiftDetailsAbout, &Settings::giftDetails);
+	AddFeature(features->entity(), Key::SeeTgMarketPreviews, Key::SeeTgMarketPreviewsAbout, &Settings::marketPreviews);
+	features->toggleOn(EnabledValue());
+	Ui::AddSkip(container);
+	Ui::AddDivider(container);
+	Ui::AddSkip(container);
+	Ui::AddSubsectionTitle(container, Lang::Value(Key::SeeTgConnectionGroup));
+	const auto resolve = container->add(object_ptr<Ui::SettingsButton>(
+		container, Lang::Value(Key::SeeTgResolveTitle), st::settingsButtonNoIcon));
+	resolve->addClickHandler([=] { showOther(ResolveSection::Id()); });
+	SettingsRows::AddDescription(container, Lang::Value(Key::SeeTgResolveAdvanced));
+	const auto again = container->add(object_ptr<Ui::SettingsButton>(
+		container, Lang::Value(Key::SeeTgSignInAgain), st::settingsButtonNoIcon));
+	again->addClickHandler([=] {
+		Auth::Invalidate(&controller->session());
+		Api::ClearCache(&controller->session());
+		controller->showToast(Lang::Text(Key::SeeTgSignedOut));
+	});
+	SettingsRows::AddDescription(container, Lang::Value(Key::SeeTgReconnectAbout));
+	Ui::AddSkip(container);
 }
 
 class SeeTgSection final : public ::Settings::Section<SeeTgSection> {
@@ -159,7 +192,7 @@ SeeTgSection::SeeTgSection(
 	not_null<Window::SessionController*> controller)
 : Section(parent, controller) {
 	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
-	BuildContent(content, controller);
+	BuildContent(content, controller, showOtherMethod());
 	Ui::ResizeFitChild(this, content);
 }
 

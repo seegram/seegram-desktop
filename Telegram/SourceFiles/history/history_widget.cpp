@@ -1160,10 +1160,12 @@ HistoryWidget::HistoryWidget(
 		if (action.replaceMediaOf) {
 		} else if (action.options.scheduled) {
 			cancelReplyOrSuggest(lastKeyboardUsed);
-			crl::on_main(this, [=, history = action.history] {
-				controller->showSection(
-					std::make_shared<HistoryView::ScheduledMemento>(history));
-			});
+			if (!action.options.ghostScheduled) {
+				crl::on_main(this, [=, history = action.history] {
+					controller->showSection(
+						std::make_shared<HistoryView::ScheduledMemento>(history));
+				});
+			}
 		} else {
 			fastShowAtEnd(action.history);
 			if (!_justMarkingAsRead

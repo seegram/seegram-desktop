@@ -8,6 +8,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/spy_mode.h"
 
 #include "core/application.h"
+#include "history/history_item.h"
+#include "data/data_media_types.h"
 
 #include <rpl/event_stream.h>
 
@@ -58,6 +60,7 @@ void Start() {
 		"saveEditsHistory",
 		defaults.saveEditsHistory);
 	GlobalSettings.saveForBots = read("saveForBots", defaults.saveForBots);
+	GlobalSettings.previewSelfDestructMedia = read("previewSelfDestructMedia", true);
 }
 
 void Set(const Settings &settings) {
@@ -71,6 +74,7 @@ void Set(const Settings &settings) {
 	object.insert(u"saveDeletedMessages"_q, settings.saveDeletedMessages);
 	object.insert(u"saveEditsHistory"_q, settings.saveEditsHistory);
 	object.insert(u"saveForBots"_q, settings.saveForBots);
+	object.insert(u"previewSelfDestructMedia"_q, settings.previewSelfDestructMedia);
 
 	// QSaveFile so that a crash mid-write cannot leave a truncated file.
 	auto file = QSaveFile(FilePath());
@@ -90,6 +94,15 @@ rpl::producer<Settings> Changes() {
 
 rpl::producer<Settings> Value() {
 	return rpl::single(GlobalSettings) | rpl::then(Changes());
+}
+
+bool PreviewSelfDestructMedia(const HistoryItem *item) {
+	return Current().previewSelfDestructMedia
+		&& item
+		&& !item->out()
+		&& item->hasUnreadMediaFlag()
+		&& item->media()
+		&& item->media()->ttlSeconds() > 0;
 }
 
 } // namespace Fork::Spy

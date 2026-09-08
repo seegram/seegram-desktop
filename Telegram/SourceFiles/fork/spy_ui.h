@@ -48,6 +48,11 @@ void ShowDeletedMessages(
 	MsgId topicRootId);
 
 // Hook, called from the message context menus.
+void AddViewSelfDestructAction(
+	not_null<Ui::PopupMenu*> menu,
+	HistoryItem *item,
+	not_null<Window::SessionController*> controller);
+
 void AddHistoryAction(
 	not_null<Ui::PopupMenu*> menu,
 	HistoryItem *item,

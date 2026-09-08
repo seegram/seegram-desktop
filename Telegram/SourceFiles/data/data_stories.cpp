@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "data/data_stories.h"
 
+#include "fork/ghost_mode.h"
+
 #include "base/unixtime.h"
 #include "apiwrap.h"
 #include "core/application.h"
@@ -1233,6 +1235,9 @@ void Stories::loadAround(FullStoryId id, StoriesContext context) {
 }
 
 void Stories::markAsRead(FullStoryId id, bool viewed) {
+	if (Fork::Ghost::BlocksStoryViews()) {
+		return;
+	}
 	if (id.peer == _owner->session().userPeerId()) {
 		return;
 	}
@@ -1394,6 +1399,9 @@ void Stories::toggleHidden(
 void Stories::sendMarkAsReadRequest(
 		not_null<PeerData*> peer,
 		StoryId tillId) {
+	if (Fork::Ghost::BlocksStoryViews()) {
+		return;
+	}
 	const auto peerId = peer->id;
 	_markReadRequests.emplace(peerId);
 	const auto finish = [=] {
@@ -1422,6 +1430,11 @@ void Stories::checkQuitPreventFinished() {
 }
 
 void Stories::sendMarkAsReadRequests() {
+	if (Fork::Ghost::BlocksStoryViews()) {
+		_markReadTimer.cancel();
+		_markReadPending.clear();
+		return;
+	}
 	_markReadTimer.cancel();
 	for (auto i = begin(_markReadPending); i != end(_markReadPending);) {
 		const auto peerId = *i;
@@ -1438,6 +1451,11 @@ void Stories::sendMarkAsReadRequests() {
 }
 
 void Stories::sendIncrementViewsRequests() {
+	if (Fork::Ghost::BlocksStoryViews()) {
+		_incrementViewsTimer.cancel();
+		_incrementViewsPending.clear();
+		return;
+	}
 	if (_incrementViewsPending.empty()) {
 		return;
 	}

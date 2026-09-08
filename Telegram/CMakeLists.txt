@@ -616,12 +616,32 @@ PRIVATE
     fork/fork_lang.h
     fork/ghost_mode.cpp
     fork/ghost_mode.h
+    fork/ghost_notifications.cpp
+    fork/ghost_notifications.h
+    fork/scheduled_preview.cpp
+    fork/scheduled_preview.h
     fork/message_marks.cpp
     fork/message_marks.h
+    fork/message_time_format.h
     fork/message_store.cpp
     fork/message_store.h
     fork/settings_ghost.cpp
     fork/settings_ghost.h
+    fork/settings_rows.h
+    fork/seetg/seetg_market_previews.cpp
+    fork/seetg/seetg_market_previews.h
+    fork/seetg/seetg_gift_tabs.cpp
+    fork/seetg/seetg_gift_tabs.h
+    fork/seetg/seetg_gift_details.cpp
+    fork/seetg/seetg_gift_details.h
+    fork/seetg/seetg_hidden_shop.cpp
+    fork/seetg/seetg_hidden_shop.h
+    fork/gift_grid.cpp
+    fork/gift_grid.h
+    fork/gift_batch.cpp
+    fork/gift_batch.h
+    fork/gift_batch_policy.h
+    fork/account_limits.h
     fork/settings_marks.cpp
     fork/settings_marks.h
     fork/settings_seegram.cpp
@@ -640,6 +660,10 @@ PRIVATE
     fork/spy_mode.h
     fork/spy_ui.cpp
     fork/spy_ui.h
+    fork/expired_media.cpp
+    fork/expired_media.h
+    fork/self_destruct_badge.cpp
+    fork/self_destruct_badge.h
     fork/update_feed.h
     fork/seetg/seetg_badge_icons.cpp
     fork/seetg/seetg_badge_icons.h
@@ -649,6 +673,8 @@ PRIVATE
     fork/seetg/seetg_verification_icon.h
     fork/seetg/seetg_api.cpp
     fork/seetg/seetg_api.h
+    fork/seetg/seetg_reactions.cpp
+    fork/seetg/seetg_reactions.h
     fork/seetg/seetg_auth.cpp
     fork/seetg/seetg_auth.h
     fork/seetg/seetg_gifts.cpp

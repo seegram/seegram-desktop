@@ -6,6 +6,13 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "fork/seetg/seetg_card.h"
+#include "fork/seetg/seetg_settings.h"
+#include "lang/lang_keys.h"
+#include "styles/style_boxes.h"
+#include <QtCore/QLocale>
+#include <QtGui/QPainterPath>
+#include <QtSvg/QSvgRenderer>
+#include <cmath>
 
 #include "info/peer_gifts/info_peer_gifts_common.h"
 #include "lang/lang_tag.h"
@@ -31,6 +38,30 @@ namespace {
 Card::Card(QWidget *parent, CardData data)
 : AbstractButton(parent)
 , _data(std::move(data)) {
+	const auto currency = _data.saleCurrency.toLower();
+	const auto ton = currency == u"ton" || currency == u"gram";
+	const auto known = ton || currency == u"xtr" || currency == u"usdt"
+		|| currency == u"major" || currency == u"not" || currency == u"dogs";
+	const auto amount = _data.saleAmount.toDouble() / (currency == u"xtr" ? 1.
+		: currency == u"usdt" ? 1e6 : 1e9);
+	if (_data.unique() && known && std::isfinite(amount) && amount > 0) {
+		_salePrice = QLocale().toString(amount, 'f', (currency == u"xtr" || amount >= 1000) ? 0 : amount >= 100 ? 1 : 2)
+			+ (ton ? u" TON"_q : currency == u"xtr" ? u" ★"_q : ' ' + currency.toUpper());
+		const auto market = _data.saleMarket.toLower();
+		const auto user = market == u"telegram" ? u"telegram"_q
+			: market == u"portals" ? u"portals"_q
+			: market == u"tonnel" ? u"tonnel_relayer_bot"_q
+			: market == u"getgems" ? u"getgems"_q
+			: market == u"mrkt" ? u"mrkt"_q : QString();
+		if (!user.isEmpty()) Visuals::Image(Visuals::UserpicUrl(user), crl::guard(this, [=](QImage image) {
+			_saleLogo = std::move(image);
+			update();
+		}));
+		EnabledValue(Feature::MarketPreviews) | rpl::on_next([=](bool) {
+			_ribbon = {};
+			update();
+		}, lifetime());
+	}
 	if (_data.unique()) {
 		if (!_data.backdrop.isEmpty()) {
 			Visuals::Backdrops(crl::guard(this, [=] {
@@ -117,9 +148,10 @@ void Card::paintRibbon(QPainter &p, const QRect &inner) {
 	}
 	if (_ribbon.isNull()) {
 		_ribbon = Info::PeerGifts::ValidateRotatedBadge({
-			.text = '#' + Lang::FormatCountDecimal(_data.num),
-			.bg1 = _backdrop->edge,
-			.bg2 = _backdrop->pattern,
+			.text = showSale() ? tr::lng_gift_stars_on_sale(tr::now) : '#' + Lang::FormatCountDecimal(_data.num),
+			.bg1 = showSale() ? st::boxTextFgGood->c : _backdrop->edge,
+			.bg2 = showSale() ? QColor(0, 0, 0, 0) : _backdrop->pattern,
+			.border = showSale() ? QColor(255, 255, 255) : QColor(0, 0, 0, 0),
 			.fg = QColor(255, 255, 255),
 			.small = true,
 		}, QMargins());
@@ -134,6 +166,56 @@ void Card::paintRibbon(QPainter &p, const QRect &inner) {
 		inner.y() - rubberOut,
 		_ribbon);
 	p.restore();
+}
+
+bool Card::showSale() const {
+	return !_salePrice.isEmpty() && (_data.saleMarket == u"telegram"
+		|| Enabled(Feature::MarketPreviews));
+}
+
+void Card::paintSale(QPainter &p, const QRect &inner) {
+	if (showSale()) {
+		const auto padding = st::giftBoxButtonPadding;
+		const auto font = st::semiboldFont;
+		const auto icon = font->height;
+		const auto gap = font->spacew;
+		const auto ton = _salePrice.endsWith(u" TON"_q);
+		const auto tonSize = icon * 3 / 4;
+		const auto logoWidth = icon + gap + (ton ? tonSize + gap : 0);
+		const auto maxWidth = std::max(inner.width() - 2 * st::giftBoxUserpicSkip
+			- padding.left() - padding.right() - logoWidth, 0);
+		const auto text = font->elided(ton ? _salePrice.chopped(4) : _salePrice, maxWidth);
+		const auto w = font->width(text) + logoWidth + padding.left() + padding.right();
+		const auto h = font->height + padding.top() + padding.bottom();
+		const auto x = (inner.width() - w) / 2;
+		const auto y = inner.height() - st::giftBoxButtonBottomSmall - h;
+		p.setPen(Qt::NoPen);
+		p.setBrush(anim::with_alpha((_backdrop ? _backdrop->pattern : st::windowBg->c), .8));
+		p.drawRoundedRect(QRect(x, y, w, h), h / 2., h / 2.);
+		const auto logo = QRect(x + padding.left(), y + padding.top(), icon, icon);
+		p.save();
+		auto clip = QPainterPath();
+		clip.addEllipse(QRectF(logo));
+		p.setClipPath(clip);
+		p.setRenderHint(QPainter::SmoothPixmapTransform);
+		if (!_saleLogo.isNull()) p.drawImage(logo, _saleLogo);
+		p.restore();
+		if (ton) {
+			const auto pixels = QSize(tonSize, tonSize) * style::DevicePixelRatio();
+			if (_saleTon.size() != pixels) {
+				_saleTon = QImage(pixels, QImage::Format_ARGB32_Premultiplied);
+				_saleTon.fill(Qt::transparent);
+				QPainter painter(&_saleTon);
+				QSvgRenderer renderer(u":/fork/gifts/ton.svg"_q);
+				renderer.render(&painter);
+			}
+			p.drawImage(QRect(x + padding.left() + icon + gap,
+				y + padding.top() + (icon - tonSize) / 2, tonSize, tonSize), _saleTon);
+		}
+		p.setFont(font);
+		p.setPen(st::white);
+		p.drawText(x + padding.left() + logoWidth, y + padding.top() + font->ascent, text);
+	}
 }
 
 void Card::paintEvent(QPaintEvent *e) {
@@ -168,6 +250,7 @@ void Card::paintEvent(QPaintEvent *e) {
 	}
 	if (_data.unique()) {
 		paintRibbon(p, inner);
+		paintSale(p, inner);
 	}
 }
 

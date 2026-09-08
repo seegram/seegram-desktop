@@ -8,6 +8,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "fork/ghost_mode.h"
 
 #include "core/application.h"
+#include "core/core_settings.h"
+#include "api/api_common.h"
+#include "base/unixtime.h"
+#include "data/data_user.h"
+#include "history/history.h"
 
 #include <rpl/event_stream.h>
 
@@ -57,6 +62,10 @@ void Start() {
 	GlobalSettings.blockTyping = read("blockTyping", false);
 	GlobalSettings.blockOnlineStatus = read("blockOnlineStatus", false);
 	GlobalSettings.blockUploadProgress = read("blockUploadProgress", false);
+	GlobalSettings.blockStoryViews = read("blockStoryViews", (GlobalSettings.blockReadReceipts && GlobalSettings.blockTyping
+			&& GlobalSettings.blockOnlineStatus && GlobalSettings.blockUploadProgress));
+	GlobalSettings.useScheduledMessages = read("useScheduledMessages", false);
+	GlobalSettings.muteScheduledNotifications = read("muteScheduledNotifications", true);
 }
 
 void Set(const Settings &settings) {
@@ -71,6 +80,9 @@ void Set(const Settings &settings) {
 	object.insert(u"blockTyping"_q, settings.blockTyping);
 	object.insert(u"blockOnlineStatus"_q, settings.blockOnlineStatus);
 	object.insert(u"blockUploadProgress"_q, settings.blockUploadProgress);
+	object.insert(u"blockStoryViews"_q, settings.blockStoryViews);
+	object.insert(u"useScheduledMessages"_q, settings.useScheduledMessages);
+	object.insert(u"muteScheduledNotifications"_q, settings.muteScheduledNotifications);
 
 	// QSaveFile so that a crash mid-write cannot leave a truncated file, which
 	// would read back as "ghost mode off" - the failure nobody would notice.
@@ -98,12 +110,9 @@ bool Enabled() {
 }
 
 void SetEnabled(bool enabled) {
-	Set({
-		.blockReadReceipts = enabled,
-		.blockTyping = enabled,
-		.blockOnlineStatus = enabled,
-		.blockUploadProgress = enabled,
-	});
+	auto settings = Current();
+	settings.setEnabled(enabled);
+	Set(settings);
 }
 
 bool BlocksReadReceipts() {
@@ -120,6 +129,34 @@ bool BlocksOnlineStatus() {
 
 bool BlocksUploadProgress() {
 	return GlobalSettings.blockUploadProgress;
+}
+
+bool BlocksStoryViews() {
+	return GlobalSettings.blockStoryViews;
+}
+
+void RefreshScheduling(Api::SendOptions &options) {
+	if (options.ghostScheduled) {
+		const auto delay = Core::App().settings().proxy().isEnabled() ? 15 : 12;
+		options.scheduled = base::unixtime::now() + delay;
+	}
+}
+
+void ApplyScheduling(Api::SendAction &action) {
+	auto &options = action.options;
+	const auto user = action.history->peer->asUser();
+	if (!Current().useScheduledMessages
+		|| options.scheduled
+		|| options.shortcutId
+		|| options.welcomeTemplate
+		|| options.ttlSeconds
+		|| options.suggest.exists
+		|| action.replaceMediaOf
+		|| (user && user->isBot())) {
+		return;
+	}
+	options.ghostScheduled = true;
+	RefreshScheduling(options);
 }
 
 } // namespace Fork::Ghost

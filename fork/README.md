@@ -138,3 +138,41 @@ an error, not as "latest" based on Telegram's unrelated version list.
 
 Older builds that accepted Telegram's update prefix may need one manual
 installation of a fixed SeeGram release. Their data folder should be preserved.
+
+## Ghost and spy modes
+
+Ghost mode includes story read receipts and profile-story view counters.
+Its five privacy switches default to off. Existing installations with all four
+older switches enabled also enable the new story switch. Scheduled sending is
+separate, defaults to off, and is preserved when the master switch changes.
+It schedules ordinary sends 12 seconds ahead (15 with a configured proxy),
+refreshing the deadline after uploads. Explicit schedules, bot destinations,
+business templates, edits, suggested posts and outgoing timed media retain their
+normal send behavior. Automatic scheduling does not open the scheduled-message
+section. This follows [AyuGram's ghost scheduling](https://github.com/AyuGram/AyuGramDesktop/blob/dev/Telegram/SourceFiles/ayu/utils/telegram_helpers.cpp).
+
+Spy mode previews incoming unread timed photos, videos, voice messages and round
+videos by default, without automatically sending a content-read receipt or
+burning single-view media on close. The message menu's **View** action explicitly
+sends the receipt; only a successful response marks the message viewed and
+starts its original timer. Server expiry still applies. Turning the setting off
+restores the normal media presentation, including in already open chats.
+
+Automatic ghost scheduling shows a local pending bubble in the chat. Its clock
+opens the actual scheduled message; only that server-owned message can be
+edited, sent now or cancelled. The bubble is removed when the scheduled item
+is sent or deleted, and ordinary scheduled messages are not mirrored.
+Self-destructing media previews retain a visible timer or single-view badge;
+drawing the badge does not acknowledge the media.
+
+When spy media previews are enabled, fully loaded expiring media keeps a local
+reference for the lifetime of its message in this session. The expired service
+bubble offers an inline Open link. It opens the retained media in the normal
+viewer without another read acknowledgement. Media that was never downloaded
+is not recovered, and disabling the setting hides the link immediately.
+
+Ghost auto-scheduling has an independent “Disable notifications from yourself”
+option, enabled by default. Only message IDs linked to SeeGram's automatic
+scheduling are filtered; manual schedules and incoming messages keep Telegram's
+notification rules. Per-account origin IDs are stored locally so reconnecting
+or restarting does not turn manual schedules into ghost messages.

@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/history_inner_widget.h"
 
+#include "fork/scheduled_preview.h"
+
 #include "fork/spy_ui.h"
 
 #include "api/api_polls.h"
@@ -2891,6 +2893,11 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 		return;
 	}
 	_menu = base::make_unique_q<Ui::PopupMenu>(this, st::popupMenuWithIcons);
+	if (Fork::ScheduledPreview::FillMenu(_menu.get(), _dragStateItem, _controller)) {
+		_menu->popup(e->globalPos());
+		e->accept();
+		return;
+	}
 	if (linkUserpicPeerId) {
 		_widget->fillSenderUserpicMenu(
 			_menu.get(),
@@ -3006,6 +3013,7 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 			}, &st::menuIconEdit);
 		}
 		Fork::SpyUi::AddHistoryAction(_menu.get(), item, controller);
+		Fork::SpyUi::AddViewSelfDestructAction(_menu.get(), item, controller);
 		if (session->factchecks().canEdit(item)) {
 			const auto text = item->factcheckText();
 			const auto phrase = text.empty()

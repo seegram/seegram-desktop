@@ -41,7 +41,7 @@ QString StateKey(not_null<Main::Session*> session, const QString &seeId) {
 }
 
 void Request(const std::shared_ptr<State> &state) {
-	if (!state->session || !Enabled() || state->loading
+	if (!state->session || (!Enabled(Feature::Transfers) && !Enabled(Feature::Comments)) || state->loading
 		|| state->expires > crl::now()) {
 		return;
 	}
@@ -124,7 +124,7 @@ rpl::producer<QString> Label(not_null<PeerData*> peer, Kind kind) {
 	return rpl::combine(
 		state->counts.value(),
 		rpl::single(rpl::empty) | rpl::then(Lang::Changes()),
-		EnabledValue()
+		EnabledValue(kind == Kind::Transfers ? Feature::Transfers : Feature::Comments)
 	) | rpl::map([state, kind](const Counts &counts, auto, bool enabled) {
 		if (enabled) {
 			Request(state);

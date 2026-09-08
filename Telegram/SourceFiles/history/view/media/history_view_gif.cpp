@@ -7,6 +7,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/media/history_view_gif.h"
 
+#include "fork/spy_mode.h"
+#include "fork/self_destruct_badge.h"
+
 #include "apiwrap.h"
 #include "api/api_transcribes.h"
 #include "lang/lang_keys.h"
@@ -180,7 +183,8 @@ Gif::Streamed::Streamed(
 [[nodiscard]] bool IsHiddenRoundMessage(not_null<Element*> parent) {
 	return parent->delegate()->elementContext() != Context::TTLViewer
 		&& parent->data()->media()
-		&& parent->data()->media()->ttlSeconds();
+		&& parent->data()->media()->ttlSeconds()
+		&& !Fork::Spy::PreviewSelfDestructMedia(parent->data());
 }
 
 Gif::Gif(
@@ -205,7 +209,7 @@ Gif::Gif(
 , _ttlCover(realParent->isTtlCoveredMedia())
 , _hasVideoCover(realParent->media() && realParent->media()->videoCover()) {
 	const auto media = _parent->data()->media();
-	if (_data->isVideoMessage() && media && media->ttlSeconds()) {
+	if (_data->isVideoMessage() && media && (media->ttlSeconds() && !Fork::Spy::PreviewSelfDestructMedia(media->parent()))) {
 		if (_spoiler) {
 			_drawTtl = CreateTtlPaintCallback([=] { repaint(); });
 		}
@@ -246,7 +250,7 @@ Gif::Gif(
 
 	if (_data->isVideoMessage()) {
 		_roundSeek = std::make_unique<VideoMessageSeek>([=] { repaint(); });
-		if (!media || !media->ttlSeconds()) {
+		if (!media || !(media->ttlSeconds() && !Fork::Spy::PreviewSelfDestructMedia(media->parent()))) {
 			_seekl = std::make_shared<VoiceSeekClickHandler>(
 				_data,
 				[](FullMsgId) {});
@@ -605,6 +609,7 @@ float64 Gif::revealedProgress() const {
 	return ((isRound || _ttlCover)
 		&& item->media()
 		&& item->media()->ttlSeconds()
+		&& !Fork::Spy::PreviewSelfDestructMedia(item)
 		&& !inTTLViewer)
 		? 0.
 		: (!isRound && _spoiler)
@@ -924,6 +929,8 @@ void Gif::draw(Painter &p, const PaintContext &context) const {
 		if ((!isRound || !inWebPage) && !sponsoredSkip) {
 			if (ttlCovered) {
 				PaintTtlLabel(p, QPoint(), width(), _realParent, context);
+			} else if (Fork::Spy::PreviewSelfDestructMedia(_realParent)) {
+				Fork::SpyUi::PaintSelfDestructBadge(p, QPoint(), width(), _realParent, context);
 			} else {
 				drawCornerStatus(p, context, QPoint());
 			}
@@ -1524,7 +1531,7 @@ TextState Gif::textState(QPoint point, StateRequest request) const {
 			const auto media = _parent->data()->media();
 			result.link = _sensitiveSpoiler
 				? spoilerTagLink()
-				: (isRound && media && media->ttlSeconds())
+				: (isRound && media && (media->ttlSeconds() && !Fork::Spy::PreviewSelfDestructMedia(media->parent())))
 				? _openl
 				: _spoiler->link;
 		} else if (_seekl && isRoundSeekable()) {
@@ -2708,7 +2715,7 @@ bool Gif::needCornerStatusDisplay() const {
 void Gif::ensureTranscribeButton() const {
 	const auto media = _parent->data()->media();
 	if (_data->isVideoMessage()
-		&& (!media || !media->ttlSeconds())
+		&& (!media || !(media->ttlSeconds() && !Fork::Spy::PreviewSelfDestructMedia(media->parent())))
 		&& !_parent->data()->isScheduled()
 		&& !_parent->data()->isAdminLogEntry()
 		&& (_data->session().premium()
