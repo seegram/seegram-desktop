@@ -104,6 +104,7 @@ fi
 
 echo "==> configuring"
 Telegram/configure.sh \
+	-U 'Qt6*_DIR' -U QT_DIR \
 	-D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF \
 	-D DESKTOP_APP_MAC_ARCH= \
 	-D DESKTOP_APP_SPECIAL_TARGET=mac \
