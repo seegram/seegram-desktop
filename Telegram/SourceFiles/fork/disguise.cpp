@@ -100,7 +100,11 @@ const QImage &TrayImage() {
 }
 
 QImage TrayMonochrome(QSize size, QColor color) {
-	const auto path = TrayChoice() == Icon::Telegram
+	return TrayMonochrome(TrayChoice(), size, color);
+}
+
+QImage TrayMonochrome(Icon icon, QSize size, QColor color) {
+	const auto path = icon == Icon::Telegram
 		? u":/gui/icons/tray/monochrome.svg"_q : u":/seegram/eye.svg"_q;
 	auto file = QFile(path);
 	if (!file.open(QIODevice::ReadOnly)) return {};

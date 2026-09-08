@@ -1,0 +1,24 @@
+using "settings/settings.style";
+
+disguiseChoiceGap: 12px;
+disguiseChoicePadding: 12px;
+disguiseChoiceTop: 28px;
+disguiseChoiceRadius: 12px;
+disguiseChoiceStroke: 2px;
+disguiseChoiceIcon: 64px;
+disguiseChoiceMinWidth: 96px;
+disguiseChoiceTint: 0.08;
+disguiseChoiceLabel: FlatLabel(defaultFlatLabel) {
+	minWidth: 1px;
+	align: align(top);
+	style: TextStyle(defaultTextStyle) { font: font(13px); }
+}
+disguiseChoiceRadio: Radio(defaultRadio) {
+	diameter: 16px;
+}
+disguiseTrayPreviewSize: size(38px, 36px);
+disguiseTrayPreviewGap: 4px;
+disguiseTrayPreviewIcon: 22px;
+disguiseTrayPreviewRadius: 8px;
+disguiseTrayPreviewLight: imageBgTransparent;
+disguiseTrayPreviewDark: imageBg;
