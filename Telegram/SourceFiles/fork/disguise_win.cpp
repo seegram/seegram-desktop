@@ -14,6 +14,7 @@
 #include <mutex>
 #include <propkey.h>
 #include <propvarutil.h>
+#include <shellapi.h>
 #include <shlobj.h>
 
 namespace Platform {
