@@ -467,6 +467,9 @@ void GiftsList::createButton(int index) {
 			.backdrop = nft->backdrop,
 			.pattern = nft->pattern,
 			.num = nft->num,
+			.saleAmount = nft->onSale ? nft->saleAmount : QString(),
+			.saleCurrency = nft->saleCurrency,
+			.saleMarket = nft->saleMarket,
 		});
 	} else {
 		item.button = std::make_unique<Card>(this, CardData{
@@ -898,7 +901,7 @@ Wrapper::Wrapper(
 		relayout();
 	}, _native->lifetime());
 
-	EnabledValue(
+	EnabledValue(Feature::Gifts
 	) | rpl::on_next([=](bool enabled) {
 		if (!enabled && _seetg) {
 			setMode(false);
@@ -911,7 +914,7 @@ Wrapper::Wrapper(
 }
 
 void Wrapper::refreshTabs() {
-	if (!Enabled()) {
+	if (!Enabled(Feature::Gifts)) {
 		if (base::take(_tabs)) {
 			relayout();
 		}
@@ -936,6 +939,7 @@ void Wrapper::refreshTabs() {
 }
 
 void Wrapper::setMode(bool seetg) {
+	seetg = seetg && Enabled(Feature::Gifts);
 	if (_seetg == seetg) {
 		return;
 	}
@@ -1012,12 +1016,6 @@ object_ptr<Ui::RpWidget> WrapGifts(
 		object_ptr<Ui::RpWidget> native,
 		not_null<Window::SessionController*> controller,
 		not_null<PeerData*> peer) {
-	// Switched off, the client's own list is handed back untouched: no
-	// wrapper, no tabs, nothing of this fork in the way. The switch is read
-	// when the tab is built, so turning it on shows in the next profile.
-	if (!Enabled()) {
-		return native;
-	}
 	return object_ptr<Wrapper>(parent, std::move(native), controller, peer);
 }
 

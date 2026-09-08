@@ -17,6 +17,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/wrap/slide_wrap.h"
 
 class PeerData;
+class QJsonObject;
+namespace Main { class Session; }
 
 namespace Ui {
 class RpWidget;
@@ -27,6 +29,7 @@ class MultiSlideTracker;
 
 namespace Window {
 class SessionNavigation;
+class SessionController;
 } // namespace Window
 
 namespace Ui::Menu {
@@ -34,6 +37,10 @@ struct MenuCallback;
 } // namespace Ui::Menu
 
 namespace Fork::SeeTg::History {
+
+object_ptr<Ui::RpWidget> GiftEventRow(
+	QWidget *parent, not_null<Window::SessionController*> controller,
+	const QJsonObject &item, QString title, QStringList details);
 
 class Memento final : public Info::ContentMemento {
 public:

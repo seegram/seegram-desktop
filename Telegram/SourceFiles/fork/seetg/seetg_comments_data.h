@@ -52,9 +52,9 @@ void SortReplies(std::vector<Comment> &items);
 [[nodiscard]] QString AuthorName(const QJsonObject &author);
 [[nodiscard]] QString AuthorUsername(const QJsonObject &author);
 
-[[nodiscard]] QString ListQuery();
+[[nodiscard]] QString ListQuery(bool gift = false);
 [[nodiscard]] QString RepliesQuery();
-[[nodiscard]] QString PostMutation();
+[[nodiscard]] QString PostMutation(bool gift = false);
 [[nodiscard]] QString PinMutation();
 [[nodiscard]] QString DeleteMutation();
 

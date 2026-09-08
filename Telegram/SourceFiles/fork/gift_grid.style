@@ -1,0 +1,11 @@
+using "ui/widgets/widgets.style";
+giftGridGap: 10px;
+giftGridRadius: 14px;
+giftGridNumberHeight: 20px;
+giftGridPlusFont: font(30px);
+
+giftActionGap: 8px;
+giftActionPadding: 12px;
+giftActionHeight: 44px;
+giftActionRadius: 10px;
+giftActionFont: font(13px);

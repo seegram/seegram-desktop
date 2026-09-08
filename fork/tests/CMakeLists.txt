@@ -31,3 +31,32 @@ target_include_directories(badge_svg_tests PRIVATE "${telegram}/SourceFiles")
 target_compile_definitions(badge_svg_tests PRIVATE BADGE_RESOURCE_DIR="${telegram}/Resources/fork/verifications")
 target_link_libraries(badge_svg_tests PRIVATE Qt6::Core)
 add_test(NAME remote_badge_svg_validation COMMAND badge_svg_tests)
+
+add_executable(privacy_settings_tests privacy_settings_tests.cpp)
+target_include_directories(privacy_settings_tests PRIVATE
+    "${telegram}/SourceFiles"
+    "${telegram}/lib_rpl"
+    "${telegram}/lib_base"
+    "${telegram}/ThirdParty/GSL/include")
+add_test(NAME privacy_settings COMMAND privacy_settings_tests)
+
+add_executable(account_limits_tests account_limits_tests.cpp)
+target_include_directories(account_limits_tests PRIVATE "${telegram}/SourceFiles")
+add_test(NAME account_storage_limits COMMAND account_limits_tests)
+
+add_executable(message_time_tests message_time_tests.cpp)
+target_include_directories(message_time_tests PRIVATE "${telegram}/SourceFiles")
+target_link_libraries(message_time_tests PRIVATE Qt6::Core)
+add_test(NAME message_time_format COMMAND message_time_tests)
+
+add_executable(seetg_features_tests seetg_features_tests.cpp)
+target_include_directories(seetg_features_tests PRIVATE
+    "${telegram}/SourceFiles"
+    "${telegram}/lib_rpl"
+    "${telegram}/lib_base"
+    "${telegram}/ThirdParty/GSL/include")
+add_test(NAME seetg_feature_switches COMMAND seetg_features_tests)
+
+add_executable(gift_batch_tests gift_batch_tests.cpp)
+target_include_directories(gift_batch_tests PRIVATE "${telegram}/SourceFiles")
+add_test(NAME gift_batch_policy COMMAND gift_batch_tests)

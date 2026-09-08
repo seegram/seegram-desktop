@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "data/components/scheduled_messages.h"
 
+#include "fork/scheduled_preview.h"
+
 #include "base/unixtime.h"
 #include "data/data_forum_topic.h"
 #include "data/data_peer.h"
@@ -402,10 +404,12 @@ void ScheduledMessages::apply(
 	auto &list = i->second;
 	const auto j = list.itemById.find(id);
 	if (j != end(list.itemById) || !IsServerMsgId(id)) {
+		Fork::ScheduledPreview::Rebind(local, j != end(list.itemById) ? j->second.get() : nullptr);
 		_session->data().destroyMessageWithCacheCleanup(local);
 	} else {
 		Assert(!list.itemById.contains(local->id));
 		local->setRealId(localMessageId(id));
+		Fork::ScheduledPreview::Refresh(local);
 		list.itemById.emplace(id, local);
 	}
 }
@@ -568,6 +572,7 @@ HistoryItem *ScheduledMessages::append(
 				existing->updateForwardedInfo(data.vfwd_from());
 			}
 			existing->updateDate(data.vdate().v);
+			Fork::ScheduledPreview::Refresh(existing);
 			history->owner().requestItemTextRefresh(existing);
 		}, [&](const auto &data) {});
 		return existing;

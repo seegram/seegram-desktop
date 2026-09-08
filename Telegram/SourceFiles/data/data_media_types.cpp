@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "data/data_media_types.h"
 
+#include "fork/spy_mode.h"
+
 #include "base/random.h"
 #include "boxes/send_credits_box.h" // CreditsEmoji.
 #include "history/history.h"
@@ -771,7 +773,8 @@ bool Media::hasSpoiler() const {
 }
 
 bool Media::hasSpoilerForPreview() const {
-	return hasSpoiler() || ttlSeconds();
+	return hasSpoiler()
+		|| (ttlSeconds() && !Fork::Spy::PreviewSelfDestructMedia(parent()));
 }
 
 crl::time Media::ttlSeconds() const {
@@ -860,7 +863,7 @@ MediaPhoto::MediaPhoto(
 , _spoiler(args.spoiler) {
 	parent->history()->owner().registerPhotoItem(_photo, parent);
 
-	if (_spoiler) {
+	if (_spoiler || _ttlSeconds) {
 		Ui::PreloadImageSpoiler();
 	}
 }
@@ -1005,7 +1008,8 @@ bool MediaPhoto::allowsEditMedia() const {
 }
 
 bool MediaPhoto::hasSpoiler() const {
-	return _spoiler;
+	return _spoiler
+		|| (_ttlSeconds && !Fork::Spy::PreviewSelfDestructMedia(parent()));
 }
 
 crl::time MediaPhoto::ttlSeconds() const {
@@ -1078,7 +1082,7 @@ std::unique_ptr<HistoryView::Media> MediaPhoto::createView(
 		message,
 		realParent,
 		_photo,
-		_spoiler);
+		hasSpoiler());
 }
 
 MediaFile::MediaFile(
@@ -1106,7 +1110,7 @@ MediaFile::MediaFile(
 		}
 	}
 
-	if (_spoiler) {
+	if (_spoiler || _ttlSeconds) {
 		Ui::PreloadImageSpoiler();
 	}
 }
@@ -1421,7 +1425,9 @@ bool MediaFile::dropForwardedInfo() const {
 }
 
 bool MediaFile::hasSpoiler() const {
-	return _spoiler;
+	return _spoiler
+		|| (_ttlSeconds && _document->isVideoFile()
+			&& !Fork::Spy::PreviewSelfDestructMedia(parent()));
 }
 
 crl::time MediaFile::ttlSeconds() const {
@@ -1502,14 +1508,14 @@ std::unique_ptr<HistoryView::Media> MediaFile::createView(
 				message,
 				realParent,
 				_document,
-				_spoiler);
+				hasSpoiler());
 		}
 	} else if (_document->isAnimation() || _document->isVideoFile()) {
 		return std::make_unique<HistoryView::Gif>(
 			message,
 			realParent,
 			_document,
-			_spoiler);
+			hasSpoiler());
 	} else if (_document->isTheme() && _document->hasThumbnail()) {
 		return std::make_unique<HistoryView::ThemeDocument>(
 			message,

@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "dialogs/ui/dialogs_layout.h"
 
+#include "fork/scheduled_preview.h"
+
 #include "base/options.h"
 #include "base/unixtime.h"
 #include "core/ui_integration.h"
@@ -839,7 +841,7 @@ void PaintRow(
 					context.selected);
 			}
 		} else if (item && !item->isEmpty() && item->needCheck()) {
-			if (!item->isSending() && !item->hasFailed()) {
+			if (!item->isSending() && !item->hasFailed() && !Fork::ScheduledPreview::Is(item)) {
 				if (item->unread(thread)) {
 					return &ThreeStateIcon(
 						st::dialogsSentIcon,

@@ -17,6 +17,14 @@ void Check(bool value, const char *message) {
 
 int main(int argc, char **argv) {
 	const auto app = QCoreApplication(argc, argv);
+	Check(ListQuery().contains(u"target: OWNER"_q)
+		&& PostMutation().contains(u"target: OWNER"_q),
+		"Profile comments must retain the OWNER target");
+	Check(ListQuery(true).contains(u"target: GIFT"_q)
+		&& PostMutation(true).contains(u"target: GIFT"_q)
+		&& !ListQuery(true).contains(u"target: OWNER"_q)
+		&& !PostMutation(true).contains(u"target: OWNER"_q),
+		"Gift comments must read and write the GIFT target");
 	auto page = ParsePage(QJsonDocument::fromJson(R"({
 		"items": [
 			{"id":"9007199254740993", "body":"newer"},
