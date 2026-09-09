@@ -2270,7 +2270,9 @@ std::shared_ptr<Info::Memento> Make(not_null<PeerData*> peer) {
 			Counters::Label(peer, Counters::Kind::Transfers),
 			st::infoSharedMediaButton));
 	result->toggleOn(EnabledValue(Feature::Transfers));
-	result->entity()->addClickHandler([=] {
+	const auto button = result->entity();
+	Counters::AddRightLabel(button, peer, Counters::Kind::Transfers);
+	button->addClickHandler([=] {
 		if (navigation->showFrozenError()) {
 			return;
 		}

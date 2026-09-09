@@ -8,6 +8,8 @@
 #include "base/weak_ptr.h"
 #include "data/data_peer.h"
 #include "main/main_session.h"
+#include "settings/settings_common.h"
+#include "styles/style_info.h"
 
 #include <rpl/variable.h>
 #include <QtCore/QLocale>
@@ -120,6 +122,10 @@ QString Text(Kind kind, const Counts &counts) {
 } // namespace
 
 rpl::producer<QString> Label(not_null<PeerData*> peer, Kind kind) {
+	if (peer->isSelf()) {
+		return Lang::Value(kind == Kind::Transfers
+			? Lang::Key::SeeTgHistoryButton : Lang::Key::SeeTgCommentsTab);
+	}
 	const auto state = Get(peer);
 	return rpl::combine(
 		state->counts.value(),
@@ -131,6 +137,35 @@ rpl::producer<QString> Label(not_null<PeerData*> peer, Kind kind) {
 		}
 		return Text(kind, enabled ? counts : Counts{});
 	}) | rpl::distinct_until_changed();
+}
+
+void AddRightLabel(
+		not_null<Ui::SettingsButton*> button,
+		not_null<PeerData*> peer,
+		Kind kind) {
+	if (!peer->isSelf()) {
+		return;
+	}
+	const auto state = Get(peer);
+	auto value = rpl::combine(
+		state->counts.value(),
+		rpl::single(rpl::empty) | rpl::then(Lang::Changes()),
+		EnabledValue(kind == Kind::Transfers ? Feature::Transfers : Feature::Comments)
+	) | rpl::map([state, kind](const Counts &counts, auto, bool enabled) {
+		if (enabled) {
+			Request(state);
+		}
+		const auto count = (kind == Kind::Transfers)
+			? counts.transfers : counts.comments;
+		return (enabled && count)
+			? QLocale(Lang::ResolvedId()).toString(*count)
+			: QString();
+	}) | rpl::distinct_until_changed();
+	::Settings::CreateRightLabel(
+		button,
+		std::move(value),
+		st::infoSharedMediaButton,
+		Label(peer, kind));
 }
 
 void Invalidate(not_null<Main::Session*> session, const QString &seeId) {
