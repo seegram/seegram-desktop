@@ -822,6 +822,7 @@ not_null<Ui::SettingsButton*> AddButton(
 	wrap->toggleOn(EnabledValue(Feature::Comments));
 	tracker.track(wrap);
 	const auto button = wrap->entity();
+	Counters::AddRightLabel(button, peer, Counters::Kind::Comments);
 	button->addClickHandler([=] {
 		if (!navigation->showFrozenError()) {
 			navigation->showSection(Make(peer));

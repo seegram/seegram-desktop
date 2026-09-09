@@ -2273,6 +2273,7 @@ not_null<Ui::SettingsButton*> AddButton(
 	wrap->toggleOn(EnabledValue(Feature::Transfers));
 	tracker.track(wrap);
 	const auto button = wrap->entity();
+	Counters::AddRightLabel(button, peer, Counters::Kind::Transfers);
 	button->addClickHandler([=] {
 		if (navigation->showFrozenError()) {
 			return;
