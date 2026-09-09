@@ -376,6 +376,7 @@ void AddDescriptions(
 			rows->add(object_ptr<DescriptionRow>(rows, entry, peer),
 				st::seetgVerificationPadding, style::al_justify);
 		}
+		rows->resizeToWidth(rows->widthNoMargins());
 		*shown = !descriptions.empty();
 	}, raw->lifetime());
 	auto wrap = object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
