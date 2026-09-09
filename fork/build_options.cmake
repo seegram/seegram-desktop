@@ -27,5 +27,3 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux"
     # with -Werror, so a real one is not going to go unseen for long.
     target_compile_options(common_options INTERFACE -Wno-error)
 endif()
-
-include(${CMAKE_CURRENT_LIST_DIR}/qt_text_shaper.cmake)
