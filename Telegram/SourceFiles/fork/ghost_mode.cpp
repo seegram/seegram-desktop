@@ -12,8 +12,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/core_settings.h"
 #include "api/api_common.h"
 #include "base/unixtime.h"
-#include "data/data_user.h"
-#include "history/history.h"
 
 #include <rpl/event_stream.h>
 
@@ -151,15 +149,13 @@ void RefreshScheduling(Api::SendOptions &options) {
 
 void ApplyScheduling(Api::SendAction &action) {
 	auto &options = action.options;
-	const auto user = action.history->peer->asUser();
 	if (!Current().useScheduledMessages
 		|| options.scheduled
 		|| options.shortcutId
 		|| options.welcomeTemplate
 		|| options.ttlSeconds
 		|| options.suggest.exists
-		|| action.replaceMediaOf
-		|| (user && user->isBot())) {
+		|| action.replaceMediaOf) {
 		return;
 	}
 	options.ghostScheduled = true;
