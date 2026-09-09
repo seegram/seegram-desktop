@@ -822,6 +822,7 @@ namespace {
 		object_ptr<Ui::SettingsButton>(parent, Counters::Label(peer, Counters::Kind::Comments), st::infoSharedMediaButton));
 	result->toggleOn(EnabledValue(Feature::Comments));
 	const auto button = result->entity();
+	Counters::AddRightLabel(button, peer, Counters::Kind::Comments);
 	button->addClickHandler([=] {
 		if (!navigation->showFrozenError()) {
 			navigation->showSection(Make(peer));
