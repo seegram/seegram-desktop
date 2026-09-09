@@ -1,0 +1,18 @@
+--- a/src/renderer/cpu/executor.rs
++++ b/src/renderer/cpu/executor.rs
+@@ -298,8 +298,13 @@
+     if let Some(lut) = self.lut_cache.get(self.lut_key.as_slice()) {
+       return Ok((lut.clone(), id));
+     }
+-    // Each LUT sample can scan the color and opacity stops on a cache miss.
+-    self.budget.work(GRADIENT_LUT_SIZE.saturating_mul(stops.0.len().saturating_add(1)))?;
++    // The interpolation loops scan stops, not the scalar components used
++    // to encode them (four per color stop and two per opacity stop).
++    let colors = color_count.min(stops.0.len() / 4);
++    let opacity_values = stops.0.len() - colors * 4;
++    let alphas = if opacity_values >= 4 && opacity_values % 2 == 0 { opacity_values / 2 } else { 0 };
++    let samples = GRADIENT_LUT_SIZE.saturating_mul(colors.saturating_add(alphas).saturating_add(1));
++    self.budget.work(samples.saturating_add(stops.0.len()))?;
+     let lut = build_gradient_lut(stops, color_count, opacity);
+     if self.lut_cache.len() >= LUT_CACHE_CAP {
+       self.lut_cache.clear();
