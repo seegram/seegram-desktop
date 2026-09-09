@@ -6,6 +6,8 @@
 # the one gcc obeys. Interface properties are read at generate time, so adding
 # to the target here still reaches everything that links it.
 
+include(${CMAKE_CURRENT_LIST_DIR}/tlottie/override.cmake)
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux"
         AND DESKTOP_APP_SPECIAL_TARGET
         AND TARGET common_options)

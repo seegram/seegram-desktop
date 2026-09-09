@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "chat_helpers/stickers_lottie.h"
+#include "fork/lottie_cache.h"
 
 #include "lottie/lottie_single_player.h"
 #include "lottie/lottie_multi_player.h"
@@ -52,7 +53,7 @@ auto LottieCachedFromContent(
 		const QByteArray &content,
 		QSize box) {
 	const auto key = Storage::Cache::Key{
-		baseKey.high,
+		Fork::LottieCache::High(baseKey.high),
 		baseKey.low + keyShift
 	};
 	const auto get = [=](FnMut<void(QByteArray &&cached)> handler) {

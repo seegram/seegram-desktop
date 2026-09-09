@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "data/stickers/data_custom_emoji.h"
+#include "fork/lottie_cache.h"
 
 #include "boxes/peers/edit_forum_topic_box.h" // MakeTopicIconEmoji.
 #include "chat_helpers/stickers_emoji_pack.h"
@@ -297,7 +298,7 @@ Storage::Cache::Key CustomEmojiLoader::cacheKey(
 		return {};
 	}
 	return Storage::Cache::Key{
-		baseKey.high,
+		Fork::LottieCache::High(baseKey.high, document->sticker() && document->sticker()->isLottie()),
 		baseKey.low + ChatHelpers::LottieCacheKeyShift(
 			0x0F,
 			LottieSizeFromTag(_tag)),
