@@ -623,6 +623,7 @@ PRIVATE
     fork/message_marks.cpp
     fork/message_marks.h
     fork/message_time_format.h
+    fork/lottie_cache.h
     fork/message_store.cpp
     fork/message_store.h
     fork/settings_account_profiles.cpp
