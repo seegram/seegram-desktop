@@ -63,9 +63,10 @@ jobs:
           RELEASE_REPO: ${{ github.repository }}
           RELEASE_SHA: ${{ github.sha }}
           RELEASE_COUNTER: ${{ inputs.counter }}
+          RELEASE_PUBLISH: ${{ inputs.publish }}
         run: |
           python3 - <<'PY'
-          import base64, json, os, re, urllib.request
+          import base64, json, os, re, urllib.request, urllib.error
           counter = os.environ['RELEASE_COUNTER']
           if not counter.isascii() or not counter.isdecimal() or not 1 <= int(counter) <= 4294967295:
               raise SystemExit('::error::Counter must be an integer from 1 to 4294967295')
@@ -77,7 +78,27 @@ jobs:
           if not committed or committed[1] != counter:
               actual = committed[1] if committed else 'missing'
               raise SystemExit(f'::error::Requested build {counter}, committed build {actual}. Use the release bot to prepare and commit the correct version first.')
-          print('Validated build ' + counter + ' at ' + os.environ['RELEASE_SHA'])
+          if os.environ['RELEASE_PUBLISH'] != 'true':
+              print('Validated build without publishing')
+              raise SystemExit(0)
+          headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'}
+          prefix = 'https://api.github.com/repos/' + os.environ['RELEASE_REPO']
+          def api(path, data=None):
+              payload = json.dumps(data).encode() if data is not None else None
+              with urllib.request.urlopen(urllib.request.Request(prefix + path, data=payload, headers=headers), timeout=30) as response:
+                  return json.load(response)
+          version_file = api('/contents/Telegram/SourceFiles/core/version.h?ref=' + os.environ['RELEASE_SHA'])
+          version = re.search(r'AppVersionStr\s*=\s*"([^"]+)"', base64.b64decode(version_file['content']).decode())[1]
+          tag = 'v' + version + '-' + counter
+          try:
+              ref = api('/git/ref/tags/' + tag)
+          except urllib.error.HTTPError as error:
+              if error.code != 404:
+                  raise
+              ref = api('/git/refs', {'ref': 'refs/tags/' + tag, 'sha': os.environ['RELEASE_SHA']})
+          if ref['object']['type'] != 'commit' or ref['object']['sha'] != os.environ['RELEASE_SHA']:
+              raise SystemExit('::error::Release tag already points to another commit; refusing to replace it.')
+          print('Verified release tag ' + tag)
           PY
 
   macos:

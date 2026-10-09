@@ -263,7 +263,7 @@ if command -v gh >/dev/null 2>&1; then
 		printf 'Telegram Desktop %s, SeeGram build %s.\n\n' "$VERSION_STR" "$COUNTER" > "$NOTES"
 		cat "$ROOT/fork/release-installation.md" >> "$NOTES"
 		gh release create "$TAG" --repo "$GH_REPO_SLUG" \
-			--target "$(git rev-parse HEAD)" \
+			--verify-tag \
 			--title "SeeGram $VERSION_STR build $COUNTER" \
 			--notes-file "$NOTES" >/dev/null \
 			|| gh release view "$TAG" --repo "$GH_REPO_SLUG" >/dev/null
