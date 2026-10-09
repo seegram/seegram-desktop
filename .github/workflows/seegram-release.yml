@@ -81,7 +81,7 @@ jobs:
           if os.environ['RELEASE_PUBLISH'] != 'true':
               print('Validated build without publishing')
               raise SystemExit(0)
-          headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'}
+          headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'}
           prefix = 'https://api.github.com/repos/' + os.environ['RELEASE_REPO']
           def api(path, data=None):
               payload = json.dumps(data).encode() if data is not None else None
