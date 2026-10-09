@@ -16,6 +16,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ["patches", "xz", "openssl3", "ffmpeg", "libheif", "breakpad",
           "tg_owt", "ada", "tlottie", "wallet-engine", "tdesktop_rust"]
+WINDOWS_TOOLS = ["msys64", "python", "NuGet", "jom", "gyp", "rust"]
 
 
 def fingerprint(paths):
@@ -54,7 +55,7 @@ def native(check, record):
     system = platform.system()
     if system not in ("Darwin", "Windows"):
         raise SystemExit("Use --linux-image on Linux")
-    stages = ([stage for stage in STAGES if stage != "xz"] + ["tg_angle"]
+    stages = (WINDOWS_TOOLS + [stage for stage in STAGES if stage != "xz"] + ["tg_angle"]
               if system == "Windows" else STAGES)
     libraries = ROOT.parent / "Libraries"
     environment = os.environ.copy()

@@ -76,6 +76,9 @@ class DependencyPreparationTests(unittest.TestCase):
         self.assertNotIn('xz', stages)
         self.assertIn('tg_angle', stages)
         self.assertIn('wallet-engine', stages)
+        for tool in ('msys64', 'python', 'NuGet', 'jom', 'gyp', 'rust'):
+            self.assertLess(stages.index(tool), stages.index('openssl3'))
+        self.assertNotIn('qt', stages)
         self.assertTrue((self.root.parent / 'Libraries/win64/.seegram-dependencies-730').is_file())
 
     def test_powershell_developer_environment_supplies_upstream_platform(self):
