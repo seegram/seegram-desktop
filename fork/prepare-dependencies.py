@@ -64,6 +64,7 @@ def native(check, record):
         if architecture.lower() not in ("x64", "amd64"):
             raise SystemExit("Use the x64 Visual Studio developer environment")
         environment["Platform"] = "x64"
+        environment["VSLANG"] = "1033"
         libraries /= "win64"
         artifacts = [libraries / "tdesktop_rust/out/lib/tdesktop_rust.lib",
                      libraries / "tdesktop_rust/out/src/wallet_engine/wallet_engine.cpp"]
