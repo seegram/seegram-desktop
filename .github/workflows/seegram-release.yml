@@ -281,6 +281,7 @@ jobs:
           # The run's own short-lived token: the runner service has no
           # credentials of its own for a private repository.
           $auth = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('x-access-token:' + $env:GH_TOKEN))
+          Write-Host "::add-mask::$auth"
           git -c submodule.recurse=false -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --quiet origin $env:SOURCE_SHA
           if ($LASTEXITCODE -ne 0) { throw 'Could not fetch the release revision' }
           git reset --quiet --hard --no-recurse-submodules $env:SOURCE_SHA

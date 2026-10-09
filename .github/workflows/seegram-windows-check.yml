@@ -33,6 +33,7 @@ jobs:
           }
           $log = Join-Path $env:RUNNER_TEMP ('windows-build-check-' + [guid]::NewGuid().ToString('N') + '.log')
           $auth = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('x-access-token:' + $env:GH_TOKEN))
+          Write-Host "::add-mask::$auth"
           git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --quiet origin $env:SOURCE_SHA *> $log
           if ($LASTEXITCODE -ne 0) { throw 'Could not fetch the requested revision' }
           git reset --quiet --hard --no-recurse-submodules $env:SOURCE_SHA *> $log
