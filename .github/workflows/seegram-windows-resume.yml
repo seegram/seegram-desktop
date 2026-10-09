@@ -73,6 +73,34 @@ jobs:
           }
           Write-Host "Verified $tag at $head"
 
+      - name: Prepare the upstream Windows build tools
+        shell: pwsh
+        env:
+          Platform: x64
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-Location $env:SEEGRAM_TREE
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ($LASTEXITCODE -ne 0 -or -not $vs) { throw 'Visual Studio C++ tools are missing' }
+          Import-Module (Join-Path $vs 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
+          $thirdParty = Join-Path (Split-Path $env:SEEGRAM_TREE -Parent) 'ThirdParty'
+          $stamp = Join-Path $thirdParty '.seegram-recovery-tools'
+          $identity = (Get-FileHash 'Telegram/build/prepare/prepare.py' -Algorithm SHA256).Hash
+          $required = @('msys64/ucrt64/bin/perl.exe', 'msys64/ucrt64/bin/nasm.exe', 'jom/jom.exe', 'python/Scripts/python.exe', 'rust/cargo/bin/cargo.exe')
+          $missing = @($required | Where-Object { -not (Test-Path (Join-Path $thirdParty $_) -PathType Leaf) })
+          if ($missing.Count -eq 0 -and (Test-Path $stamp) -and (Get-Content -Raw $stamp).Trim() -eq $identity) {
+            Write-Host 'Upstream Windows tools are already prepared'
+          } else {
+            python Telegram/build/prepare/prepare.py silent msys64 python NuGet jom gyp rust
+            if ($LASTEXITCODE -ne 0) { throw 'Upstream build-tool preparation failed' }
+            foreach ($relative in $required) {
+              if (-not (Test-Path (Join-Path $thirdParty $relative) -PathType Leaf)) { throw "Prepared tool is missing: $relative" }
+            }
+            Set-Content -Path $stamp -Value $identity
+          }
+
       - name: Build, sign and publish Windows
         shell: pwsh
         env:
