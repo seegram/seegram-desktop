@@ -88,6 +88,7 @@ class DependencyPreparationTests(unittest.TestCase):
                 patch.object(MODULE.subprocess, 'run') as run:
             MODULE.native(False, False)
         self.assertEqual(run.call_args.kwargs['env']['Platform'], 'x64')
+        self.assertEqual(run.call_args.kwargs['env']['VSLANG'], '1033')
 
     def test_actual_developer_architecture_overrides_stale_platform(self):
         patch.object(MODULE.platform, 'system', return_value='Windows').start()

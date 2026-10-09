@@ -89,6 +89,19 @@ jobs:
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if ($LASTEXITCODE -ne 0 -or -not $vs) { throw 'Visual Studio C++ tools are missing' }
+          $toolset = (Get-Content (Join-Path $vs 'VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt') -Raw).Trim()
+          $english = Join-Path $vs "VC/Tools/MSVC/$toolset/bin/Hostx64/x64/1033/clui.dll"
+          if (-not (Test-Path $english -PathType Leaf)) {
+            Write-Host 'Installing the English compiler resources required by upstream FFmpeg'
+            $principal = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
+            if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Add the English Visual Studio language pack with the installer before resuming' }
+            $channel = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property channelId
+            $installer = Join-Path (Split-Path $vswhere -Parent) 'setup.exe'
+            $setup = Start-Process -FilePath $installer -ArgumentList @('modify', '--installPath', "`"$vs`"", '--channelId', $channel, '--addProductLang', 'en-US', '--quiet', '--norestart') -Wait -PassThru
+            if ($setup.ExitCode -notin @(0, 3010)) { throw "Visual Studio language installation failed: $($setup.ExitCode)" }
+            if (-not (Test-Path $english -PathType Leaf)) { throw 'English compiler resources are still missing' }
+          }
+          $env:VSLANG = '1033'
           Import-Module (Join-Path $vs 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
           $thirdParty = Join-Path (Split-Path $env:SEEGRAM_TREE -Parent) 'ThirdParty'
@@ -112,6 +125,7 @@ jobs:
         shell: pwsh
         env:
           Platform: x64
+          VSLANG: '1033'
           RELEASE_COUNTER: ${{ inputs.counter }}
           TDESKTOP_API_ID: ${{ secrets.TDESKTOP_API_ID }}
           TDESKTOP_API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
