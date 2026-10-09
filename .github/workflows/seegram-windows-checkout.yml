@@ -51,11 +51,13 @@ jobs:
             $target = [IO.Path]::GetFullPath((Join-Path $module $Matches[1]))
             $expected = [IO.Path]::GetFullPath((Join-Path $env:SEEGRAM_TREE '.git/modules/Telegram/ThirdParty/zxcvbn'))
             if ($target -ne $expected) { throw 'Submodule gitfile points outside its expected location' }
-            $broken = -not (Test-Path $target -PathType Container)
+            $null = git --git-dir="$target" rev-parse --verify HEAD 2>$null
+            $broken = $LASTEXITCODE -ne 0
           }
-          Write-Host "ZXCVBN_DANGLING_GITFILE=$broken"
-          git status --short --untracked-files=no --ignore-submodules=all
+          Write-Host "ZXCVBN_BROKEN_GITFILE=$broken"
+          $changes = @(git status --short --untracked-files=no --ignore-submodules=all)
           if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect tracked checkout changes' }
+          Write-Host "TRACKED_CHANGES=$($changes.Count)"
           if ($env:REPAIR -ne 'true') { exit 0 }
 
           $backupRoot = Join-Path (Split-Path $env:SEEGRAM_TREE -Parent) '.seegram-checkout-backups'
@@ -69,9 +71,13 @@ jobs:
               throw 'Refusing to move a junction or symbolic link'
             }
             Move-Item -LiteralPath $module -Destination "$backup\zxcvbn"
+            if (Test-Path -LiteralPath $target) {
+              Move-Item -LiteralPath $target -Destination "$backup\zxcvbn.git"
+            }
           }
           Write-Host "BACKUP=$([IO.Path]::GetFileName($backup))"
           $auth = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('x-access-token:' + $env:GH_TOKEN))
+          Write-Host "::add-mask::$auth"
           git -c submodule.recurse=false -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --quiet origin $env:SOURCE_SHA
           if ($LASTEXITCODE -ne 0) { throw 'Could not fetch the requested commit' }
           git reset --quiet --hard --no-recurse-submodules $env:SOURCE_SHA
