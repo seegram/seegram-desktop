@@ -119,6 +119,10 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue) -or -not (Get-Command
     }
 }
 
+$sdkHeaders = Join-Path $env:WindowsSdkDir ("Include\" + $env:WindowsSDKVersion.TrimEnd('\'))
+& python "$root\fork\windows-sdk-cache.py" --build-dir "$root\out" --sdk-root $sdkHeaders
+if ($LASTEXITCODE -ne 0) { Fail "Windows SDK validation failed" }
+
 & python "$root\fork\prepare-dependencies.py"
 if ($LASTEXITCODE -ne 0) { Fail "dependency preparation failed" }
 
