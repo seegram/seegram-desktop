@@ -12,6 +12,10 @@ on:
         description: Original committed build counter
         type: string
         required: true
+      diagnostics_only:
+        description: Read the previous dependency failure without rebuilding
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -27,6 +31,7 @@ jobs:
     timeout-minutes: 360
     steps:
       - name: Restore and verify the original release revision
+        if: ${{ !inputs.diagnostics_only }}
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -74,6 +79,7 @@ jobs:
           Write-Host "Verified $tag at $head"
 
       - name: Prepare the upstream Windows build tools
+        if: ${{ !inputs.diagnostics_only }}
         shell: pwsh
         env:
           Platform: x64
@@ -102,6 +108,7 @@ jobs:
           }
 
       - name: Build, sign and publish Windows
+        if: ${{ !inputs.diagnostics_only }}
         shell: pwsh
         env:
           Platform: x64
@@ -120,3 +127,16 @@ jobs:
           if (-not $env:TDESKTOP_API_ID -or -not $env:TDESKTOP_API_HASH) { throw 'Telegram API credentials are missing' }
           .\fork\release.ps1 -Counter ([long]$env:RELEASE_COUNTER)
           if ($LASTEXITCODE -ne 0) { throw 'Windows release failed' }
+
+      - name: Read dependency failure details
+        if: ${{ failure() || inputs.diagnostics_only }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:SEEGRAM_TREE) { throw 'Prepared checkout is missing' }
+          $libraries = Join-Path (Split-Path $env:SEEGRAM_TREE -Parent) 'Libraries/win64'
+          $log = Join-Path $libraries 'ffmpeg/ffbuild/config.log'
+          if (Test-Path $log -PathType Leaf) {
+            Write-Host 'FFmpeg compiler test:'
+            Get-Content $log -Tail 65
+          }
