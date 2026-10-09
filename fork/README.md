@@ -50,7 +50,8 @@ recipe. It preserves existing images and reuses the matching one on later runs.
 `SEEGRAM_LINUX_IMAGE` keeps an explicitly managed image instead. The first
 release after this update takes longer because dependencies must be rebuilt.
 
-Windows preparation accepts both the Visual Studio PowerShell target variable
+Windows preparation also refreshes the upstream MSYS2 UCRT tools, Python, jom,
+gyp, NuGet and Rust before building libraries. It accepts the PowerShell target variable
 and the legacy Native Tools `Platform` variable. The manual Windows Release
 Recovery workflow can finish an unpublished Windows platform from an existing
 release's exact commit and counter, leaving completed platforms alone. It
