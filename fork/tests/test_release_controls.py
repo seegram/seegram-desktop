@@ -75,11 +75,13 @@ class ServiceTests(unittest.IsolatedAsyncioTestCase):
         self.calls = []
         self.head = 'old-head'
         self.runs = []
+        self.tags = {}
         self.source = '#define SEEGRAM_BUILD_COUNTER 1\n'
         async def request(method, path, **kwargs):
             self.calls.append((method, path, kwargs))
             if '/actions/workflows/' in path and method == 'GET': return {'workflow_runs': self.runs}
             if path.endswith('/git/ref/heads/main'): return {'object': {'sha': self.head}}
+            if '/git/ref/tags/' in path: return self.tags.get(path.rsplit('/', 1)[-1])
             if '/git/commits/' in path: return {'tree': {'sha': 'old-tree'}}
             if path.endswith('/git/blobs'): return {'sha': 'blob'}
             if path.endswith('/git/trees'): return {'sha': 'tree'}
@@ -96,10 +98,26 @@ class ServiceTests(unittest.IsolatedAsyncioTestCase):
         update = next(c[2]['json'] for c in self.calls if c[0] == 'PATCH')
         self.assertIs(update['force'], False)
         self.assertEqual(state['sha'], 'new-head')
+        tag = next(c[2]['json'] for c in self.calls if c[1].endswith('/git/refs'))
+        self.assertEqual(tag, {'ref': 'refs/tags/v7.2.5-2', 'sha': 'new-head'})
         await self.service.dispatch(state)
         dispatch = self.calls[-1][2]['json']
-        self.assertEqual(dispatch['ref'], 'release-build/unique-token')
+        self.assertEqual(dispatch['ref'], 'v7.2.5-2')
         self.assertEqual(dispatch['inputs']['counter'], '2')
+
+    async def test_reserved_release_tag_never_changes_the_counter_or_tag(self):
+        self.tags['v7.2.5-2'] = {'object': {'sha': 'already-built'}}
+        with self.assertRaises(ReleaseError): await self.service.prepare(self.plan)
+        self.assertTrue(all(c[0] == 'GET' for c in self.calls))
+
+    async def test_new_upstream_version_pins_existing_commit(self):
+        self.plan.counter = self.plan.current
+        state = await self.service.prepare(self.plan)
+        self.assertEqual(state['sha'], self.head)
+        self.assertEqual(state['ref'], 'v7.2.5-1')
+        mutations = [c for c in self.calls if c[0] != 'GET']
+        self.assertEqual(len(mutations), 1)
+        self.assertEqual(mutations[0][2]['json']['sha'], self.head)
 
     async def test_changed_main_never_mutates(self):
         self.head = 'someone-elses-commit'
