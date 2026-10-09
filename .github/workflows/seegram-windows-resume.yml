@@ -145,6 +145,21 @@ jobs:
             Set-Content -Path $stamp -Value $identity
           }
 
+      - name: Refresh objects compiled with the previous Windows SDK
+        if: ${{ !inputs.diagnostics_only }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $encoded = gh api "repos/$env:GITHUB_REPOSITORY/contents/fork/windows-sdk-cache.py?ref=$env:GITHUB_SHA" --jq .content
+          if ($LASTEXITCODE -ne 0) { throw 'Could not read the SDK cache helper from this workflow revision' }
+          $helper = Join-Path $env:RUNNER_TEMP 'seegram-windows-sdk-cache.py'
+          [IO.File]::WriteAllBytes($helper, [Convert]::FromBase64String(($encoded -join '')))
+          $sdk = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits/10/Include/10.0.26100.0'
+          python $helper --build-dir "$env:SEEGRAM_TREE/out" --sdk-root $sdk
+          if ($LASTEXITCODE -ne 0) { throw 'SDK cache refresh failed' }
+
       - name: Build, sign and publish Windows
         if: ${{ !inputs.diagnostics_only }}
         shell: pwsh
