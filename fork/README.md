@@ -58,6 +58,10 @@ Preparation sets `VSLANG=1033` for its child processes. The manual Windows Relea
 Recovery workflow can finish an unpublished Windows platform from an existing
 release's exact commit and counter, leaving completed platforms alone. It
 refuses to rebuild a Windows version already present in the update feed.
+Windows SDK 26100 must also include the serviced Windows Hello declarations
+(`RequestCreateForWindowAsync` and `IKeyCredentialWithWindow`); the original
+26100 SDK headers are too old. Recovery updates this SDK from Microsoft's signed
+installer when those declarations are missing.
 
 ## Version numbers
 
