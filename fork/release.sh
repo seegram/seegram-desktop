@@ -88,6 +88,8 @@ fi
 # The client compares (base << 32 | counter), see Core::RunningUpdateVersion.
 VERSION="$(( (BASE << 32) | COUNTER ))"
 
+python3 fork/prepare-dependencies.py
+
 echo "==> upstream version : $BASE"
 echo "    fork build       : $COUNTER"
 echo "    update version   : $VERSION"

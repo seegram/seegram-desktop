@@ -68,3 +68,11 @@ forked submodule or edited upstream file to reconcile.
 The downloaded gift is diagnostic input only and is not included in the repo.
 This fix addresses disappearing animations; it does not establish a cause for
 the separately reported allocator crashes.
+
+## Telegram 7.3
+
+Upstream pins `92df98dc20` and builds tlottie together with wallet-engine in
+`tdesktop_rust`. The pin detector supports the named revision in prepare.py,
+and the regression links that shared archive explicitly. The old patch stays
+disabled for this pin. The generated gradient regression passes against the
+unmodified upstream archive.

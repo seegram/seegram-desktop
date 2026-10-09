@@ -69,7 +69,13 @@ function(seegram_prepare_tlottie)
             IMPORTED_LOCATION_MINSIZEREL "${seegram_tlottie_library}"
         )
     else()
-        get_target_property(seegram_tlottie_library external_tlottie_native IMPORTED_LOCATION)
+        if (TARGET external_tdesktop_rust_native)
+            get_target_property(seegram_tlottie_library external_tdesktop_rust_native IMPORTED_LOCATION)
+        elseif (TARGET external_tlottie_native)
+            get_target_property(seegram_tlottie_library external_tlottie_native IMPORTED_LOCATION)
+        else()
+            set(seegram_tlottie_library "${DESKTOP_APP_TLOTTIE_LIBRARY}")
+        endif()
         message(STATUS "New tlottie pin: temporary patch disabled, checking upstream library")
     endif()
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${seegram_tlottie_library}")
@@ -86,6 +92,10 @@ function(seegram_prepare_tlottie)
         set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded)
         unset(gradient_result CACHE)
         unset(gradient_compiled CACHE)
+        set(regression_libraries external_tlottie)
+        if (TARGET external_tdesktop_rust)
+            list(APPEND regression_libraries external_tdesktop_rust)
+        endif()
         try_run(gradient_result gradient_compiled
             "${output}/probe"
             "${directory}/gradient-regression.cpp"
@@ -93,7 +103,7 @@ function(seegram_prepare_tlottie)
                 "-DCMAKE_CXX_STANDARD=17"
                 "-DCMAKE_OSX_ARCHITECTURES=${CMAKE_HOST_SYSTEM_PROCESSOR}"
                 "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded"
-            LINK_LIBRARIES external_tlottie
+            LINK_LIBRARIES ${regression_libraries}
             COMPILE_OUTPUT_VARIABLE compile_log
             RUN_OUTPUT_VARIABLE run_log
         )

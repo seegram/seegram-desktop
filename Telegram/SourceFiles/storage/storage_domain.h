@@ -240,6 +240,7 @@ private:
 	[[nodiscard]] QByteArray prepareAccountsInfo(bool includeProfiles) const;
 	bool writeKeyData(const KeyData &data, bool sync) const;
 	[[nodiscard]] bool writeKeyDataChecked(const KeyData &data) const;
+	[[nodiscard]] bool persistAccountProfiles();
 	[[nodiscard]] bool wrapOnDiskOpensLocalKey(
 		const PasscodeWrap &staged,
 		const MTP::AuthKeyPtr &wrapKey) const;
