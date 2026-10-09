@@ -57,9 +57,12 @@ def native(check, record):
     stages = ([stage for stage in STAGES if stage != "xz"] + ["tg_angle"]
               if system == "Windows" else STAGES)
     libraries = ROOT.parent / "Libraries"
+    environment = os.environ.copy()
     if system == "Windows":
-        if os.environ.get("Platform", "").lower() != "x64":
+        architecture = environment.get("VSCMD_ARG_TGT_ARCH") or environment.get("Platform", "")
+        if architecture.lower() not in ("x64", "amd64"):
             raise SystemExit("Use the x64 Visual Studio developer environment")
+        environment["Platform"] = "x64"
         libraries /= "win64"
         artifacts = [libraries / "tdesktop_rust/out/lib/tdesktop_rust.lib",
                      libraries / "tdesktop_rust/out/src/wallet_engine/wallet_engine.cpp"]
@@ -78,7 +81,7 @@ def native(check, record):
         raise SystemExit("Telegram 7.3 dependencies need preparation")
     if not record:
         subprocess.run([sys.executable, str(recipe), "silent", *stages],
-                       cwd=ROOT, check=True)
+                       cwd=ROOT, env=environment, check=True)
     if not all(path.is_file() for path in artifacts):
         raise SystemExit("Prepared Rust archive or generated wallet binding is missing")
     stamp.write_text(identity + "\n")

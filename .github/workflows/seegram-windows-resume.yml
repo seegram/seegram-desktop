@@ -1,0 +1,94 @@
+name: SeeGram Windows Release Recovery
+run-name: "Resume Windows build ${{ inputs.counter }} · ${{ inputs.source_sha }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Original release commit (full SHA)
+        type: string
+        required: true
+      counter:
+        description: Original committed build counter
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seegram-release
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Resume Windows x64
+    runs-on: [self-hosted, Windows, X64, seegram]
+    timeout-minutes: 360
+    steps:
+      - name: Restore and verify the original release revision
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          RELEASE_COUNTER: ${{ inputs.counter }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          if ($env:SOURCE_SHA -notmatch '^[0-9a-f]{40}$' -or $env:RELEASE_COUNTER -notmatch '^[1-9][0-9]{0,9}$') {
+            throw 'Expected an exact commit and a positive build counter'
+          }
+          if ([long]$env:RELEASE_COUNTER -gt 4294967295) { throw 'Build counter is too large' }
+          if (-not $env:SEEGRAM_TREE -or -not (Test-Path "$env:SEEGRAM_TREE\.git")) { throw 'Prepared checkout is missing' }
+          Set-Location $env:SEEGRAM_TREE
+          $dirty = git status --porcelain --untracked-files=no
+          if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Checkout is not clean; repair it before resuming' }
+          $auth = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('x-access-token:' + $env:GH_TOKEN))
+          Write-Host "::add-mask::$auth"
+          git -c submodule.recurse=false -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --quiet origin $env:SOURCE_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'Could not fetch the original commit' }
+          git reset --quiet --hard --no-recurse-submodules $env:SOURCE_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'Could not select the original commit' }
+          git submodule sync --quiet --recursive
+          if ($LASTEXITCODE -ne 0) { throw 'Could not sync submodules' }
+          git submodule update --quiet --init --recursive
+          if ($LASTEXITCODE -ne 0) { throw 'Could not prepare submodules' }
+          $head = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $head -ne $env:SOURCE_SHA) { throw 'Wrong release revision' }
+          $counter = (Select-String -Path 'Telegram/SourceFiles/fork/build_counter.h' -Pattern '^#define SEEGRAM_BUILD_COUNTER (\d+)').Matches[0].Groups[1].Value
+          if ($counter -ne $env:RELEASE_COUNTER) { throw 'Counter differs from the original source' }
+          $version = (Select-String -Path 'Telegram/SourceFiles/core/version.h' -Pattern 'AppVersionStr = "([^"]*)"').Matches[0].Groups[1].Value
+          $tag = "v$version-$counter"
+          $refJson = gh api "repos/$env:GITHUB_REPOSITORY/git/ref/tags/$tag"
+          if ($LASTEXITCODE -ne 0) { throw 'Original release tag is missing' }
+          $ref = $refJson | ConvertFrom-Json
+          if ($ref.object.type -ne 'commit' -or $ref.object.sha -ne $head) { throw 'Release tag points to another commit' }
+          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -ne 0) { throw 'Create the original GitHub release before resuming' }
+          $base = [long](Select-String -Path 'Telegram/SourceFiles/core/version.h' -Pattern 'AppVersion = (\d+);').Matches[0].Groups[1].Value
+          $expected = ($base -shl 32) -bor [long]$counter
+          $feed = Invoke-RestMethod -Uri 'https://desktop.see.tg/current4' -TimeoutSec 30
+          if ([long]$feed.win64.stable.released -ge $expected) {
+            throw 'Windows already serves this or a newer version; recover installer uploads without rebuilding it'
+          }
+          Write-Host "Verified $tag at $head"
+
+      - name: Build, sign and publish Windows
+        shell: pwsh
+        env:
+          Platform: x64
+          RELEASE_COUNTER: ${{ inputs.counter }}
+          TDESKTOP_API_ID: ${{ secrets.TDESKTOP_API_ID }}
+          TDESKTOP_API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
+          GH_TOKEN: ${{ github.token }}
+          SEEGRAM_KEYS_DIR: ${{ secrets.SEEGRAM_KEYS_DIR }}
+          SEEGRAM_KEY_FILE: ${{ secrets.SEEGRAM_KEY_FILE }}
+          SEEGRAM_SSH_KEY: ${{ secrets.SEEGRAM_SSH_KEY }}
+          SEEGRAM_UPDATE_SERVER: ${{ secrets.SEEGRAM_UPDATE_SERVER }}
+          SEEGRAM_UPDATE_ROOT: ${{ secrets.SEEGRAM_UPDATE_ROOT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-Location $env:SEEGRAM_TREE
+          if (-not $env:TDESKTOP_API_ID -or -not $env:TDESKTOP_API_HASH) { throw 'Telegram API credentials are missing' }
+          .\fork\release.ps1 -Counter ([long]$env:RELEASE_COUNTER)
+          if ($LASTEXITCODE -ne 0) { throw 'Windows release failed' }
