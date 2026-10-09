@@ -9,9 +9,15 @@ published feed. A new upstream base starts at the committed counter, normally
 Confirmation expires after ten minutes. Changes to main, another active run,
 an already published version or a rollback abort preparation. If needed, the
 bot commits only `Telegram/SourceFiles/fork/build_counter.h` through GitHub's Git API with a
-non-forced ref update. It creates an immutable `release-build/<request-id>`
+non-forced ref update. It creates the immutable final `v<version>-<counter>`
 tag and dispatches that ref. The unique request ID and commit identify the
 run, so another person's run cannot be mistaken for this one.
+
+The workflow verifies this tag before building; a manual run reserves it at
+the same early step. GitHub release creation only accepts an existing tag,
+so the upload job does not also need to create a tag after publishing the feed.
+An existing tag is never retargeted. State from older `release-build/` runs
+continues to work for status and retries.
 
 `/status` shows platform steps. `/feed` checks public versions and package
 availability. `/retry` repeats only failed jobs of a tracked release, preserving

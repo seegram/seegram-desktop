@@ -307,7 +307,7 @@ try {
                 (Get-Content -Raw -Encoding utf8 (Join-Path $root 'fork/release-installation.md'))
             $notesFile = Join-Path $stage 'release-notes.md'
             [System.IO.File]::WriteAllText($notesFile, $notes, [System.Text.UTF8Encoding]::new($false))
-            gh release create $tag --repo $slug --target (git rev-parse HEAD) --title "SeeGram $versionStr build $Counter" --notes-file $notesFile | Out-Null
+            gh release create $tag --repo $slug --verify-tag --title "SeeGram $versionStr build $Counter" --notes-file $notesFile | Out-Null
             if ($LASTEXITCODE -ne 0) {
                 gh release view $tag --repo $slug *> $null
                 if ($LASTEXITCODE -ne 0) { Fail "could not create release $tag" }
