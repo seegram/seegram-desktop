@@ -1,0 +1,87 @@
+name: SeeGram Windows Checkout Recovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact release commit to recover
+        type: string
+        required: true
+      repair:
+        description: Back up the broken zxcvbn checkout and restore the release revision
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seegram-windows-checkout-recovery
+  cancel-in-progress: false
+
+jobs:
+  checkout:
+    runs-on: [self-hosted, Windows, X64, seegram]
+    timeout-minutes: 15
+    steps:
+      - name: Inspect and recover the prepared checkout
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          REPAIR: ${{ inputs.repair }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          if ($env:SOURCE_SHA -notmatch '^[0-9a-f]{40}$') { throw 'A full commit SHA is required' }
+          if (-not $env:SEEGRAM_TREE -or -not (Test-Path "$env:SEEGRAM_TREE\.git" -PathType Container)) {
+            throw 'Prepared checkout is missing or is not a standalone clone'
+          }
+          Set-Location $env:SEEGRAM_TREE
+          $head = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot read checkout HEAD' }
+          Write-Host "HEAD=$head"
+          $relative = 'Telegram/ThirdParty/zxcvbn'
+          $module = Join-Path $env:SEEGRAM_TREE $relative
+          $marker = Join-Path $module '.git'
+          $broken = $false
+          if (Test-Path $marker -PathType Leaf) {
+            $pointer = (Get-Content -LiteralPath $marker -Raw).Trim()
+            if ($pointer -notmatch '^gitdir: (.+)$') { throw 'Unexpected submodule gitfile format' }
+            $target = [IO.Path]::GetFullPath((Join-Path $module $Matches[1]))
+            $expected = [IO.Path]::GetFullPath((Join-Path $env:SEEGRAM_TREE '.git/modules/Telegram/ThirdParty/zxcvbn'))
+            if ($target -ne $expected) { throw 'Submodule gitfile points outside its expected location' }
+            $broken = -not (Test-Path $target -PathType Container)
+          }
+          Write-Host "ZXCVBN_DANGLING_GITFILE=$broken"
+          git status --short --untracked-files=no --ignore-submodules=all
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect tracked checkout changes' }
+          if ($env:REPAIR -ne 'true') { exit 0 }
+
+          $backupRoot = Join-Path (Split-Path $env:SEEGRAM_TREE -Parent) '.seegram-checkout-backups'
+          $backup = Join-Path $backupRoot ([guid]::NewGuid().ToString('N'))
+          New-Item -ItemType Directory -Path $backup -Force | Out-Null
+          git diff --binary --ignore-submodules=all HEAD --output="$backup\tracked.patch"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not back up tracked changes' }
+          Set-Content -LiteralPath "$backup\previous-head.txt" -Value $head -Encoding utf8
+          if ($broken) {
+            if ((Get-Item -LiteralPath $module).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+              throw 'Refusing to move a junction or symbolic link'
+            }
+            Move-Item -LiteralPath $module -Destination "$backup\zxcvbn"
+          }
+          Write-Host "BACKUP=$([IO.Path]::GetFileName($backup))"
+          $auth = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('x-access-token:' + $env:GH_TOKEN))
+          git -c submodule.recurse=false -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --quiet origin $env:SOURCE_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'Could not fetch the requested commit' }
+          git reset --quiet --hard --no-recurse-submodules $env:SOURCE_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'Could not restore the release checkout' }
+          git submodule sync --quiet --recursive
+          if ($LASTEXITCODE -ne 0) { throw 'Could not sync submodule URLs' }
+          git submodule update --quiet --init --recursive
+          if ($LASTEXITCODE -ne 0) { throw 'Could not initialize submodules' }
+          $actual = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $actual -ne $env:SOURCE_SHA) { throw 'Wrong final revision' }
+          $dirty = git status --porcelain --untracked-files=no
+          if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Checkout is not clean after recovery' }
+          Write-Host "RECOVERED=$actual"
