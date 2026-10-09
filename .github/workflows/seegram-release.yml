@@ -271,14 +271,26 @@ jobs:
 
       - name: Sync the build tree to this commit
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.sha }}
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
           Set-Location $env:SEEGRAM_TREE
           # The run's own short-lived token: the runner service has no
           # credentials of its own for a private repository.
-          git fetch --quiet "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "${{ github.sha }}"
-          git reset --quiet --hard "${{ github.sha }}"
+          $auth = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('x-access-token:' + $env:GH_TOKEN))
+          git -c submodule.recurse=false -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --quiet origin $env:SOURCE_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'Could not fetch the release revision' }
+          git reset --quiet --hard --no-recurse-submodules $env:SOURCE_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'Could not select the release revision; build stopped' }
+          git submodule sync --quiet --recursive
+          if ($LASTEXITCODE -ne 0) { throw 'Could not sync submodule URLs' }
           git submodule update --quiet --init --recursive
+          if ($LASTEXITCODE -ne 0) { throw 'Could not prepare release submodules; build stopped' }
+          $actual = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $actual -ne $env:SOURCE_SHA) { throw 'Build tree does not match the release revision' }
           Write-Host "building $(git log -1 --format='%h %s')"
 
       - name: Build, sign and publish
