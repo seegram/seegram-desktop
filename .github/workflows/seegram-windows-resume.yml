@@ -134,9 +134,20 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           if (-not $env:SEEGRAM_TREE) { throw 'Prepared checkout is missing' }
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          Import-Module (Join-Path $vs 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
+          $env:VSLANG = '1033'
+          $compilerDir = Split-Path (Get-Command cl.exe).Source -Parent
+          Write-Host ('English compiler resources: ' + (Test-Path (Join-Path $compilerDir '1033/clui.dll')))
+          & cl.exe 2>&1 | ForEach-Object { Write-Host $_ }
+          $principal = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
+          Write-Host ('Administrator: ' + $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
           $libraries = Join-Path (Split-Path $env:SEEGRAM_TREE -Parent) 'Libraries/win64'
           $log = Join-Path $libraries 'ffmpeg/ffbuild/config.log'
           if (Test-Path $log -PathType Leaf) {
             Write-Host 'FFmpeg compiler test:'
             Get-Content $log -Tail 65
           }
+          exit 0
