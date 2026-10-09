@@ -11,12 +11,23 @@ rebuilds the main window, and destroys accounts outside the selected group.
 Group management is also rejected at the storage layer in restricted mode.
 System and biometric unlock are disabled while groups exist.
 
-The account key file retains its original three fields. The encrypted account
-list appends versioned profile metadata; a fourth outer field contains salted
-passcode wrappers. The wrappers use Telegram's local key derivation and
-encryption routines. Profile names and assignments are encrypted. Saving from
-a restricted group retains all unloaded account indices, and new accounts
-cannot reuse indices still stored or assigned to another group.
+The account key file retains Telegram's three initial fields. With Telegram
+7.3, the fourth outer field is upstream's versioned passcode-wrap trailer;
+SeeGram appends group key slots as a fifth field. Old SeeGram files with group
+slots in the fourth field are recognized explicitly. Opening such a file with
+a group passcode retains its legacy master wrapper until the master passcode
+is supplied; a group password is never used to migrate the master key.
+
+The encrypted account list retains the existing profile and appearance tails.
+Group key slots use Telegram's legacy local-key derivation and encryption;
+master passcodes use upstream's current derivation, verification tokens and
+staged durable writes. Derivation jobs carry copies of group slots and check
+the current authenticated definitions before accepting a group. Wrong or
+corrupt key files fail closed without creating empty replacement storage.
+Saving from a group retains unloaded account indices. Only master verification
+can authorize administrative changes; disabling the app lock is refused while
+groups exist. Removing the master passcode also removes group wrappers and
+clean-group references in the same checked write.
 
 This provides isolation in the running client, not forensic deniability.
 All profiles use Telegram's existing shared local encryption key. A party
@@ -89,3 +100,26 @@ network rejection and independent tray selection. Native settings and the group
 editor were captured at 100% and 200% scale. Both application icons persist as
 Finder icons after quitting; signed Contents are unchanged. The temporary test
 scenario is removed from the production source before the final dev build.
+
+## Native regression after an upstream update
+
+The opt-in scenario in `fork/tests/storage_domain_native.cpp` exercises the
+actual account store and crypto. Its runner copies the test app into a marked
+temporary directory, gives it a distinct bundle identifier and creates all key
+files from synthetic keys. It never copies a user's `tdata`.
+
+```sh
+cmake -S . -B out/dev-build -DSEEGRAM_STORAGE_REGRESSION=ON
+python3 fork/build-dev-mac.py --build-only
+python3 fork/tests/run_storage_native.py out/dev-build/Debug/SeeGram.app
+cmake -S . -B out/dev-build -DSEEGRAM_STORAGE_REGRESSION=OFF
+python3 fork/build-dev-mac.py
+```
+
+Always turn the option off before installing the final Dev app. Production
+builds default to OFF and do not contain the test scenario.
+
+The Telegram 7.3.0 update passes 68 native checks on macOS: legacy master and
+group migration, cold and warm unlock, preservation of unloaded accounts and
+appearance, one-use verification tokens, stale derivations, passcode removal,
+slot identity validation and refusal to overwrite corrupt storage.
