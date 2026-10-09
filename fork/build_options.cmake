@@ -8,6 +8,13 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/tlottie/override.cmake)
 
+option(SEEGRAM_STORAGE_REGRESSION "Run native storage checks in a disposable app" OFF)
+if (SEEGRAM_STORAGE_REGRESSION)
+    target_sources(Telegram PRIVATE "${CMAKE_CURRENT_LIST_DIR}/tests/storage_domain_native.cpp")
+    set_property(SOURCE "${CMAKE_SOURCE_DIR}/Telegram/SourceFiles/core/application.cpp"
+        APPEND PROPERTY COMPILE_DEFINITIONS SEEGRAM_STORAGE_REGRESSION)
+endif()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux"
         AND DESKTOP_APP_SPECIAL_TARGET
         AND TARGET common_options)

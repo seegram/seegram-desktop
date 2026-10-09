@@ -6,6 +6,9 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "core/application.h"
+#ifdef SEEGRAM_STORAGE_REGRESSION
+#include "fork/storage_regression.h"
+#endif // SEEGRAM_STORAGE_REGRESSION
 #include "fork/disguise.h"
 
 #include "data/data_abstract_structure.h"
@@ -442,6 +445,9 @@ void Application::run() {
 
 	DEBUG_LOG(("Application Info: window created..."));
 
+#ifdef SEEGRAM_STORAGE_REGRESSION
+	Fork::Tests::RunStorageRegression();
+#endif // SEEGRAM_STORAGE_REGRESSION
 	startDomain();
 	startTray();
 

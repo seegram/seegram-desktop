@@ -119,6 +119,9 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue) -or -not (Get-Command
     }
 }
 
+& python "$root\fork\prepare-dependencies.py"
+if ($LASTEXITCODE -ne 0) { Fail "dependency preparation failed" }
+
 Write-Host "==> configuring"
 # "x64" is positional and picked up by cmake/run_cmake.py, which otherwise
 # defaults the Visual Studio generator to Win32 and then collides with an

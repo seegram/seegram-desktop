@@ -36,6 +36,20 @@ env -u QT cmake -S . -B out
 cmake --build out --config Release --target Telegram
 ```
 
+## Dependencies after the Telegram 7.3 update
+
+Release scripts run `fork/prepare-dependencies.py` before configuring. On macOS
+and Windows x64 it prepares the changed upstream libraries once per recipe,
+including the combined Rust archive and generated wallet binding, while keeping
+the existing Qt build. A successful preparation is recorded next to Libraries;
+a failed preparation is not cached. For a manually prepared developer tree,
+`--record` records completion of those same stages after they have succeeded.
+
+Linux prepares the official dependency Dockerfile under a tag derived from its
+recipe. It preserves existing images and reuses the matching one on later runs.
+`SEEGRAM_LINUX_IMAGE` keeps an explicitly managed image instead. The first
+release after this update takes longer because dependencies must be rebuilt.
+
 ## Version numbers
 
 `Telegram/build/version` and `core/version.h` follow the upstream version.

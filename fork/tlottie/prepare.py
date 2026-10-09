@@ -30,7 +30,9 @@ def run(command, **kwargs):
 
 def upstream_pin():
     recipe = (ROOT / "Telegram/build/prepare/prepare.py").read_text()
-    match = re.search(r"stage\('tlottie',.*?git checkout ([0-9a-f]{10,40})", recipe, re.S)
+    match = re.search(r"tlottieRevision\s*=\s*'([0-9a-f]{10,40})'", recipe)
+    if not match:
+        match = re.search(r"stage\('tlottie',.*?git checkout ([0-9a-f]{10,40})", recipe, re.S)
     if not match:
         raise RuntimeError("Cannot identify upstream tlottie pin; review fork/tlottie")
     return match[1]

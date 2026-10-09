@@ -944,6 +944,15 @@ bool Domain::writeKeyDataChecked(const KeyData &data) const {
 	return written;
 }
 
+bool Domain::persistAccountProfiles() {
+	if (_keyData->legacy || !writeKeyDataChecked(*_keyData)) {
+		return false;
+	}
+	_keyData->profileKeys = profileKeys();
+	_verificationNonce = 0;
+	return true;
+}
+
 // The staged wrap was already proved to open the local key in memory, so what
 // is left to prove is that the bytes the write path put on disk are those same
 // bytes. Comparing the parsed wrap field by field against the staged one and
@@ -1197,6 +1206,14 @@ SetPasscodeResult Domain::changePasscode(
 	} else if (!_keyData->passcodeWraps.empty() && !accepts(verification)) {
 		return SetPasscodeResult::NeedsVerification;
 	} else if (derived) {
+		const auto current = profileKeys();
+		if (current.size() != derived->_profileKeys.size()
+			|| !std::equal(begin(current), end(current),
+				begin(derived->_profileKeys), [](const auto &a, const auto &b) {
+					return a.salt == b.salt && a.encryptedKey == b.encryptedKey;
+				})) {
+			return SetPasscodeResult::Failed;
+		}
 		derived->deriveProfiles();
 		for (const auto &candidate : derived->_profileKeys) {
 			if (candidate.localKey && candidate.localKey->equals(_localKey)) {
@@ -1217,6 +1234,7 @@ SetPasscodeResult Domain::changePasscode(
 	*_keyData = std::move(updated);
 	_accountProfiles.clear();
 	_keyData->profileKeys.clear();
+	_pendingProfile.reset();
 	_keyDataDirty = false;
 
 	_verificationNonce = 0;

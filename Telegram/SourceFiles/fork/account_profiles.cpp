@@ -122,7 +122,7 @@ bool Domain::restrictedProfile() const {
 }
 
 bool Domain::hasAccountProfiles() const {
-	return !_accountProfiles.empty();
+	return !profileKeys().empty();
 }
 
 bool Domain::cleanProfile() const {
@@ -332,12 +332,16 @@ bool Domain::saveAccountProfile(
 		profile.encryptedKey = PrepareEncrypted(data,
 			CreateLocalKey(passcode, profile.salt));
 	}
+	const auto previous = _accountProfiles;
 	if (existing == end(_accountProfiles)) {
 		_accountProfiles.push_back(std::move(profile));
 	} else {
 		*existing = std::move(profile);
 	}
-	writeAccounts();
+	if (!persistAccountProfiles()) {
+		_accountProfiles = previous;
+		return false;
+	}
 	_accountProfilesChanged.fire({});
 	return true;
 }
@@ -350,8 +354,12 @@ bool Domain::removeAccountProfile(const QByteArray &id) {
 	if (i == end(_accountProfiles)) {
 		return false;
 	}
+	const auto previous = _accountProfiles;
 	_accountProfiles.erase(i);
-	writeAccounts();
+	if (!persistAccountProfiles()) {
+		_accountProfiles = previous;
+		return false;
+	}
 	_accountProfilesChanged.fire({});
 	return true;
 }

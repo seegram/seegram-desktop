@@ -10,15 +10,9 @@
 # container, so that the binary runs on distributions older than the one it
 # was built on. Everything after the build is deliberately the same shape.
 #
-# The image is built once, out of band:
-#
-#     cd Telegram/build/docker/centos_env
-#     DEBUG= LTO= python gen_dockerfile.py > /tmp/Dockerfile.gen
-#     docker build -f /tmp/Dockerfile.gen -t tdesktop:centos_env .
-#
-# Note the generated file goes somewhere else: Dockerfile in that directory is
-# the jinja template it is generated FROM, and redirecting onto it truncates
-# the template before the generator reads it.
+# The matching upstream dependency image is prepared automatically and cached
+# under its own recipe hash. SEEGRAM_LINUX_IMAGE opts into a manually managed
+# image instead. Never overwrite the upstream Dockerfile template with output.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -70,7 +64,7 @@ if [ ! -f "$KEYS_DIR/$KEY_FILE" ]; then
 	echo "[ERROR] signing key not found in $KEYS_DIR" >&2
 	exit 1
 fi
-if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+if [ -n "${SEEGRAM_LINUX_IMAGE:-}" ] && ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
 	echo "[ERROR] docker image '$IMAGE' not found, see the header of this file" >&2
 	exit 1
 fi
@@ -103,6 +97,9 @@ fi
 # break the next run's git status check.
 # Library paths cached by CMake belong to one dependency image.
 # Keep object files, but rediscover dependencies whenever the image changes.
+if [ -z "${SEEGRAM_LINUX_IMAGE:-}" ]; then
+	IMAGE="$(python3 fork/prepare-dependencies.py --linux-image)"
+fi
 IMAGE_ID="$(docker image inspect "$IMAGE" --format '{{.Id}}')"
 IMAGE_STAMP="out/.seegram-linux-image"
 mkdir -p out
