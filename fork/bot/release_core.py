@@ -83,6 +83,8 @@ class ReleaseService:
         release = await self.api('GET', f'/releases/tags/{tag}', allow_missing=True)
         if release:
             raise ReleaseError(f'Релиз {tag} уже существует. Выберите следующий номер.')
+        if await self.api('GET', f'/git/ref/tags/{tag}', allow_missing=True):
+            raise ReleaseError(f'Версия {tag} уже закреплена. Выберите следующий номер или повторите её запуск.')
         return Plan(head, base, version[1], counter, current, content, uuid.uuid4().hex, time.time())
 
     async def prepare(self, plan):
@@ -92,6 +94,9 @@ class ReleaseService:
         if await self.head() != plan.head:
             raise ReleaseError('main изменился после предпросмотра. Подготовьте релиз заново.')
         choose_counter(plan.base, plan.current, await self.feed(), plan.counter)
+        ref = f'v{plan.version}-{plan.counter}'
+        if await self.api('GET', '/git/ref/tags/' + ref, allow_missing=True):
+            raise ReleaseError(f'Версия {ref} уже закреплена. Её тег нельзя заменять.')
         head = plan.head
         if plan.counter != plan.current:
             commit = await self.api('GET', '/git/commits/' + head)
@@ -102,7 +107,6 @@ class ReleaseService:
             commit = await self.api('POST', '/git/commits', json={'message': f'fork: prepare {plan.version} build {plan.counter}', 'tree': tree['sha'], 'parents': [head]})
             await self.api('PATCH', '/git/refs/heads/main', json={'sha': commit['sha'], 'force': False})
             head = commit['sha']
-        ref = 'release-build/' + plan.token
         await self.api('POST', '/git/refs', json={'ref': 'refs/tags/' + ref, 'sha': head})
         return {'token': plan.token, 'sha': head, 'ref': ref, 'counter': plan.counter,
                 'base': plan.base, 'version': plan.version, 'created': time.time(),
