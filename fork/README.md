@@ -50,6 +50,12 @@ recipe. It preserves existing images and reuses the matching one on later runs.
 `SEEGRAM_LINUX_IMAGE` keeps an explicitly managed image instead. The first
 release after this update takes longer because dependencies must be rebuilt.
 
+Windows preparation accepts both the Visual Studio PowerShell target variable
+and the legacy Native Tools `Platform` variable. The manual Windows Release
+Recovery workflow can finish an unpublished Windows platform from an existing
+release's exact commit and counter, leaving completed platforms alone. It
+refuses to rebuild a Windows version already present in the update feed.
+
 ## Version numbers
 
 `Telegram/build/version` and `core/version.h` follow the upstream version.

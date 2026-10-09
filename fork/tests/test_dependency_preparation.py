@@ -78,6 +78,23 @@ class DependencyPreparationTests(unittest.TestCase):
         self.assertIn('wallet-engine', stages)
         self.assertTrue((self.root.parent / 'Libraries/win64/.seegram-dependencies-730').is_file())
 
+    def test_powershell_developer_environment_supplies_upstream_platform(self):
+        patch.object(MODULE.platform, 'system', return_value='Windows').start()
+        self.artifacts(windows=True)
+        with patch.dict(MODULE.os.environ, {'VSCMD_ARG_TGT_ARCH': 'x64'}, clear=True), \
+                patch.object(MODULE.subprocess, 'run') as run:
+            MODULE.native(False, False)
+        self.assertEqual(run.call_args.kwargs['env']['Platform'], 'x64')
+
+    def test_actual_developer_architecture_overrides_stale_platform(self):
+        patch.object(MODULE.platform, 'system', return_value='Windows').start()
+        self.artifacts(windows=True)
+        with patch.dict(MODULE.os.environ, {'VSCMD_ARG_TGT_ARCH': 'x86', 'Platform': 'x64'}), \
+                patch.object(MODULE.subprocess, 'run') as run:
+            with self.assertRaises(SystemExit):
+                MODULE.native(False, False)
+        run.assert_not_called()
+
     def test_failed_preparation_never_writes_success_stamp(self):
         patch.object(MODULE.platform, 'system', return_value='Darwin').start()
         libraries = self.artifacts()
