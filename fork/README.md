@@ -62,6 +62,9 @@ Windows SDK 26100 must also include the serviced Windows Hello declarations
 (`RequestCreateForWindowAsync` and `IKeyCredentialWithWindow`); the original
 26100 SDK headers are too old. Recovery updates this SDK from Microsoft's signed
 installer when those declarations are missing.
+Before building, release preparation invalidates object files whose embedded
+C++/WinRT version differs from the active SDK. Other cached objects and prepared
+libraries remain in place.
 
 ## Version numbers
 
