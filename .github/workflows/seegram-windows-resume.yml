@@ -78,6 +78,31 @@ jobs:
           }
           Write-Host "Verified $tag at $head"
 
+      - name: Update Windows SDK headers for Windows Hello
+        if: ${{ !inputs.diagnostics_only }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sdk = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits/10/Include/10.0.26100.0/cppwinrt/winrt'
+          function Test-WalletSdk {
+            $header = Join-Path $sdk 'Windows.Security.Credentials.h'
+            $interfaces = Join-Path $sdk 'impl/Windows.Security.Credentials.0.h'
+            return ((Test-Path $header) -and (Test-Path $interfaces) -and
+              (Select-String -Path $header -SimpleMatch 'RequestCreateForWindowAsync' -Quiet) -and
+              (Select-String -Path $interfaces -SimpleMatch 'IKeyCredentialWithWindow' -Quiet))
+          }
+          if (-not (Test-WalletSdk)) {
+            Write-Host 'Updating Windows SDK 26100 to its September 2026 servicing release'
+            $installer = Join-Path $env:RUNNER_TEMP 'seegram-winsdk-26100.exe'
+            Invoke-WebRequest -Uri 'https://download.microsoft.com/download/46742ab5-6592-4968-a793-129e7f3bc55a/KIT_BUNDLE_WINDOWSSDK_MEDIACREATION/winsdksetup.exe' -OutFile $installer
+            $signature = Get-AuthenticodeSignature $installer
+            if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'O=Microsoft Corporation') { throw 'Windows SDK installer signature is invalid' }
+            $setup = Start-Process -FilePath $installer -ArgumentList @('/features', 'OptionId.DesktopCPPx64', 'OptionId.UWPCPP', '/quiet', '/norestart') -Wait -PassThru
+            if ($setup.ExitCode -notin @(0, 3010)) { throw "Windows SDK update failed: $($setup.ExitCode)" }
+            if (-not (Test-WalletSdk)) { throw 'Windows Hello SDK declarations are still missing' }
+          }
+          Write-Host 'Windows Hello SDK declarations are available'
+
       - name: Prepare the upstream Windows build tools
         if: ${{ !inputs.diagnostics_only }}
         shell: pwsh
