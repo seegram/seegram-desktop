@@ -47,6 +47,15 @@ jobs:
           Set-Location $env:SEEGRAM_TREE
           # Keep the prepared cache and compile with the same configuration as releases.
           Remove-Item Env:QT -ErrorAction SilentlyContinue
+          # Releases move the tree to a new Qt (Qt 6 since Telegram 7.3.2); until one
+          # has, this tree would only prove that the previous Qt still compiles.
+          $qt = python fork/prepare-dependencies.py --qt-version
+          if ($LASTEXITCODE -ne 0) { throw 'Could not select the Qt version' }
+          $configured = (Select-String -Path out\CMakeCache.txt -Pattern '^qt_requested:STRING=(.*)$' |
+            Select-Object -First 1).Matches[0].Groups[1].Value
+          if ($configured -ne $qt) {
+            throw "Build tree uses Qt $configured, releases build with Qt $qt; run SeeGram Release without publishing first"
+          }
           cmake -S . -B out *> $log
           if ($LASTEXITCODE -ne 0) { throw 'Windows configuration failed; log kept locally on runner' }
           cmake --build out --config Release --target Telegram *> $log

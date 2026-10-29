@@ -41,9 +41,17 @@ cmake --build out --config Release --target Telegram
 Release scripts run `fork/prepare-dependencies.py` before configuring. On macOS
 and Windows x64 it prepares the changed upstream libraries once per recipe,
 including the combined Rust archive and generated wallet binding, while keeping
-the existing Qt build. A successful preparation is recorded next to Libraries;
+an installed Qt. A Qt version that is not installed yet is prepared once, with
+upstream's own recipe. A successful preparation is recorded next to Libraries;
 a failed preparation is not cached. For a manually prepared developer tree,
 `--record` records completion of those same stages after they have succeeded.
+`--qt-version` prints the Qt version upstream's scripts select.
+
+Windows builds with Qt 6, like Telegram Desktop since 7.3.2, instead of Qt 5.15.
+Its first Qt 6 preparation builds the Windows 7 patches, `tg_angle` and Qt and
+takes hours. A release configures a build tree for another Qt from scratch,
+keeping its object directory. The Windows build check refuses such a tree:
+run SeeGram Release without publishing first.
 
 Linux prepares the official dependency Dockerfile under a tag derived from its
 recipe. It preserves existing images and reuses the matching one on later runs.
