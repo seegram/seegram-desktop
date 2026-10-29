@@ -1,4 +1,5 @@
 import importlib.util
+import io
 from pathlib import Path
 import subprocess
 import tempfile
@@ -132,6 +133,18 @@ class DependencyPreparationTests(unittest.TestCase):
         self.assertFalse((libraries / '.seegram-dependencies-730').exists())
         with self.assertRaises(SystemExit):
             MODULE.native(False, True)
+
+    def test_qt_version_prints_only_the_version(self):
+        # Upstream announces its Windows choice on stdout.
+        (self.root / 'Telegram/build/qt_version.py').write_text(
+            'import os, sys\n'
+            'def resolve(arch):\n'
+            '    sys.stdout.write("Choosing Qt 6.\\n")\n'
+            '    os.environ["QT"] = "6.11.2"\n'
+            '    return True\n')
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
+            self.assertEqual(MODULE.qt_version(), '6.11.2')
+        self.assertEqual(output.getvalue(), '')
 
     def test_qt_version_leaves_environment_unchanged(self):
         with patch.dict(MODULE.os.environ, {'QT': 'configured elsewhere'}):

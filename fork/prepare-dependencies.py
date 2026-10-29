@@ -7,8 +7,10 @@ Linux uses a separate, content-addressed upstream dependency image instead of
 replacing a shared image tag.
 """
 import argparse
+import contextlib
 import hashlib
 import importlib.util
+import io
 import os
 from pathlib import Path
 import platform
@@ -60,11 +62,14 @@ def qt_version():
         "qt_version", ROOT / "Telegram/build/qt_version.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    # resolve() reports its choice through the environment.
+    # resolve() reports its choice through the environment, and announces it
+    # on Windows, which would end up in the --qt-version output.
     previous = os.environ.get("QT")
     try:
         architecture = "x64" if platform.system() == "Windows" else ""
-        if not module.resolve(architecture):
+        with contextlib.redirect_stdout(io.StringIO()):
+            supported = module.resolve(architecture)
+        if not supported:
             raise SystemExit("Upstream does not support this platform")
         return os.environ["QT"]
     finally:

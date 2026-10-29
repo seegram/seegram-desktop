@@ -129,8 +129,10 @@ if ($LASTEXITCODE -ne 0) { Fail "dependency preparation failed" }
 Write-Host "==> configuring"
 # configure.bat reuses out\ as it is, and a tree configured for another Qt
 # keeps that Qt's cache entries - the Qt 5 trees from before Telegram 7.3.2
-# switched Windows to Qt 6. A changed version starts the configuration over:
-# "force" keeps out\Release, whose changed flags then rebuild it.
+# switched Windows to Qt 6. A changed version starts the configuration over
+# with CMake's --fresh, which replaces only the cache: out\Release is rebuilt
+# by its changed flags, and the tlottie overlay keeps its archive. Upstream's
+# "force" would delete out\fork, and fails on its read-only git objects.
 $qt = & python "$root\fork\prepare-dependencies.py" --qt-version
 if ($LASTEXITCODE -ne 0) { Fail "Qt version selection failed" }
 $configure = @()
@@ -140,7 +142,7 @@ if (Test-Path $cache) {
         Select-Object -First 1 | ForEach-Object { $_.Matches[0].Groups[1].Value }
     if ($configured -and $configured -ne $qt) {
         Write-Host "    build tree uses Qt $configured, configuring for Qt $qt from scratch"
-        $configure += 'force'
+        $configure += '--fresh'
     }
 }
 # "x64" is positional and picked up by cmake/run_cmake.py, which otherwise
