@@ -11,9 +11,18 @@ $status = Get-MpComputerStatus
 Write-Host "Defender engine: $($status.AMEngineVersion), signatures: $($status.AntivirusSignatureVersion)"
 
 $platform = Join-Path $env:ProgramData 'Microsoft\Windows Defender\Platform'
+# Platform\ holds a directory per installed platform version, and newer
+# Defender platforms add unversioned entries such as CurrentVersion beside
+# them. Only the versioned directories take part in choosing the newest.
 $scanner = Get-ChildItem -Path "$platform\*\MpCmdRun.exe" -ErrorAction SilentlyContinue |
-    Sort-Object { [version]($_.Directory.Name -replace '-.*$', '') } -Descending |
-    Select-Object -First 1 -ExpandProperty FullName
+    ForEach-Object {
+        $version = $null
+        if ([version]::TryParse(($_.Directory.Name -replace '-.*$', ''), [ref]$version)) {
+            [pscustomobject]@{ Version = $version; Path = $_.FullName }
+        }
+    } |
+    Sort-Object Version -Descending |
+    Select-Object -First 1 -ExpandProperty Path
 if (-not $scanner) {
     $scanner = Join-Path $env:ProgramFiles 'Windows Defender\MpCmdRun.exe'
 }
