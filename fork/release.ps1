@@ -127,10 +127,26 @@ if ($LASTEXITCODE -ne 0) { Fail "Windows SDK validation failed" }
 if ($LASTEXITCODE -ne 0) { Fail "dependency preparation failed" }
 
 Write-Host "==> configuring"
+# configure.bat reuses out\ as it is, and a tree configured for another Qt
+# keeps that Qt's cache entries - the Qt 5 trees from before Telegram 7.3.2
+# switched Windows to Qt 6. A changed version starts the configuration over:
+# "force" keeps out\Release, whose changed flags then rebuild it.
+$qt = & python "$root\fork\prepare-dependencies.py" --qt-version
+if ($LASTEXITCODE -ne 0) { Fail "Qt version selection failed" }
+$configure = @()
+$cache = Join-Path $root "out\CMakeCache.txt"
+if (Test-Path $cache) {
+    $configured = Select-String -Path $cache -Pattern '^qt_requested:STRING=(.*)$' |
+        Select-Object -First 1 | ForEach-Object { $_.Matches[0].Groups[1].Value }
+    if ($configured -and $configured -ne $qt) {
+        Write-Host "    build tree uses Qt $configured, configuring for Qt $qt from scratch"
+        $configure += 'force'
+    }
+}
 # "x64" is positional and picked up by cmake/run_cmake.py, which otherwise
 # defaults the Visual Studio generator to Win32 and then collides with an
 # existing x64 build directory.
-& "Telegram\configure.bat" x64 `
+& "Telegram\configure.bat" x64 @configure `
     -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF `
     -D DESKTOP_APP_SPECIAL_TARGET=win64 `
     -D CMAKE_CXX_FLAGS=-DPACKER_DISABLE_PRIVATE | Out-Null

@@ -5,8 +5,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+CHECKOUT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location(
-    'prepare_dependencies', Path(__file__).resolve().parents[1] / 'prepare-dependencies.py')
+    'prepare_dependencies', CHECKOUT / 'fork/prepare-dependencies.py')
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
@@ -18,18 +19,32 @@ class DependencyPreparationTests(unittest.TestCase):
         self.root = Path(self.directory.name).resolve() / 'checkout'
         self.root.mkdir()
         self.script = self.root / 'fork/prepare-dependencies.py'
-        for relative in ('fork/prepare-dependencies.py', 'Telegram/build/prepare/prepare.py',
-                         'Telegram/build/qt_version.py'):
+        for relative in ('fork/prepare-dependencies.py', 'Telegram/build/prepare/prepare.py'):
             path = self.root / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text('initial recipe')
+        # The Qt choice is upstream's, so the real selection is exercised.
+        (self.root / 'Telegram/build/qt_version.py').write_text(
+            (CHECKOUT / 'Telegram/build/qt_version.py').read_text())
         self.addCleanup(patch.stopall)
         patch.object(MODULE, 'ROOT', self.root).start()
         patch.object(MODULE, '__file__', str(self.script)).start()
         patch('builtins.print').start()
 
-    def artifacts(self, windows=False):
+    def qt_config(self, windows=False):
         libraries = self.root.parent / 'Libraries'
+        prefix = (libraries / 'win64') if windows else (libraries / 'local')
+        return prefix / ('Qt-' + MODULE.qt_version()) / 'lib/cmake/Qt6/Qt6Config.cmake'
+
+    def install_qt(self, windows=False):
+        path = self.qt_config(windows)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('prepared Qt')
+
+    def artifacts(self, windows=False, qt=True):
+        libraries = self.root.parent / 'Libraries'
+        if qt:
+            self.install_qt(windows)
         if windows:
             libraries /= 'win64'
             names = ('tdesktop_rust/out/lib/tdesktop_rust.lib',
@@ -78,8 +93,50 @@ class DependencyPreparationTests(unittest.TestCase):
         self.assertIn('wallet-engine', stages)
         for tool in ('msys64', 'python', 'NuGet', 'jom', 'gyp', 'rust'):
             self.assertLess(stages.index(tool), stages.index('openssl3'))
-        self.assertNotIn('qt', stages)
+        self.assertFalse(any(stage.startswith('qt') for stage in stages))
         self.assertTrue((self.root.parent / 'Libraries/win64/.seegram-dependencies-730').is_file())
+
+    def test_missing_windows_qt_is_prepared_once_from_upstream_stages(self):
+        patch.object(MODULE.platform, 'system', return_value='Windows').start()
+        self.artifacts(windows=True, qt=False)
+        qt = 'qt_' + MODULE.qt_version()
+        with patch.dict(MODULE.os.environ, {'Platform': 'x64'}), \
+                patch.object(MODULE.subprocess, 'run',
+                             side_effect=lambda *args, **kwargs: self.install_qt(True)) as run:
+            MODULE.native(False, False)
+        stages = run.call_args.args[0][3:]
+        for stage in ('qt6_windows7', 'tg_angle', qt):
+            self.assertIn(stage, stages)
+        (self.root / 'Telegram/build/prepare/prepare.py').write_text('new pinned libraries')
+        with patch.dict(MODULE.os.environ, {'Platform': 'x64'}), \
+                patch.object(MODULE.subprocess, 'run') as run:
+            MODULE.native(False, False)
+        self.assertNotIn(qt, run.call_args.args[0][3:])
+
+    def test_missing_macos_qt_is_prepared_without_windows_patches(self):
+        patch.object(MODULE.platform, 'system', return_value='Darwin').start()
+        self.artifacts(qt=False)
+        with patch.object(MODULE.subprocess, 'run',
+                          side_effect=lambda *args, **kwargs: self.install_qt()) as run:
+            MODULE.native(False, False)
+        stages = run.call_args.args[0][3:]
+        self.assertIn('qt_' + MODULE.qt_version(), stages)
+        self.assertNotIn('qt6_windows7', stages)
+
+    def test_unprepared_qt_fails_without_writing_success_stamp(self):
+        patch.object(MODULE.platform, 'system', return_value='Darwin').start()
+        libraries = self.artifacts(qt=False)
+        with patch.object(MODULE.subprocess, 'run'):
+            with self.assertRaises(SystemExit):
+                MODULE.native(False, False)
+        self.assertFalse((libraries / '.seegram-dependencies-730').exists())
+        with self.assertRaises(SystemExit):
+            MODULE.native(False, True)
+
+    def test_qt_version_leaves_environment_unchanged(self):
+        with patch.dict(MODULE.os.environ, {'QT': 'configured elsewhere'}):
+            self.assertTrue(MODULE.qt_version().startswith('6.'))
+            self.assertEqual(MODULE.os.environ['QT'], 'configured elsewhere')
 
     def test_powershell_developer_environment_supplies_upstream_platform(self):
         patch.object(MODULE.platform, 'system', return_value='Windows').start()

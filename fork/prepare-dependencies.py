@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Prepare the dependencies changed by the Telegram 7.3 update once per recipe.
 
-Qt stays in its existing prepared directory. Linux uses a separate, content-
-addressed upstream dependency image instead of replacing a shared image tag.
+Qt is prepared once per version: an installed Qt stays in its directory, and
+a version that is not installed yet is built with the stages it depends on.
+Linux uses a separate, content-addressed upstream dependency image instead of
+replacing a shared image tag.
 """
 import argparse
 import hashlib
+import importlib.util
 import os
 from pathlib import Path
 import platform
@@ -51,6 +54,26 @@ def linux_image(check):
     print(image)
 
 
+def qt_version():
+    """The Qt version upstream's own scripts choose for this platform."""
+    spec = importlib.util.spec_from_file_location(
+        "qt_version", ROOT / "Telegram/build/qt_version.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    # resolve() reports its choice through the environment.
+    previous = os.environ.get("QT")
+    try:
+        architecture = "x64" if platform.system() == "Windows" else ""
+        if not module.resolve(architecture):
+            raise SystemExit("Upstream does not support this platform")
+        return os.environ["QT"]
+    finally:
+        if previous is None:
+            os.environ.pop("QT", None)
+        else:
+            os.environ["QT"] = previous
+
+
 def native(check, record):
     system = platform.system()
     if system not in ("Darwin", "Windows"):
@@ -71,11 +94,22 @@ def native(check, record):
     else:
         artifacts = [libraries / "local/lib/libtdesktop_rust.a",
                      libraries / "local/src/wallet_engine/wallet_engine.cpp"]
+    qt = qt_version()
+    major = qt.split(".")[0]
+    qt_config = (libraries if system == "Windows" else libraries / "local") / (
+        "Qt-" + qt) / "lib/cmake" / ("Qt" + major) / ("Qt" + major + "Config.cmake")
+    # Named stages always rebuild and Qt takes longest by far, so recipe
+    # changes keep an installed Qt. A version with none, such as Windows'
+    # move to Qt 6 in Telegram 7.3.2, is prepared once; on Windows upstream
+    # builds it from the qt6_windows7 patches and tg_angle.
+    if not qt_config.is_file():
+        stages = [*stages, *(["qt6_windows7"] if system == "Windows" and int(major) >= 6
+                            else []), "qt_" + qt]
     recipe = ROOT / "Telegram/build/prepare/prepare.py"
     identity = fingerprint([Path(__file__).resolve(), recipe,
                             ROOT / "Telegram/build/qt_version.py"])
     stamp = libraries / ".seegram-dependencies-730"
-    ready = all(path.is_file() for path in artifacts)
+    ready = qt_config.is_file() and all(path.is_file() for path in artifacts)
     if ready and stamp.is_file() and stamp.read_text().strip() == identity:
         print("Telegram 7.3 dependencies are ready.")
         return
@@ -84,6 +118,8 @@ def native(check, record):
     if not record:
         subprocess.run([sys.executable, str(recipe), "silent", *stages],
                        cwd=ROOT, env=environment, check=True)
+    if not qt_config.is_file():
+        raise SystemExit("Prepared Qt " + qt + " is missing")
     if not all(path.is_file() for path in artifacts):
         raise SystemExit("Prepared Rust archive or generated wallet binding is missing")
     stamp.write_text(identity + "\n")
@@ -97,8 +133,12 @@ if __name__ == "__main__":
                         help="Record a completed manual preparation of the same stages")
     parser.add_argument("--linux-image", action="store_true",
                         help="Prepare and print the matching Linux image tag")
+    parser.add_argument("--qt-version", action="store_true",
+                        help="Print the Qt version this platform builds with")
     args = parser.parse_args()
-    if args.linux_image:
+    if args.qt_version:
+        print(qt_version())
+    elif args.linux_image:
         linux_image(args.check)
     else:
         native(args.check, args.record)
