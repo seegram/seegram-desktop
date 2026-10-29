@@ -36,3 +36,14 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux"
     # with -Werror, so a real one is not going to go unseen for long.
     target_compile_options(common_options INTERFACE -Wno-error)
 endif()
+
+if (WIN32 AND DESKTOP_APP_WIN7_BASELINE)
+    # Qt 6's static QtNetwork resolves DNS records through Dnsapi, and the
+    # Windows 7 patches import DnsQuery_W and its helpers from it directly.
+    # Qt's own CMake config names Dnsapi for that; cmake_helpers lists Qt's
+    # system libraries by hand and gets them from WindowsApp.lib, which the
+    # Windows 7 baseline leaves off the link line. This client's link pulls
+    # QDnsLookup's object file in, which upstream's evidently does not.
+    # Every function it imports exists in dnsapi.dll on Windows 7.
+    target_link_libraries(Telegram PRIVATE Dnsapi)
+endif()

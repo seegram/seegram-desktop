@@ -2,16 +2,17 @@
 # upstream changes that workflow regularly, so patching it would mean a
 # conflict on every rebase. A new path can never conflict.
 #
-# Purpose is portability, not releases. The fork's code has to compile
-# against both Qt 5.15 (the Windows default) and Qt 6 (what macOS uses),
-# and that is exactly the breakage a Windows-only developer never sees.
+# Purpose is portability, not releases. The fork's Windows-only code never
+# compiles on macOS, and that is exactly the breakage a macOS developer never
+# sees. Windows uses the same Qt 6 as macOS and Linux since Telegram 7.3.2
+# switched it from Qt 5.15, so one configuration covers what releases build.
 #
 # Manual trigger only, on purpose. Run #1 built every dependency and then
 # died with "No space left on device" while compiling the client, after
 # 1h55m - and because the disk was full, actions/cache saved nothing, so a
 # retry would have cost the full two hours again. On a single-developer
-# setup with a 16-core workstation and an Apple Silicon laptop, both Qt
-# variants are verified locally in minutes, so paying that on every push
+# setup with a 16-core workstation and an Apple Silicon laptop, both
+# platforms are verified locally in minutes, so paying that on every push
 # buys nothing. This stays here for when releases or contributors make it
 # worth having; the cleanup step below addresses the confirmed cause but
 # has not yet been proven green.
@@ -23,13 +24,8 @@ on:
 
 jobs:
   windows:
-    name: x64 ${{ matrix.qt || 'qt5' }}
+    name: x64
     runs-on: windows-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        qt: ["", qt6]
 
     env:
       PREPARE_PATH: "Telegram/build/prepare/prepare.py"
@@ -128,8 +124,7 @@ jobs:
           restore-keys: ${{ runner.OS }}-${{ runner.arch }}-third-party-
 
       # Qt is cached separately from everything else: it is by far the
-      # largest and slowest stage, and the two Qt variants must not evict
-      # each other's entry.
+      # largest and slowest stage.
       - name: Libraries cache.
         uses: actions/cache@v6
         with:
@@ -148,12 +143,12 @@ jobs:
           path: |
             ${{ env.LibrariesPath }}\[qQ]t[_-]*
             ${{ env.LibrariesPath }}\cache_keys\[qQ]t[_-]*
-          key: ${{ runner.OS }}-x64-${{ matrix.qt || 'qt' }}-${{ env.CACHE_KEY }}
-          restore-keys: ${{ runner.OS }}-x64-${{ matrix.qt || 'qt' }}-
+          key: ${{ runner.OS }}-x64-qt6-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-x64-qt6-
 
       - name: Libraries.
         run: |
-          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat skip-release silent ${{ matrix.qt }}
+          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat skip-release silent
 
       - name: Free up some disk space.
         shell: bash
@@ -166,7 +161,7 @@ jobs:
         run: |
           cd %TBUILD%\%REPO_NAME%\Telegram
 
-          call configure.bat x64 ${{ matrix.qt }} ^
+          call configure.bat x64 ^
           -D TDESKTOP_API_TEST=ON ^
           -D CMAKE_CONFIGURATION_TYPES=Debug ^
           -D CMAKE_COMPILE_WARNING_AS_ERROR=ON ^
