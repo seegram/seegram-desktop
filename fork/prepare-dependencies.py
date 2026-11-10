@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Prepare the dependencies changed by the Telegram 7.3 update once per recipe.
+"""Prepare the dependencies upstream updates change once per recipe.
 
-Qt is prepared once per version: an installed Qt stays in its directory, and
-a version that is not installed yet is built with the stages it depends on.
-Linux uses a separate, content-addressed upstream dependency image instead of
-replacing a shared image tag.
+Qt takes longest by far, so it is rebuilt only when it is missing or the
+upstream patches it is built with have changed; the stages it depends on are
+prepared with it. Linux uses a separate, content-addressed upstream dependency
+image instead of replacing a shared image tag.
 """
 import argparse
 import contextlib
@@ -19,15 +19,15 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-STAGES = ["patches", "xz", "openssl3", "ffmpeg", "libheif", "breakpad",
-          "tg_owt", "ada", "tlottie", "wallet-engine", "tdesktop_rust"]
+STAGES = ["patches", "xz", "openssl3", "libvpx", "libjxl", "ffmpeg", "libheif",
+          "breakpad", "tg_owt", "ada", "tlottie", "wallet-engine", "tdesktop_rust"]
 WINDOWS_TOOLS = ["msys64", "python", "NuGet", "jom", "gyp", "rust"]
 
 
-def fingerprint(paths):
+def fingerprint(paths, root=None):
     digest = hashlib.sha256()
     for path in sorted(paths):
-        digest.update(path.relative_to(ROOT).as_posix().encode())
+        digest.update(path.relative_to(root or ROOT).as_posix().encode())
         digest.update(path.read_bytes())
     return digest.hexdigest()
 
@@ -101,34 +101,54 @@ def native(check, record):
                      libraries / "local/src/wallet_engine/wallet_engine.cpp"]
     qt = qt_version()
     major = qt.split(".")[0]
-    qt_config = (libraries if system == "Windows" else libraries / "local") / (
-        "Qt-" + qt) / "lib/cmake" / ("Qt" + major) / ("Qt" + major + "Config.cmake")
-    # Named stages always rebuild and Qt takes longest by far, so recipe
-    # changes keep an installed Qt. A version with none, such as Windows'
-    # move to Qt 6 in Telegram 7.3.2, is prepared once; on Windows upstream
-    # builds it from the qt6_windows7 patches and tg_angle.
-    if not qt_config.is_file():
-        stages = [*stages, *(["qt6_windows7"] if system == "Windows" and int(major) >= 6
-                            else []), "qt_" + qt]
+    windows_qt6 = system == "Windows" and int(major) >= 6
+    qt_prefix = (libraries if system == "Windows" else libraries / "local") / ("Qt-" + qt)
+    qt_config = qt_prefix / "lib/cmake" / ("Qt" + major) / ("Qt" + major + "Config.cmake")
+    # The patch files upstream's Qt stage depends on; on Windows Qt 6 is also
+    # built from the qt6_windows7 patches, and macOS applies the High Sierra ones.
+    qt_patches = ["patches/qtbase_" + qt + "/*.patch", "patches/qtsvg_" + qt + "/*.patch"]
+    if windows_qt6:
+        qt_patches.append("qt6_windows7/*.patch")
+    elif system == "Darwin":
+        qt_patches.append("patches/qt6_highsierra/*.patch")
+    qt_stamp = qt_prefix / ".seegram-patches"
+
+    def qt_patched():
+        return fingerprint([path for pattern in qt_patches for path in libraries.glob(pattern)],
+                           libraries)
+
     recipe = ROOT / "Telegram/build/prepare/prepare.py"
     identity = fingerprint([Path(__file__).resolve(), recipe,
                             ROOT / "Telegram/build/qt_version.py"])
     stamp = libraries / ".seegram-dependencies-730"
     ready = qt_config.is_file() and all(path.is_file() for path in artifacts)
     if ready and stamp.is_file() and stamp.read_text().strip() == identity:
-        print("Telegram 7.3 dependencies are ready.")
+        print("Upstream dependencies are ready.")
         return
     if check:
-        raise SystemExit("Telegram 7.3 dependencies need preparation")
+        raise SystemExit("Upstream dependencies need preparation")
     if not record:
-        subprocess.run([sys.executable, str(recipe), "silent", *stages],
+        # Whether Qt is stale depends on the patches, so they are updated first.
+        sources = ["patches", *(["qt6_windows7"] if windows_qt6 else [])]
+        subprocess.run([sys.executable, str(recipe), "silent", *sources],
+                       cwd=ROOT, env=environment, check=True)
+        # Named stages always rebuild and Qt takes longest by far, so an
+        # installed Qt is kept until upstream changes its patches. A missing
+        # one, such as Windows' after the move to Qt 6 in Telegram 7.3.2, is
+        # built as well; on Windows upstream builds it with tg_angle.
+        built = qt_stamp.read_text().strip() if qt_stamp.is_file() else ""
+        qt_ready = qt_config.is_file() and built == qt_patched()
+        subprocess.run([sys.executable, str(recipe), "silent",
+                        *[stage for stage in stages if stage not in sources],
+                        *([] if qt_ready else ["qt_" + qt])],
                        cwd=ROOT, env=environment, check=True)
     if not qt_config.is_file():
         raise SystemExit("Prepared Qt " + qt + " is missing")
     if not all(path.is_file() for path in artifacts):
         raise SystemExit("Prepared Rust archive or generated wallet binding is missing")
+    qt_stamp.write_text(qt_patched() + "\n")
     stamp.write_text(identity + "\n")
-    print("Telegram 7.3 dependencies are ready.")
+    print("Upstream dependencies are ready.")
 
 
 if __name__ == "__main__":

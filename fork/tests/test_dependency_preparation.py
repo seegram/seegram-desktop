@@ -41,6 +41,19 @@ class DependencyPreparationTests(unittest.TestCase):
         path = self.qt_config(windows)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text('prepared Qt')
+        # Built with the patches Libraries has now, which is none.
+        (path.parents[3] / '.seegram-patches').write_text(MODULE.fingerprint([]) + '\n')
+
+    def build_qt(self, windows=False):
+        """A preparation run that installs Qt only when asked for it."""
+        def run(command, **kwargs):
+            if any(stage.startswith('qt_') for stage in command[3:]):
+                self.install_qt(windows)
+        return run
+
+    @staticmethod
+    def all_stages(run):
+        return [stage for call in run.call_args_list for stage in call.args[0][3:]]
 
     def artifacts(self, windows=False, qt=True):
         libraries = self.root.parent / 'Libraries'
@@ -77,10 +90,31 @@ class DependencyPreparationTests(unittest.TestCase):
         (self.root / 'Telegram/build/prepare/prepare.py').write_text('new pinned libraries')
         with patch.object(MODULE.subprocess, 'run') as run:
             MODULE.native(False, False)
+        self.assertEqual(run.call_args_list[0].args[0][3:], ['patches'])
         stages = run.call_args.args[0][3:]
-        self.assertIn('tdesktop_rust', stages)
-        self.assertIn('ffmpeg', stages)
+        for stage in ('tdesktop_rust', 'ffmpeg', 'libvpx', 'libjxl'):
+            self.assertIn(stage, stages)
+        self.assertNotIn('patches', stages)
         self.assertFalse(any(stage.startswith('qt') for stage in stages))
+
+    def test_changed_qt_patches_rebuild_installed_qt_once(self):
+        patch.object(MODULE.platform, 'system', return_value='Darwin').start()
+        libraries = self.artifacts()
+        MODULE.native(False, True)
+        qt = MODULE.qt_version()
+        def update_patches(command, **kwargs):
+            if command[3:] == ['patches']:
+                path = libraries / 'patches' / ('qtsvg_' + qt) / '0001-bound-memory.patch'
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('upstream fix')
+        (self.root / 'Telegram/build/prepare/prepare.py').write_text('new patches')
+        with patch.object(MODULE.subprocess, 'run', side_effect=update_patches) as run:
+            MODULE.native(False, False)
+        self.assertIn('qt_' + qt, run.call_args.args[0][3:])
+        (self.root / 'Telegram/build/prepare/prepare.py').write_text('new libraries')
+        with patch.object(MODULE.subprocess, 'run') as run:
+            MODULE.native(False, False)
+        self.assertNotIn('qt_' + qt, run.call_args.args[0][3:])
 
     def test_windows_uses_supported_stages_and_separate_library_cache(self):
         patch.object(MODULE.platform, 'system', return_value='Windows').start()
@@ -88,6 +122,7 @@ class DependencyPreparationTests(unittest.TestCase):
         with patch.dict(MODULE.os.environ, {'Platform': 'x64'}), \
                 patch.object(MODULE.subprocess, 'run') as run:
             MODULE.native(False, False)
+        self.assertEqual(run.call_args_list[0].args[0][3:], ['patches', 'qt6_windows7'])
         stages = run.call_args.args[0][3:]
         self.assertNotIn('xz', stages)
         self.assertIn('tg_angle', stages)
@@ -102,25 +137,23 @@ class DependencyPreparationTests(unittest.TestCase):
         self.artifacts(windows=True, qt=False)
         qt = 'qt_' + MODULE.qt_version()
         with patch.dict(MODULE.os.environ, {'Platform': 'x64'}), \
-                patch.object(MODULE.subprocess, 'run',
-                             side_effect=lambda *args, **kwargs: self.install_qt(True)) as run:
+                patch.object(MODULE.subprocess, 'run', side_effect=self.build_qt(True)) as run:
             MODULE.native(False, False)
-        stages = run.call_args.args[0][3:]
+        stages = self.all_stages(run)
         for stage in ('qt6_windows7', 'tg_angle', qt):
             self.assertIn(stage, stages)
         (self.root / 'Telegram/build/prepare/prepare.py').write_text('new pinned libraries')
         with patch.dict(MODULE.os.environ, {'Platform': 'x64'}), \
                 patch.object(MODULE.subprocess, 'run') as run:
             MODULE.native(False, False)
-        self.assertNotIn(qt, run.call_args.args[0][3:])
+        self.assertNotIn(qt, self.all_stages(run))
 
     def test_missing_macos_qt_is_prepared_without_windows_patches(self):
         patch.object(MODULE.platform, 'system', return_value='Darwin').start()
         self.artifacts(qt=False)
-        with patch.object(MODULE.subprocess, 'run',
-                          side_effect=lambda *args, **kwargs: self.install_qt()) as run:
+        with patch.object(MODULE.subprocess, 'run', side_effect=self.build_qt()) as run:
             MODULE.native(False, False)
-        stages = run.call_args.args[0][3:]
+        stages = self.all_stages(run)
         self.assertIn('qt_' + MODULE.qt_version(), stages)
         self.assertNotIn('qt6_windows7', stages)
 

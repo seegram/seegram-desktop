@@ -36,13 +36,16 @@ env -u QT cmake -S . -B out
 cmake --build out --config Release --target Telegram
 ```
 
-## Dependencies after the Telegram 7.3 update
+## Dependencies after upstream updates
 
 Release scripts run `fork/prepare-dependencies.py` before configuring. On macOS
 and Windows x64 it prepares the changed upstream libraries once per recipe,
-including the combined Rust archive and generated wallet binding, while keeping
-an installed Qt. A Qt version that is not installed yet is prepared once, with
-upstream's own recipe. A successful preparation is recorded next to Libraries;
+including the combined Rust archive and generated wallet binding. It updates
+upstream's patches first and keeps an installed Qt built with the same Qt
+patches. A Qt version that is not installed yet, or one whose patches upstream
+changed (as in Telegram 7.4.1), is rebuilt with upstream's own recipe, the
+longest step of a preparation. Add a library to `STAGES` when an update changes
+its recipe or patches. A successful preparation is recorded next to Libraries;
 a failed preparation is not cached. For a manually prepared developer tree,
 `--record` records completion of those same stages after they have succeeded.
 `--qt-version` prints the Qt version upstream's scripts select.
